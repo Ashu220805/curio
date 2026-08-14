@@ -1,0 +1,3145 @@
+/* =========================================================
+   CURIO DASHBOARD
+   ========================================================= */
+
+.dashboard-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  background: #f8f9fd;
+  color: #101942;
+  font-family: inherit;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.dashboard-sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e8eaf3;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 16px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 20;
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.dashboard-logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 12px 28px;
+}
+
+.dashboard-logo-image {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.dashboard-logo-name {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  line-height: 1;
+  color: #101942;
+}
+
+.dashboard-logo-tagline {
+  margin-top: 5px;
+  font-size: 9px;
+  color: #7a82a3;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.dashboard-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dashboard-nav-item {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 15px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #1d2854;
+  font-size: 15px;
+  font-weight: 500;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dashboard-nav-item:hover {
+  background: #f2efff;
+  color: #5b35df;
+  transform: translateX(2px);
+}
+
+.dashboard-nav-active {
+  background: linear-gradient(
+    135deg,
+    #f0ebff,
+    #f6f4ff
+  );
+  color: #5d35df;
+  font-weight: 700;
+}
+
+.dashboard-nav-icon {
+  width: 25px;
+  text-align: center;
+  font-size: 19px;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+   ========================================================= */
+
+.dashboard-sidebar-bottom {
+  margin-top: auto;
+}
+
+.dashboard-learning-style {
+  position: relative;
+  background: #f7f5ff;
+  border: 1px solid #e5defe;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.dashboard-learning-style-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5c35db;
+  margin-bottom: 7px;
+}
+
+.dashboard-learning-style-value {
+  font-size: 12px;
+  color: #606987;
+  padding-right: 55px;
+}
+
+.dashboard-change-button {
+  position: absolute;
+  right: 10px;
+  top: 31px;
+  border: 1px solid #cfc5ff;
+  background: #ffffff;
+  color: #5b35df;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.dashboard-logout-button {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #e4e6ef;
+  background: #ffffff;
+  color: #59617f;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.dashboard-logout-button:hover {
+  border-color: #cfc5ff;
+  color: #5b35df;
+  background: #faf9ff;
+}
+
+.dashboard-logout-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.dashboard-main {
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  min-height: 100vh;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.dashboard-header {
+  height: 78px;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e8eaf3;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  gap: 25px;
+  position: sticky;
+  top: 0;
+  z-index: 15;
+}
+
+.dashboard-mobile-logo {
+  display: none;
+}
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.dashboard-search {
+  width: min(420px, 40%);
+  height: 43px;
+  border: 1px solid #dfe2ec;
+  background: #ffffff;
+  border-radius: 23px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  transition: border-color 0.2s ease;
+}
+
+.dashboard-search:focus-within {
+  border-color: #7b4bea;
+  box-shadow: 0 0 0 3px rgba(123, 75, 234, 0.08);
+}
+
+.dashboard-search-icon {
+  font-size: 23px;
+  color: #6e7695;
+  margin-right: 8px;
+}
+
+.dashboard-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1b244c;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.dashboard-search input::placeholder {
+  color: #8b92ad;
+}
+
+
+/* =========================================================
+   HEADER ACTIONS
+   ========================================================= */
+
+.dashboard-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-header-button {
+  border: none;
+  background: transparent;
+  color: #263052;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.dashboard-header-button:hover {
+  background: #f6f5fb;
+}
+
+.dashboard-notification-button {
+  border: none;
+  background: transparent;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.dashboard-notification-button:hover {
+  background: #f5f3fb;
+}
+
+.dashboard-profile {
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 5px 8px;
+  border-radius: 12px;
+}
+
+.dashboard-profile:hover {
+  background: #f7f6fb;
+}
+
+.dashboard-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #eeeaff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.dashboard-profile-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.dashboard-profile-text strong {
+  font-size: 12px;
+  color: #192248;
+}
+
+.dashboard-profile-text span {
+  font-size: 10px;
+  color: #7a82a2;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.dashboard-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 35px 42px 60px;
+}
+
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
+
+.dashboard-welcome {
+  margin-bottom: 25px;
+}
+
+.dashboard-welcome h1 {
+  margin: 0 0 8px;
+  font-size: 29px;
+  line-height: 1.2;
+  color: #101942;
+  letter-spacing: -0.5px;
+}
+
+.dashboard-welcome p {
+  margin: 0;
+  color: #68708f;
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.dashboard-learning-hero {
+  min-height: 270px;
+  border-radius: 22px;
+  border: 1px solid #e5dfff;
+  background:
+    radial-gradient(
+      circle at 80% 50%,
+      rgba(122, 76, 235, 0.14),
+      transparent 32%
+    ),
+    linear-gradient(
+      120deg,
+      #f8f6ff,
+      #f3f0ff
+    );
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  position: relative;
+  padding: 38px 50px;
+  margin-bottom: 42px;
+}
+
+.dashboard-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 550px;
+}
+
+.dashboard-hero-label {
+  display: inline-block;
+  color: #6a3ee0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  margin-bottom: 11px;
+}
+
+.dashboard-hero-content h2 {
+  margin: 0;
+  font-size: 31px;
+  line-height: 1.18;
+  letter-spacing: -0.5px;
+  color: #111a45;
+}
+
+.dashboard-hero-content p {
+  margin: 16px 0 23px;
+  max-width: 440px;
+  color: #626b8d;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.dashboard-primary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+  padding: 13px 21px;
+  border-radius: 11px;
+  background: linear-gradient(
+    135deg,
+    #7238e8,
+    #5269e9
+  );
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 9px 22px rgba(101, 63, 220, 0.22);
+  transition: all 0.2s ease;
+}
+
+.dashboard-primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(101, 63, 220, 0.28);
+}
+
+.dashboard-primary-button span {
+  font-size: 18px;
+}
+
+
+/* =========================================================
+   HERO VISUAL
+   ========================================================= */
+
+.dashboard-hero-visual {
+  width: 330px;
+  height: 230px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-brain {
+  width: 145px;
+  height: 145px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    #d9ceff,
+    #b8d7ff
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 74px;
+  box-shadow:
+    0 20px 45px rgba(98, 65, 211, 0.17);
+}
+
+.dashboard-hero-circle {
+  position: absolute;
+  width: 49px;
+  height: 49px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(49, 52, 99, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.dashboard-circle-one {
+  top: 15px;
+  left: 36px;
+}
+
+.dashboard-circle-two {
+  top: 37px;
+  right: 17px;
+}
+
+.dashboard-circle-three {
+  bottom: 17px;
+  left: 68px;
+}
+
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.dashboard-section {
+  margin-bottom: 42px;
+}
+
+.dashboard-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.dashboard-section-heading h2 {
+  margin: 0;
+  color: #101942;
+  font-size: 21px;
+  letter-spacing: -0.2px;
+}
+
+.dashboard-section-heading p {
+  margin: 6px 0 0;
+  color: #747c9a;
+  font-size: 13px;
+}
+
+.dashboard-view-all {
+  color: #5c39db;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-view-all:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   LEARNING CARDS
+   ========================================================= */
+
+.dashboard-learning-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.dashboard-learning-card {
+  min-height: 245px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #e3e6f0;
+  border-radius: 17px;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.dashboard-learning-card:hover {
+  transform: translateY(-3px);
+  border-color: #d3c9ff;
+  box-shadow: 0 12px 30px rgba(50, 52, 102, 0.08);
+}
+
+.dashboard-learning-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 15px;
+  background: #f1edff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 17px;
+}
+
+.dashboard-learning-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-learning-card h3 {
+  margin: 0;
+  color: #101942;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.dashboard-learning-card p {
+  margin: 8px 0;
+  color: #747c99;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.dashboard-card-meta {
+  display: flex;
+  gap: 6px;
+  color: #727a98;
+  font-size: 10px;
+  margin-top: auto;
+  margin-bottom: 13px;
+}
+
+.dashboard-progress {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dashboard-progress-track {
+  height: 6px;
+  flex: 1;
+  background: #e9ebf3;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.dashboard-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #6d42e8,
+    #527de9
+  );
+}
+
+.dashboard-progress > span {
+  min-width: 30px;
+  text-align: right;
+  font-size: 10px;
+  color: #59617e;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+   ========================================================= */
+
+.dashboard-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.dashboard-action-card {
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 17px;
+  border-radius: 15px;
+  border: 1px solid #e4e6ee;
+  background: #ffffff;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 25px rgba(45, 48, 93, 0.08);
+}
+
+.dashboard-action-icon {
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.dashboard-action-card h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+}
+
+.dashboard-action-card p {
+  margin: 0;
+  color: #737b99;
+  font-size: 10px;
+}
+
+
+/* ACTION COLORS */
+
+.dashboard-action-green .dashboard-action-icon {
+  background: #e7f8ed;
+}
+
+.dashboard-action-green h3 {
+  color: #168348;
+}
+
+.dashboard-action-blue .dashboard-action-icon {
+  background: #e8f0ff;
+}
+
+.dashboard-action-blue h3 {
+  color: #2b66d9;
+}
+
+.dashboard-action-purple .dashboard-action-icon {
+  background: #eee9ff;
+}
+
+.dashboard-action-purple h3 {
+  color: #6637d9;
+}
+
+.dashboard-action-orange .dashboard-action-icon {
+  background: #fff0dc;
+}
+
+.dashboard-action-orange h3 {
+  color: #db7a18;
+}
+
+.dashboard-action-teal .dashboard-action-icon {
+  background: #e5f8f5;
+}
+
+.dashboard-action-teal h3 {
+  color: #148b7b;
+}
+
+.dashboard-action-red .dashboard-action-icon {
+  background: #ffe9e9;
+}
+
+.dashboard-action-red h3 {
+  color: #d54848;
+}
+
+
+/* =========================================================
+   OVERALL PROGRESS
+   ========================================================= */
+
+.dashboard-progress-section {
+  border: 1px solid #e3defb;
+  border-radius: 19px;
+  background: linear-gradient(
+    110deg,
+    #f7f4ff,
+    #ffffff
+  );
+  padding: 25px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 35px;
+}
+
+.dashboard-progress-label {
+  color: #6a42db;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.dashboard-progress-section h2 {
+  margin: 7px 0 5px;
+  color: #111942;
+  font-size: 18px;
+}
+
+.dashboard-progress-section p {
+  margin: 0;
+  color: #737b98;
+  font-size: 12px;
+}
+
+.dashboard-overall-progress {
+  width: 330px;
+}
+
+.dashboard-overall-progress-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: #6339dd;
+  margin-bottom: 8px;
+}
+
+.dashboard-overall-progress-track {
+  height: 8px;
+  width: 100%;
+  background: #e7e7f1;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.dashboard-overall-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #713ee7,
+    #527ee9
+  );
+}
+
+.dashboard-overall-progress span {
+  display: block;
+  margin-top: 7px;
+  color: #7a819d;
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 1150px) {
+
+  .dashboard-sidebar {
+    width: 220px;
+  }
+
+  .dashboard-main {
+    margin-left: 220px;
+    width: calc(100% - 220px);
+  }
+
+  .dashboard-content {
+    padding: 30px 28px 50px;
+  }
+
+  .dashboard-header {
+    padding: 0 25px;
+  }
+
+  .dashboard-header-button span {
+    display: none;
+  }
+
+  .dashboard-learning-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-learning-hero {
+    padding: 35px;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — SMALL TABLET
+   ========================================================= */
+
+@media (max-width: 850px) {
+
+  .dashboard-sidebar {
+    width: 75px;
+    padding: 18px 10px;
+  }
+
+  .dashboard-logo {
+    justify-content: center;
+    padding: 4px 0 25px;
+  }
+
+  .dashboard-logo-image {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dashboard-logo > div {
+    display: none;
+  }
+
+  .dashboard-nav-item {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .dashboard-nav-item span:last-child {
+    display: none;
+  }
+
+  .dashboard-nav-icon {
+    font-size: 20px;
+  }
+
+  .dashboard-learning-style {
+    display: none;
+  }
+
+  .dashboard-logout-button span:last-child {
+    display: none;
+  }
+
+  .dashboard-main {
+    margin-left: 75px;
+    width: calc(100% - 75px);
+  }
+
+  .dashboard-learning-hero {
+    min-height: 250px;
+  }
+
+  .dashboard-hero-visual {
+    width: 250px;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+  .dashboard-page {
+    display: block;
+  }
+
+  .dashboard-sidebar {
+    width: 100%;
+    min-height: auto;
+    height: 64px;
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-right: none;
+    border-top: 1px solid #e4e6ef;
+    padding: 6px 10px;
+    z-index: 50;
+  }
+
+  .dashboard-logo,
+  .dashboard-sidebar-bottom {
+    display: none;
+  }
+
+  .dashboard-navigation {
+    height: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .dashboard-nav-item {
+    width: 45px;
+    height: 45px;
+    min-height: 45px;
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .dashboard-nav-item span:last-child {
+    display: none;
+  }
+
+  .dashboard-main {
+    margin-left: 0;
+    width: 100%;
+    padding-bottom: 65px;
+  }
+
+  .dashboard-header {
+    height: 65px;
+    padding: 0 15px;
+  }
+
+  .dashboard-mobile-logo {
+    display: block;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #17204a;
+  }
+
+  .dashboard-search {
+    flex: 1;
+    width: auto;
+  }
+
+  .dashboard-search input {
+    font-size: 11px;
+  }
+
+  .dashboard-header-actions {
+    gap: 2px;
+  }
+
+  .dashboard-header-button,
+  .dashboard-notification-button {
+    display: none;
+  }
+
+  .dashboard-profile-text {
+    display: none;
+  }
+
+  .dashboard-profile {
+    padding: 0;
+  }
+
+  .dashboard-content {
+    padding: 25px 16px 35px;
+  }
+
+  .dashboard-welcome h1 {
+    font-size: 24px;
+  }
+
+  .dashboard-welcome p {
+    font-size: 13px;
+  }
+
+  .dashboard-learning-hero {
+    padding: 27px;
+    min-height: auto;
+    margin-bottom: 34px;
+  }
+
+  .dashboard-hero-content h2 {
+    font-size: 24px;
+  }
+
+  .dashboard-hero-content p {
+    font-size: 13px;
+  }
+
+  .dashboard-hero-visual {
+    display: none;
+  }
+
+  .dashboard-learning-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-progress-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-overall-progress {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — VERY SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+  .dashboard-header {
+    gap: 8px;
+  }
+
+  .dashboard-mobile-logo {
+    font-size: 17px;
+  }
+
+  .dashboard-search {
+    height: 38px;
+  }
+
+  .dashboard-search-icon {
+    font-size: 18px;
+  }
+
+  .dashboard-content {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+
+  .dashboard-learning-hero {
+    padding: 23px;
+  }
+
+  .dashboard-hero-content h2 {
+    font-size: 21px;
+  }
+
+  .dashboard-primary-button {
+    font-size: 12px;
+    padding: 11px 15px;
+  }
+
+  .dashboard-section-heading h2 {
+    font-size: 18px;
+  }
+
+}
+/* =========================================
+   PROFILE PANEL
+========================================= */
+
+.dashboard-header {
+  position: relative;
+}
+
+.dashboard-profile {
+  cursor: pointer;
+}
+
+.dashboard-profile-panel {
+  position: absolute;
+  top: 70px;
+  right: 0;
+  width: 330px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e4e5f2;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(35, 27, 90, 0.16);
+  z-index: 1000;
+}
+
+.dashboard-profile-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dashboard-profile-large-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f0edff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27px;
+}
+
+.dashboard-profile-panel-header div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dashboard-profile-panel-header strong {
+  color: #101943;
+  font-size: 17px;
+}
+
+.dashboard-profile-panel-header span {
+  color: #747b9d;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-profile-divider {
+  height: 1px;
+  background: #ececf4;
+  margin: 18px 0;
+}
+
+.dashboard-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dashboard-profile-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-profile-info span {
+  color: #7c83a2;
+  font-size: 12px;
+}
+
+.dashboard-profile-info strong {
+  color: #171f4d;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================
+   PROFILE BUTTONS
+========================================= */
+
+.dashboard-profile-action,
+.dashboard-profile-logout {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 14px;
+  margin-top: 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-profile-action {
+  background: #f1edff;
+  color: #5f36df;
+}
+
+.dashboard-profile-action:hover {
+  background: #e6e0ff;
+}
+
+.dashboard-profile-logout {
+  background: #fff1f1;
+  color: #d14444;
+}
+
+.dashboard-profile-logout:hover {
+  background: #ffe4e4;
+}
+
+
+/* =========================================
+   PASSWORD CHANGE
+========================================= */
+
+.dashboard-password-box {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #f8f8ff;
+}
+
+.dashboard-password-box input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  margin-bottom: 9px;
+  border: 1px solid #dddff0;
+  border-radius: 9px;
+  outline: none;
+  font-size: 13px;
+  background: #ffffff;
+}
+
+.dashboard-password-box input:focus {
+  border-color: #7042e8;
+}
+
+.dashboard-password-box button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(
+    90deg,
+    #7638e8,
+    #536bea
+  );
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-password-box button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-password-message {
+  margin: 9px 0 0;
+  font-size: 12px;
+  color: #59617e;
+}
+
+
+/* =========================================
+   A+ TEXT MODE
+========================================= */
+
+.dashboard-large-text {
+  font-size: 17px;
+}
+
+.dashboard-large-text h1 {
+  font-size: 38px;
+}
+
+.dashboard-large-text h2 {
+  font-size: 27px;
+}
+
+.dashboard-large-text h3 {
+  font-size: 18px;
+}
+
+.dashboard-header-button-active {
+  background: #f0ecff;
+  color: #5f35df;
+  border-radius: 10px;
+}
+
+
+/* =========================================
+   CALM MODE
+========================================= */
+
+.dashboard-calm-mode *,
+.dashboard-calm-mode *::before,
+.dashboard-calm-mode *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.dashboard-calm-mode {
+  background: #fafaff;
+}
+
+.dashboard-calm-mode .dashboard-learning-hero {
+  box-shadow: none;
+}
+
+.dashboard-calm-mode .dashboard-primary-button {
+  box-shadow: none;
+}
+
+
+/* =========================================
+   MOBILE PROFILE
+========================================= */
+
+@media (max-width: 700px) {
+  .dashboard-profile-panel {
+    position: fixed;
+    top: 70px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
+/* =========================================================
+   CURIO PROFILE PANEL
+   ADDITIONAL CSS ONLY
+   Do NOT remove or modify the existing Dashboard CSS.
+========================================================= */
+
+
+/* =========================================================
+   PROFILE PANEL WRAPPER
+========================================================= */
+
+.profile-panel {
+  position: absolute;
+
+  top: calc(100% + 10px);
+  right: 0;
+
+  width: 350px;
+  max-width: calc(100vw - 30px);
+
+  background: #ffffff;
+
+  border: 1px solid #e4e9e5;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 18px 50px rgba(37, 54, 45, 0.14);
+
+  overflow: hidden;
+
+  z-index: 9999;
+
+  color: #26332d;
+
+  font-size: 14px;
+
+  line-height: 1.4;
+
+  animation: curioProfileOpen 160ms ease-out;
+}
+
+
+/* =========================================================
+   PROFILE BUTTON WRAPPER
+   IMPORTANT FOR CORRECT POSITIONING
+========================================================= */
+
+.dashboard-profile-wrapper {
+  position: relative;
+
+  display: inline-flex;
+  align-items: center;
+}
+
+
+/* =========================================================
+   PROFILE PANEL ANIMATION
+========================================================= */
+
+@keyframes curioProfileOpen {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-5px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   PROFILE PANEL HEADER
+========================================================= */
+
+.profile-panel-header {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 19px 20px;
+
+  background: #ffffff;
+
+  border-bottom: 1px solid #edf0ee;
+}
+
+
+/* =========================================================
+   PROFILE AVATAR
+========================================================= */
+
+.profile-panel-avatar {
+  width: 48px;
+  height: 48px;
+
+  min-width: 48px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #edf5f0;
+
+  color: #47725f;
+
+  font-size: 21px;
+
+  border: 1px solid #dce9df;
+}
+
+
+/* =========================================================
+   PROFILE HEADER TEXT
+========================================================= */
+
+.profile-panel-header-info {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.profile-panel-name {
+  margin: 0;
+
+  padding: 0;
+
+  color: #26332d;
+
+  font-size: 15px;
+
+  line-height: 1.3;
+
+  font-weight: 800;
+}
+
+.profile-panel-role {
+  margin: 4px 0 0;
+
+  padding: 0;
+
+  color: #7d8982;
+
+  font-size: 11px;
+
+  line-height: 1.3;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   CLOSE BUTTON
+========================================================= */
+
+.profile-panel-close {
+  width: 30px;
+  height: 30px;
+
+  min-width: 30px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #89938e;
+
+  font-size: 19px;
+
+  cursor: pointer;
+
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.profile-panel-close:hover {
+  background: #f3f6f3;
+
+  color: #26332d;
+}
+
+
+/* =========================================================
+   PROFILE BODY
+========================================================= */
+
+.profile-panel-body {
+  padding: 19px 20px;
+}
+
+
+/* =========================================================
+   SECTION TITLE
+========================================================= */
+
+.profile-panel-section-title {
+  margin: 0 0 13px;
+
+  padding: 0;
+
+  color: #8a958f;
+
+  font-size: 10px;
+
+  line-height: 1.2;
+
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   PROFILE INFORMATION
+========================================================= */
+
+.profile-info-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 14px;
+
+  margin: 0;
+
+  padding: 0;
+}
+
+.profile-info-row {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 11px;
+
+  margin: 0;
+
+  padding: 0;
+}
+
+.profile-info-icon {
+  width: 32px;
+  height: 32px;
+
+  min-width: 32px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #f4f7f4;
+
+  font-size: 14px;
+}
+
+.profile-info-content {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+
+  margin: 0;
+
+  padding: 0;
+}
+
+.profile-info-label {
+  margin: 0;
+
+  padding: 0;
+
+  color: #8a958f;
+
+  font-size: 10px;
+
+  line-height: 1.2;
+
+  font-weight: 700;
+
+  letter-spacing: 0.04em;
+
+  text-transform: uppercase;
+}
+
+.profile-info-value {
+  margin: 0;
+
+  padding: 0;
+
+  color: #26332d;
+
+  font-size: 12px;
+
+  line-height: 1.45;
+
+  font-weight: 650;
+
+  overflow-wrap: anywhere;
+
+  word-break: break-word;
+}
+
+
+/* =========================================================
+   PROFILE PROGRESS
+========================================================= */
+
+.profile-progress {
+  margin-top: 18px;
+
+  padding-top: 17px;
+
+  border-top: 1px solid #edf0ee;
+}
+
+.profile-progress-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 8px;
+}
+
+.profile-progress-label {
+  margin: 0;
+
+  color: #7d8982;
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+.profile-progress-value {
+  margin: 0;
+
+  color: #47725f;
+
+  font-size: 13px;
+
+  font-weight: 800;
+}
+
+.profile-progress-track {
+  width: 100%;
+
+  height: 7px;
+
+  overflow: hidden;
+
+  border-radius: 20px;
+
+  background: #edf0ee;
+}
+
+.profile-progress-bar {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: #5f8f78;
+
+  transition: width 300ms ease;
+}
+
+
+/* =========================================================
+   PROFILE ACTIONS
+========================================================= */
+
+.profile-panel-actions {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-top: 20px;
+
+  padding-top: 17px;
+
+  border-top: 1px solid #edf0ee;
+}
+
+.profile-panel-action {
+  width: 100%;
+
+  min-height: 43px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 0 12px;
+
+  border: 1px solid transparent;
+
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #435149;
+
+  text-decoration: none;
+
+  font-size: 12px;
+
+  line-height: 1.3;
+
+  font-weight: 700;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.profile-panel-action:hover {
+  background: #f5f8f5;
+
+  border-color: #e5ebe6;
+
+  color: #26332d;
+}
+
+.profile-panel-action-icon {
+  width: 28px;
+  height: 28px;
+
+  min-width: 28px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #f3f6f3;
+
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   SIGN OUT
+========================================================= */
+
+.profile-panel-signout {
+  color: #a45f5f;
+}
+
+.profile-panel-signout:hover {
+  background: #fbf3f3;
+
+  border-color: #eedede;
+
+  color: #974f4f;
+}
+
+.profile-panel-signout .profile-panel-action-icon {
+  background: #faf0f0;
+}
+
+
+/* =========================================================
+   GUEST PROFILE
+========================================================= */
+
+.profile-panel-guest .profile-panel-avatar {
+  background: #f1f4f2;
+
+  border-color: #e2e8e3;
+}
+
+.profile-panel-guest .profile-panel-role {
+  color: #7d8982;
+}
+
+
+/* =========================================================
+   PASSWORD FORM
+========================================================= */
+
+.profile-password-form {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+
+  margin-top: 14px;
+}
+
+.profile-password-field {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.profile-password-field label {
+  color: #77837c;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.04em;
+}
+
+.profile-password-field input {
+  width: 100%;
+
+  height: 40px;
+
+  padding: 0 11px;
+
+  border: 1px solid #e1e7e2;
+
+  border-radius: 9px;
+
+  outline: none;
+
+  background: #fafcfa;
+
+  color: #26332d;
+
+  font-size: 12px;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.profile-password-field input:focus {
+  background: #ffffff;
+
+  border-color: #a9c3b2;
+
+  box-shadow:
+    0 0 0 3px rgba(95, 143, 120, 0.08);
+}
+
+
+/* =========================================================
+   PASSWORD BUTTON
+========================================================= */
+
+.profile-password-submit {
+  width: 100%;
+
+  min-height: 41px;
+
+  margin-top: 3px;
+
+  border: 0;
+
+  border-radius: 9px;
+
+  background: #5f8f78;
+
+  color: #ffffff;
+
+  font-size: 12px;
+
+  font-weight: 750;
+
+  cursor: pointer;
+
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.profile-password-submit:hover {
+  background: #47725f;
+}
+
+.profile-password-submit:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================================================
+   ACCOUNT SETTINGS
+========================================================= */
+
+.profile-account-settings {
+  padding-top: 17px;
+
+  margin-top: 17px;
+
+  border-top: 1px solid #edf0ee;
+}
+
+.profile-account-settings p {
+  margin: 0;
+
+  color: #7d8982;
+
+  font-size: 11px;
+
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   PROFILE PANEL SCROLLBAR
+========================================================= */
+
+.profile-panel::-webkit-scrollbar {
+  width: 5px;
+}
+
+.profile-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-panel::-webkit-scrollbar-thumb {
+  background: #dce3de;
+
+  border-radius: 20px;
+}
+
+.profile-panel::-webkit-scrollbar-thumb:hover {
+  background: #c8d2cb;
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   PREVENT A+/A− FROM SCALING PROFILE PANEL
+========================================================= */
+
+/*
+   If your Dashboard.tsx adds a font-size class to
+   .dashboard-page, these rules keep the profile panel
+   typography stable.
+
+   The profile panel intentionally uses fixed rem/px values.
+*/
+
+.profile-panel,
+.profile-panel *,
+.profile-panel h1,
+.profile-panel h2,
+.profile-panel h3,
+.profile-panel p,
+.profile-panel span,
+.profile-panel button,
+.profile-panel input,
+.profile-panel label {
+  font-size: revert;
+}
+
+
+/*
+   Re-apply the intended sizes after the reset above.
+*/
+
+.profile-panel {
+  font-size: 14px;
+}
+
+.profile-panel-name {
+  font-size: 15px;
+}
+
+.profile-panel-role {
+  font-size: 11px;
+}
+
+.profile-panel-section-title {
+  font-size: 10px;
+}
+
+.profile-info-label {
+  font-size: 10px;
+}
+
+.profile-info-value {
+  font-size: 12px;
+}
+
+.profile-progress-label {
+  font-size: 11px;
+}
+
+.profile-progress-value {
+  font-size: 13px;
+}
+
+.profile-panel-action {
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .profile-panel {
+    right: 15px;
+
+    width: 340px;
+  }
+
+}
+
+
+@media (max-width: 640px) {
+
+  .profile-panel {
+    position: fixed;
+
+    top: 70px;
+
+    right: 12px;
+    left: 12px;
+
+    width: auto;
+
+    max-width: none;
+
+    max-height: calc(100vh - 84px);
+  }
+
+  .profile-panel-header {
+    padding: 17px;
+  }
+
+  .profile-panel-body {
+    padding: 17px;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .profile-panel {
+    border-radius: 15px;
+  }
+
+  .profile-panel-header {
+    padding: 15px;
+  }
+
+  .profile-panel-body {
+    padding: 15px;
+  }
+
+  .profile-panel-avatar {
+    width: 44px;
+    height: 44px;
+
+    min-width: 44px;
+  }
+
+}
+
+
+/* =========================================================
+   END OF ADDITIONAL PROFILE PANEL CSS
+========================================================= */
+/* =========================================================
+   CURIO TEXT SIZE CONTROL
+========================================================= */
+
+.dashboard-text-size-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  height: 38px;
+
+  padding: 3px;
+
+  border: 1px solid #e1e8e3;
+
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+}
+
+.dashboard-text-size-control button {
+  width: 34px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #53635a;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  flex-shrink: 0;
+
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 100ms ease;
+}
+
+.dashboard-text-size-control button:hover {
+  background: #f0f5f2;
+
+  color: #416650;
+}
+
+.dashboard-text-size-control button:active {
+  transform: scale(0.94);
+}
+
+.dashboard-text-size-control button:focus-visible {
+  outline: 2px solid #8eae9b;
+
+  outline-offset: 2px;
+}
+
+.dashboard-text-size-control .text-size-minus {
+  font-size: 17px;
+}
+
+.dashboard-text-size-control .text-size-plus {
+  font-size: 15px;
+}
+
+
+/* Current size indicator */
+
+.dashboard-text-size-value {
+  min-width: 34px;
+
+  padding: 0 4px;
+
+  color: #69766f;
+
+  font-size: 10px;
+
+  font-weight: 750;
+
+  text-align: center;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .dashboard-text-size-control {
+    height: 36px;
+
+    gap: 2px;
+
+    padding: 2px;
+  }
+
+  .dashboard-text-size-control button {
+    width: 31px;
+    height: 30px;
+  }
+
+  .dashboard-text-size-value {
+    display: none;
+  }
+
+}
+/* =========================================
+   CURIO ACCESSIBILITY TEXT SCALING
+   ========================================= */
+
+.dashboard-page {
+  --dashboard-text-scale: 1;
+}
+
+/*
+   Scale only the actual dashboard interface.
+   The profile panel is intentionally excluded
+   from this scaling.
+*/
+
+.dashboard-page.dashboard-large-text
+  .dashboard-content {
+  font-size: calc(
+    1rem * var(--dashboard-text-scale)
+  );
+}
+
+/* Keep header controls stable */
+.dashboard-header,
+.dashboard-header-actions,
+.dashboard-text-controls,
+.dashboard-profile-panel {
+  font-size: 1rem;
+}
+
+/* Text inside dashboard content follows scale */
+.dashboard-content h1,
+.dashboard-content h2,
+.dashboard-content h3,
+.dashboard-content p,
+.dashboard-content span,
+.dashboard-content a {
+  font-size: calc(
+    1em * var(--dashboard-text-scale)
+  );
+}
+
+/* =========================================
+   TEXT SIZE CONTROL
+   ========================================= */
+
+.dashboard-text-controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  height: 42px;
+  padding: 3px;
+  border: 1px solid #e3e0f4;
+  border-radius: 12px;
+  background: #ffffff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.dashboard-text-size-button {
+  width: 40px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #172554;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.dashboard-text-size-button:hover:not(:disabled) {
+  background: #f2efff;
+  color: #6538d8;
+}
+
+.dashboard-text-size-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dashboard-text-size-label {
+  min-width: 48px;
+  text-align: center;
+  color: #172554;
+  font-size: 14px;
+  font-weight: 600;
+  user-select: none;
+  white-space: nowrap;
+} 
+/* =========================================================
+   CURIO GUEST DASHBOARD
+   =========================================================
+   Guest users get a limited learning experience.
+
+   IMPORTANT:
+   These styles do NOT change the existing Dashboard design.
+   They only control the visual state of guest-only elements.
+========================================================= */
+
+
+/* =========================================================
+   GUEST DASHBOARD NOTICE
+========================================================= */
+
+.dashboard-guest-notice {
+  width: 100%;
+  box-sizing: border-box;
+
+  margin-bottom: 24px;
+
+  padding: 15px 18px;
+
+  border: 1px solid #e4defc;
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      110deg,
+      #f8f6ff,
+      #ffffff
+    );
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 18px;
+}
+
+
+.dashboard-guest-notice-content {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  min-width: 0;
+}
+
+
+.dashboard-guest-notice-icon {
+  width: 38px;
+  height: 38px;
+
+  min-width: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #eee9ff;
+
+  color: #6339dd;
+
+  font-size: 18px;
+}
+
+
+.dashboard-guest-notice-text {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+
+.dashboard-guest-notice-text strong {
+  color: #252d53;
+
+  font-size: 13px;
+
+  font-weight: 750;
+}
+
+
+.dashboard-guest-notice-text span {
+  color: #747c99;
+
+  font-size: 11px;
+
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   GUEST SIGN-IN BUTTON
+========================================================= */
+
+.dashboard-guest-signin-button {
+  flex-shrink: 0;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 37px;
+
+  padding: 0 15px;
+
+  border: 1px solid #d8cef9;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #5f38d5;
+
+  text-decoration: none;
+
+  font-size: 11px;
+
+  font-weight: 750;
+
+  white-space: nowrap;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.dashboard-guest-signin-button:hover {
+  background: #f5f1ff;
+
+  border-color: #c9b9f5;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   GUEST PROFILE
+========================================================= */
+
+.dashboard-profile-guest {
+  background: transparent;
+}
+
+
+.dashboard-profile-guest .dashboard-avatar {
+  background: #f1f3f2;
+
+  color: #68756d;
+}
+
+
+.dashboard-profile-guest .dashboard-profile-text strong {
+  color: #59655f;
+}
+
+
+/* =========================================================
+   GUEST HERO
+========================================================= */
+
+.dashboard-guest-mode .dashboard-learning-hero {
+  border-color: #e6e1f5;
+}
+
+
+.dashboard-guest-mode .dashboard-primary-button {
+  background: linear-gradient(
+    135deg,
+    #6f48d8,
+    #6576db
+  );
+}
+
+
+/* =========================================================
+   GUEST LEARNING CARDS
+========================================================= */
+
+/*
+   Available guest lessons remain normal.
+
+   Locked lessons are visually different.
+*/
+
+.dashboard-learning-card.dashboard-guest-locked {
+  cursor: not-allowed;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fafafd,
+      #f6f7fa
+    );
+
+  border-color: #e6e7ee;
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+
+.dashboard-learning-card.dashboard-guest-locked:hover {
+  transform: none;
+
+  border-color: #e6e7ee;
+
+  box-shadow: none;
+}
+
+
+.dashboard-learning-card.dashboard-guest-locked
+  .dashboard-learning-card-icon {
+  background: #f0f1f4;
+
+  filter: grayscale(0.35);
+
+  opacity: 0.72;
+}
+
+
+.dashboard-learning-card.dashboard-guest-locked
+  h3 {
+  color: #646b80;
+}
+
+
+.dashboard-learning-card.dashboard-guest-locked
+  p {
+  color: #9297a8;
+}
+
+
+/* =========================================================
+   GUEST LOCK OVERLAY
+========================================================= */
+
+.dashboard-guest-lock {
+  position: absolute;
+
+  top: 12px;
+  right: 12px;
+
+  min-height: 25px;
+
+  padding: 0 8px;
+
+  border-radius: 7px;
+
+  background: #f0edf8;
+
+  color: #746c8c;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  font-size: 9px;
+
+  font-weight: 750;
+
+  letter-spacing: 0.1px;
+}
+
+
+.dashboard-guest-lock-icon {
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   GUEST TRIAL BADGE
+========================================================= */
+
+.dashboard-guest-trial-badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content;
+
+  margin-bottom: 8px;
+
+  padding: 4px 8px;
+
+  border-radius: 6px;
+
+  background: #eee9ff;
+
+  color: #6339dd;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.4px;
+
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   GUEST PROGRESS
+========================================================= */
+
+/*
+   Guest users should NOT inherit the logged-in user's
+   saved progress visually.
+*/
+
+.dashboard-guest-mode
+  .dashboard-progress-section {
+  background:
+    linear-gradient(
+      110deg,
+      #faf9ff,
+      #ffffff
+    );
+}
+
+
+.dashboard-guest-mode
+  .dashboard-overall-progress-number {
+  color: #716b88;
+}
+
+
+.dashboard-guest-mode
+  .dashboard-overall-progress-bar {
+  background: linear-gradient(
+    90deg,
+    #aaa4bc,
+    #c1bfd0
+  );
+}
+
+
+/* =========================================================
+   GUEST ACCOUNT CTA
+========================================================= */
+
+.dashboard-guest-account-card {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 24px 26px;
+
+  border: 1px solid #e3def8;
+
+  border-radius: 17px;
+
+  background:
+    linear-gradient(
+      110deg,
+      #f8f5ff,
+      #ffffff
+    );
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 25px;
+}
+
+
+.dashboard-guest-account-content {
+  min-width: 0;
+}
+
+
+.dashboard-guest-account-content
+  .dashboard-guest-account-label {
+  margin: 0 0 6px;
+
+  color: #6a42db;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+}
+
+
+.dashboard-guest-account-content h2 {
+  margin: 0 0 6px;
+
+  color: #161e46;
+
+  font-size: 18px;
+
+  line-height: 1.3;
+}
+
+
+.dashboard-guest-account-content p {
+  margin: 0;
+
+  max-width: 550px;
+
+  color: #747c99;
+
+  font-size: 12px;
+
+  line-height: 1.55;
+}
+
+
+.dashboard-guest-account-button {
+  flex-shrink: 0;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+
+  padding: 0 18px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7238e8,
+      #5269e9
+    );
+
+  color: #ffffff;
+
+  text-decoration: none;
+
+  font-size: 12px;
+
+  font-weight: 750;
+
+  box-shadow:
+    0 8px 20px
+    rgba(101, 63, 220, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.dashboard-guest-account-button:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 11px 24px
+    rgba(101, 63, 220, 0.25);
+}
+
+
+/* =========================================================
+   GUEST PROFILE PANEL
+========================================================= */
+
+.dashboard-profile-panel-guest {
+  width: 300px;
+}
+
+
+.dashboard-profile-panel-guest
+  .dashboard-profile-large-avatar {
+  background: #f1f3f2;
+
+  color: #68756d;
+}
+
+
+.dashboard-profile-panel-guest
+  .dashboard-profile-panel-header strong {
+  color: #303a34;
+}
+
+
+.dashboard-profile-panel-guest
+  .dashboard-profile-panel-header span {
+  color: #7c847f;
+}
+
+
+/* =========================================================
+   GUEST PROFILE CTA
+========================================================= */
+
+.dashboard-guest-profile-message {
+  padding: 13px;
+
+  border-radius: 11px;
+
+  background: #f7f5ff;
+
+  border: 1px solid #e8e1ff;
+
+  color: #69627e;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+
+.dashboard-guest-profile-message strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #5f38d5;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   GUEST LOCKED ACTION
+========================================================= */
+
+.dashboard-action-card.dashboard-guest-locked {
+  cursor: not-allowed;
+
+  opacity: 0.72;
+}
+
+
+.dashboard-action-card.dashboard-guest-locked:hover {
+  transform: none;
+
+  box-shadow: none;
+}
+
+
+/* =========================================================
+   GUEST SIDEBAR
+========================================================= */
+
+.dashboard-guest-mode
+  .dashboard-learning-style {
+  background: #faf9ff;
+
+  border-color: #e7e2f4;
+}
+
+
+.dashboard-guest-mode
+  .dashboard-learning-style-title {
+  color: #756e88;
+}
+
+
+.dashboard-guest-mode
+  .dashboard-learning-style-value {
+  color: #858a9a;
+}
+
+
+/* =========================================================
+   GUEST LOGOUT / EXIT
+========================================================= */
+
+.dashboard-guest-exit-button {
+  width: 100%;
+
+  min-height: 42px;
+
+  border: 1px solid #e4e6ef;
+
+  background: #ffffff;
+
+  color: #59617f;
+
+  border-radius: 11px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 9px;
+
+  cursor: pointer;
+
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.dashboard-guest-exit-button:hover {
+  border-color: #d7d2e8;
+
+  color: #625b74;
+
+  background: #faf9ff;
+}
+
+
+/* =========================================================
+   GUEST MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .dashboard-guest-notice {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    padding: 14px;
+  }
+
+
+  .dashboard-guest-notice-content {
+    width: 100%;
+  }
+
+
+  .dashboard-guest-signin-button {
+    width: 100%;
+  }
+
+
+  .dashboard-guest-account-card {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    padding: 20px;
+  }
+
+
+  .dashboard-guest-account-button {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   GUEST VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+
+  .dashboard-guest-notice {
+    padding: 13px;
+  }
+
+
+  .dashboard-guest-notice-text strong {
+    font-size: 12px;
+  }
+
+
+  .dashboard-guest-notice-text span {
+    font-size: 10px;
+  }
+
+
+  .dashboard-guest-account-card {
+    padding: 18px;
+  }
+
+
+  .dashboard-guest-account-content h2 {
+    font-size: 16px;
+  }
+
+
+  .dashboard-guest-account-content p {
+    font-size: 11px;
+  }
+
+}
+
+
+/* =========================================================
+   END — GUEST DASHBOARD CSS
+========================================================= */
