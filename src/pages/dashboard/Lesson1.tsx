@@ -101,7 +101,7 @@ function Lesson1() {
 
   const [contextAnswer, setContextAnswer] = useState("");
   const [safetyAnswers, setSafetyAnswers] = useState<Record<string, boolean>>({});
-  const [practiceAnswer, setPracticeAnswer] = useState("");
+  const [] = useState("");
   const [finalAnswers, setFinalAnswers] = useState<number[]>(
     Array(FINAL_QUESTIONS.length).fill(-1)
   );
@@ -159,12 +159,6 @@ function Lesson1() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const goPrevious = () => {
-    if (currentIndex <= 0) return;
-
-    setSection(sections[currentIndex - 1].id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   const canOpenSection = (index: number) => {
     return index <= furthestUnlockedIndex || completedSections.includes(sections[index].id);
@@ -223,7 +217,6 @@ function Lesson1() {
   );
 
   const contextCorrect = contextAnswer === "with";
-  const practiceCorrect = practiceAnswer === "better";
 
   const finalScore = FINAL_QUESTIONS.reduce(
     (score, question, index) =>

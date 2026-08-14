@@ -216,8 +216,8 @@ function saveLesson5Completion() {
 function Lesson5() {
   const [activeSection, setActiveSection] = useState(1);
   const [completedSections, setCompletedSections] = useState<number[]>([]);
-  const [safetyAnswers, setSafetyAnswers] = useState<Record<number, number>>({});
-  const [checkedSafety, setCheckedSafety] = useState<number[]>([]);
+  const [] = useState<Record<number, number>>({});
+  const [] = useState<number[]>([]);
   const [scenarioAnswers, setScenarioAnswers] = useState<Record<number, string>>({});
   const [checkedScenarios, setCheckedScenarios] = useState<number[]>([]);
   const [finalAnswers, setFinalAnswers] = useState<Record<number, number>>({});
@@ -240,8 +240,6 @@ function Lesson5() {
     [finalAnswers]
   );
 
-  const safetyPracticeComplete =
-    checkedSafety.length === safetyQuestions.length;
 
   const scenarioPracticeComplete =
     checkedScenarios.length === scenarioQuestions.length;
@@ -267,23 +265,7 @@ function Lesson5() {
     }
   };
 
-  const chooseSafetyAnswer = (
-    questionIndex: number,
-    optionIndex: number
-  ) => {
-    setSafetyAnswers((current) => ({
-      ...current,
-      [questionIndex]: optionIndex,
-    }));
-  };
 
-  const checkSafetyAnswer = (questionIndex: number) => {
-    setCheckedSafety((current) =>
-      current.includes(questionIndex)
-        ? current
-        : [...current, questionIndex]
-    );
-  };
 
   const chooseScenarioAnswer = (
     questionIndex: number,
