@@ -218,6 +218,25 @@ function Dashboard() {
 
   const [textScale, setTextScale] =
     useState(1);
+    /*
+  =========================================
+  LESSON COMPLETION / PRACTICE ACCESS
+  =========================================
+*/
+
+const [completedLessonIds, setCompletedLessonIds] =
+  useState<number[]>([]);
+
+const totalLessons = 8;
+
+const completedLessons = completedLessonIds.length;
+
+const lessonsCompleted =
+  Math.min(completedLessons, totalLessons);
+
+const canPractice =
+  !isGuest &&
+  lessonsCompleted === totalLessons;
 
   /*
     =========================================
@@ -299,6 +318,103 @@ function Dashboard() {
 
     loadUser();
   }, [navigate]);
+/*
+  =========================================
+  LOAD LESSON COMPLETION
+  =========================================
+*/
+
+useEffect(() => {
+  const loadLessonProgress = () => {
+    /*
+      Guest users NEVER get practice access.
+      Their lesson progress is not used here.
+    */
+    if (
+      sessionStorage.getItem("curio_guest") === "true"
+    ) {
+      setCompletedLessonIds([]);
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem(
+        "curio_completed_lessons"
+      );
+
+      if (!stored) {
+        setCompletedLessonIds([]);
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+
+      if (!Array.isArray(parsed)) {
+        setCompletedLessonIds([]);
+        return;
+      }
+
+      const validIds = parsed
+        .map(Number)
+        .filter(
+          (id) =>
+            Number.isInteger(id) &&
+            id >= 1 &&
+            id <= totalLessons
+        );
+
+      setCompletedLessonIds(
+        Array.from(new Set(validIds)).sort(
+          (a, b) => a - b
+        )
+      );
+    } catch {
+      setCompletedLessonIds([]);
+    }
+  };
+
+  loadLessonProgress();
+
+  /*
+    Lesson pages dispatch this event after completion.
+    This makes the dashboard update immediately.
+  */
+  const handleLessonCompleted = () => {
+    loadLessonProgress();
+  };
+
+  window.addEventListener(
+    "curio:lesson-completed",
+    handleLessonCompleted
+  );
+
+  window.addEventListener(
+    "storage",
+    handleLessonCompleted
+  );
+
+  window.addEventListener(
+    "focus",
+    loadLessonProgress
+  );
+
+  return () => {
+    window.removeEventListener(
+      "curio:lesson-completed",
+      handleLessonCompleted
+    );
+
+    window.removeEventListener(
+      "storage",
+      handleLessonCompleted
+    );
+
+    window.removeEventListener(
+      "focus",
+      loadLessonProgress
+    );
+  };
+}, []);
 
   /*
     =========================================
@@ -697,42 +813,7 @@ function Dashboard() {
       className:
         "dashboard-action-blue",
     },
-
-    {
-      title: "AI Simulator",
-      description: "Practice using AI",
-      icon: "🤖",
-      path: "/simulator",
-      className:
-        "dashboard-action-purple",
-    },
-
-    {
-      title: "Prompt Coach",
-      description: "Improve your prompts",
-      icon: "💬",
-      path: "/prompt-coach",
-      className:
-        "dashboard-action-orange",
-    },
-
-    {
-      title: "Verify AI",
-      description: "Check AI responses",
-      icon: "🔍",
-      path: "/verify",
-      className:
-        "dashboard-action-teal",
-    },
-
-    {
-      title: "Ethics & Safety",
-      description: "Stay safe with AI",
-      icon: "🛡️",
-      path: "/ethics",
-      className:
-        "dashboard-action-red",
-    },
+    
   ];
 
   /*
@@ -828,75 +909,47 @@ function Dashboard() {
           </Link>
 
 
-          <Link
-            to="/practice"
-            className="dashboard-nav-item"
-          >
-            <span className="dashboard-nav-icon">
-              ✨
-            </span>
+          {canPractice ? (
+  <Link
+    to="/practice"
+    className="dashboard-nav-item"
+  >
+    <span className="dashboard-nav-icon">
+      ✨
+    </span>
 
-            <span>
-              Practice
-            </span>
-          </Link>
+    <span>
+      Practice
+    </span>
+  </Link>
+) : (
+  <button
+    type="button"
+    className="dashboard-nav-item dashboard-nav-locked"
+    onClick={() => {
+      if (isGuest) {
+        navigate("/learn");
+        return;
+      }
 
+      navigate("/learn");
+    }}
+    title={
+      isGuest
+        ? "Sign in and complete all 8 lessons to unlock Practice"
+        : `Complete all 8 lessons to unlock Practice (${lessonsCompleted}/8)`
+    }
+  >
+    <span className="dashboard-nav-icon">
+      🔒
+    </span>
 
-          <Link
-            to="/simulator"
-            className="dashboard-nav-item"
-          >
-            <span className="dashboard-nav-icon">
-              🤖
-            </span>
-
-            <span>
-              AI Simulator
-            </span>
-          </Link>
-
-
-          <Link
-            to="/prompt-coach"
-            className="dashboard-nav-item"
-          >
-            <span className="dashboard-nav-icon">
-              💬
-            </span>
-
-            <span>
-              Prompt Coach
-            </span>
-          </Link>
-
-
-          <Link
-            to="/verify"
-            className="dashboard-nav-item"
-          >
-            <span className="dashboard-nav-icon">
-              🔍
-            </span>
-
-            <span>
-              Verify AI
-            </span>
-          </Link>
-
-
-          <Link
-            to="/ethics"
-            className="dashboard-nav-item"
-          >
-            <span className="dashboard-nav-icon">
-              🛡️
-            </span>
-
-            <span>
-              Ethics & Safety
-            </span>
-          </Link>
-
+    <span>
+      Practice
+    </span>
+  </button>
+)}
+          
         </nav>
 
 

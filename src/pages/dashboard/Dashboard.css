@@ -1,4 +1,173 @@
 /* =========================================================
+   1. CURIO DASHBOARD BACKGROUND
+   ---------------------------------------------------------
+   Clean • Calm • Modern • AI-learning focused
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode) {
+  --curio-purple: #7046e8;
+  --curio-blue: #246fe8;
+  --curio-teal: #11a99a;
+  --curio-green: #35b879;
+  --curio-navy: #101c4d;
+
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+
+  background:
+    /* Purple glow — top right */
+    radial-gradient(
+      circle at 92% 4%,
+      rgba(112, 70, 232, 0.13),
+      transparent 26%
+    ),
+
+    /* Blue glow — upper center */
+    radial-gradient(
+      circle at 55% 18%,
+      rgba(36, 111, 232, 0.055),
+      transparent 30%
+    ),
+
+    /* Teal glow — lower left */
+    radial-gradient(
+      circle at 4% 82%,
+      rgba(17, 169, 154, 0.09),
+      transparent 27%
+    ),
+
+    /* Very subtle green glow — lower right */
+    radial-gradient(
+      circle at 94% 88%,
+      rgba(53, 184, 121, 0.055),
+      transparent 25%
+    ),
+
+    /* Main CURIO background */
+    linear-gradient(
+      135deg,
+      #f8fbff 0%,
+      #f8f7ff 45%,
+      #f5fbfa 100%
+    );
+}
+
+
+/* =========================================================
+   SOFT DECORATIVE GLOW — LEFT
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode)::before {
+  content: "";
+
+  position: fixed;
+
+  width: 440px;
+  height: 440px;
+
+  left: -220px;
+  top: 42%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(17, 169, 154, 0.09) 0%,
+      rgba(17, 169, 154, 0.035) 35%,
+      transparent 70%
+    );
+
+  pointer-events: none;
+
+  z-index: 0;
+
+  animation: curioBackgroundFloat 14s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   SOFT DECORATIVE GLOW — RIGHT
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode)::after {
+  content: "";
+
+  position: fixed;
+
+  width: 520px;
+  height: 520px;
+
+  right: -250px;
+  top: 2%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(112, 70, 232, 0.10) 0%,
+      rgba(112, 70, 232, 0.035) 38%,
+      transparent 70%
+    );
+
+  pointer-events: none;
+
+  z-index: 0;
+
+  animation: curioBackgroundFloatReverse 17s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   BACKGROUND MOTION
+   ========================================================= */
+
+@keyframes curioBackgroundFloat {
+
+  0%,
+  100% {
+    transform:
+      translate3d(0, 0, 0)
+      scale(1);
+  }
+
+  50% {
+    transform:
+      translate3d(28px, -22px, 0)
+      scale(1.06);
+  }
+}
+
+
+@keyframes curioBackgroundFloatReverse {
+
+  0%,
+  100% {
+    transform:
+      translate3d(0, 0, 0)
+      scale(1);
+  }
+
+  50% {
+    transform:
+      translate3d(-25px, 22px, 0)
+      scale(1.05);
+  }
+}
+
+
+/* =========================================================
+   KEEP DASHBOARD CONTENT ABOVE BACKGROUND
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode) .dashboard-sidebar,
+.dashboard-page:not(.dashboard-guest-mode) .dashboard-main {
+  position: relative;
+  z-index: 1;
+}
+/* =========================================================
    CURIO DASHBOARD
    ========================================================= */
 
@@ -3143,3 +3312,382 @@
 /* =========================================================
    END — GUEST DASHBOARD CSS
 ========================================================= */
+/* =========================================================
+   CURIO DASHBOARD — FINAL ALIGNMENT FIX
+   ---------------------------------------------------------
+   Do not change background.
+   Do not change Dashboard.tsx.
+   This only fixes horizontal positioning.
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode) {
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode) .dashboard-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 260px;
+
+  box-sizing: border-box;
+
+  z-index: 10;
+}
+
+
+/* =========================================================
+   MAIN AREA
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode) .dashboard-main {
+  position: relative;
+
+  margin-left: 260px;
+
+  width: calc(100% - 260px);
+
+  min-height: 100vh;
+
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow-x: hidden;
+}
+
+
+/* =========================================================
+   HEADER ALIGNMENT
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode) .dashboard-header {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   MAIN CONTENT ALIGNMENT
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode) .dashboard-content {
+  width: 100%;
+  max-width: 1280px;
+
+  margin-left: auto;
+  margin-right: auto;
+
+  box-sizing: border-box;
+
+  padding-left: 42px;
+  padding-right: 42px;
+
+  padding-top: 35px;
+  padding-bottom: 60px;
+}
+
+
+/* =========================================================
+   PREVENT CHILDREN FROM PUSHING CONTENT RIGHT
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode)
+.dashboard-content > * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   HERO / CARDS STAY INSIDE CONTENT
+   ========================================================= */
+
+.dashboard-page:not(.dashboard-guest-mode)
+.dashboard-learning-hero,
+
+.dashboard-page:not(.dashboard-guest-mode)
+.dashboard-learning-section,
+
+.dashboard-page:not(.dashboard-guest-mode)
+.dashboard-progress-section,
+
+.dashboard-page:not(.dashboard-guest-mode)
+.dashboard-learning-grid {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   DESKTOP — KEEP CONTENT VISUALLY CENTERED
+   ========================================================= */
+
+@media (min-width: 1151px) {
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-content {
+    width: min(100%, 1280px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1150px) {
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-sidebar {
+    width: 220px;
+  }
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-main {
+    margin-left: 220px;
+    width: calc(100% - 220px);
+  }
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-content {
+    width: 100%;
+    max-width: none;
+
+    margin-left: 0;
+    margin-right: 0;
+
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL TABLET
+   ========================================================= */
+
+@media (max-width: 850px) {
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-sidebar {
+    width: 75px;
+  }
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-main {
+    margin-left: 75px;
+    width: calc(100% - 75px);
+  }
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-sidebar {
+    width: 0;
+  }
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .dashboard-page:not(.dashboard-guest-mode)
+  .dashboard-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+}
+/* =========================================================
+   CURIO FINAL BACKGROUND
+   Deep Navy + Purple + Blue + Teal
+   ========================================================= */
+
+.dashboard-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+
+  background:
+    radial-gradient(
+      circle at 15% 20%,
+      rgba(91, 72, 190, 0.24) 0%,
+      rgba(91, 72, 190, 0.10) 24%,
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 75% 10%,
+      rgba(70, 105, 210, 0.20) 0%,
+      rgba(70, 105, 210, 0.08) 26%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 90% 70%,
+      rgba(22, 180, 170, 0.14) 0%,
+      rgba(22, 180, 170, 0.05) 25%,
+      transparent 48%
+    ),
+    linear-gradient(
+      135deg,
+      #080b1c 0%,
+      #0d1028 35%,
+      #10152f 65%,
+      #0a1024 100%
+    );
+
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+
+  color: #eef2ff;
+}
+
+
+/* =========================================================
+   LEFT PURPLE GLOW
+   ========================================================= */
+
+.dashboard-page::before {
+  content: "";
+
+  position: fixed;
+
+  width: 480px;
+  height: 480px;
+
+  top: 40px;
+  left: 170px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(113, 82, 230, 0.16) 0%,
+      rgba(113, 82, 230, 0.07) 35%,
+      transparent 72%
+    );
+
+  filter: blur(35px);
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+/* =========================================================
+   RIGHT BLUE / TEAL GLOW
+   ========================================================= */
+
+.dashboard-page::after {
+  content: "";
+
+  position: fixed;
+
+  width: 520px;
+  height: 520px;
+
+  right: -170px;
+  bottom: -180px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(26, 185, 177, 0.13) 0%,
+      rgba(46, 113, 220, 0.07) 35%,
+      transparent 72%
+    );
+
+  filter: blur(40px);
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+/* =========================================================
+   KEEP SIDEBAR / HEADER / CONTENT ABOVE BACKGROUND
+   ========================================================= */
+
+.dashboard-page > * {
+  position: relative;
+  z-index: 1;
+}
+/* =========================================================
+   PRACTICE ACCESS LOCK
+   ADDITION ONLY
+   ========================================================= */
+
+.dashboard-nav-locked {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: not-allowed;
+  color: #a0a5b6;
+  opacity: 0.68;
+}
+
+.dashboard-nav-locked:hover {
+  background: #f7f7fa;
+  color: #8d92a5;
+  transform: none;
+}
+
+.dashboard-nav-locked .dashboard-nav-icon {
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+
+
+/* =========================================================
+   PRACTICE UNLOCKED
+   ========================================================= */
+
+.dashboard-navigation
+  .dashboard-nav-item[href="/practice"] {
+  color: #5d35df;
+}
+
+.dashboard-navigation
+  .dashboard-nav-item[href="/practice"]:hover {
+  background: #f2efff;
+  color: #5d35df;
+}
