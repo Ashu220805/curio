@@ -12,7 +12,7 @@ function Dashboard() {
     =========================================
     GUEST MODE
   =========================================
-  */
+    */
 
   /*
     IMPORTANT:
@@ -31,7 +31,7 @@ function Dashboard() {
     =========================================
     LEARNING PROGRESS
   =========================================
-  */
+    */
 
   const [progressVersion, setProgressVersion] = useState(0);
 
@@ -47,6 +47,7 @@ function Dashboard() {
       Never use the logged-in user's
       localStorage progress while in Guest Mode.
     */
+
     if (isGuest) {
       return [];
     }
@@ -90,6 +91,7 @@ function Dashboard() {
       Guests do not inherit progress from
       an existing CURIO account.
     */
+
     if (isGuest) {
       return 0;
     }
@@ -162,16 +164,12 @@ function Dashboard() {
       GUEST MODE
       =========================================
 
-      Lesson 1 is the free trial.
-
-      We intentionally keep guest progress
-      separate from the logged-in user's
-      progress.
-
-      Since the existing lesson pages save
-      their completion globally, we do not
-      expose that global value here.
+      Guests always see zero dashboard
+      progress because their progress is
+      intentionally not connected to the
+      logged-in user's localStorage.
     */
+
     if (isGuest) {
       return 0;
     }
@@ -218,25 +216,53 @@ function Dashboard() {
 
   const [textScale, setTextScale] =
     useState(1);
-    /*
+
+  /*
+    =========================================
+    LESSON COMPLETION / PRACTICE ACCESS
   =========================================
-  LESSON COMPLETION / PRACTICE ACCESS
+  */
+
+  const [completedLessonIds, setCompletedLessonIds] =
+    useState<number[]>([]);
+
+  const totalLessons = 8;
+
+  const completedLessons =
+    completedLessonIds.length;
+
+  const lessonsCompleted =
+    Math.min(completedLessons, totalLessons);
+
+  /*
+    =========================================
+    FEATURE ACCESS
+    =========================================
+
+    Guest:
+      Practice      -> locked
+      AI Literacy   -> locked
+      AI Simulation  -> locked
+
+    Logged-in:
+      Practice      -> unlocked only after
+                      all 8 lessons
+
+      AI Literacy   -> unlocked
+
+      AI Simulation -> unlocked
   =========================================
-*/
+  */
 
-const [completedLessonIds, setCompletedLessonIds] =
-  useState<number[]>([]);
+  const canPractice =
+    !isGuest &&
+    lessonsCompleted === totalLessons;
 
-const totalLessons = 8;
+  const canAccessAILiteracy =
+    !isGuest;
 
-const completedLessons = completedLessonIds.length;
-
-const lessonsCompleted =
-  Math.min(completedLessons, totalLessons);
-
-const canPractice =
-  !isGuest &&
-  lessonsCompleted === totalLessons;
+  const canAccessAISimulation =
+    !isGuest;
 
   /*
     =========================================
@@ -318,103 +344,107 @@ const canPractice =
 
     loadUser();
   }, [navigate]);
-/*
-  =========================================
-  LOAD LESSON COMPLETION
-  =========================================
-*/
-
-useEffect(() => {
-  const loadLessonProgress = () => {
-    /*
-      Guest users NEVER get practice access.
-      Their lesson progress is not used here.
-    */
-    if (
-      sessionStorage.getItem("curio_guest") === "true"
-    ) {
-      setCompletedLessonIds([]);
-      return;
-    }
-
-    try {
-      const stored = localStorage.getItem(
-        "curio_completed_lessons"
-      );
-
-      if (!stored) {
-        setCompletedLessonIds([]);
-        return;
-      }
-
-      const parsed = JSON.parse(stored);
-
-      if (!Array.isArray(parsed)) {
-        setCompletedLessonIds([]);
-        return;
-      }
-
-      const validIds = parsed
-        .map(Number)
-        .filter(
-          (id) =>
-            Number.isInteger(id) &&
-            id >= 1 &&
-            id <= totalLessons
-        );
-
-      setCompletedLessonIds(
-        Array.from(new Set(validIds)).sort(
-          (a, b) => a - b
-        )
-      );
-    } catch {
-      setCompletedLessonIds([]);
-    }
-  };
-
-  loadLessonProgress();
 
   /*
-    Lesson pages dispatch this event after completion.
-    This makes the dashboard update immediately.
+    =========================================
+    LOAD LESSON COMPLETION
+  =========================================
   */
-  const handleLessonCompleted = () => {
+
+  useEffect(() => {
+    const loadLessonProgress = () => {
+      /*
+        Guest users NEVER get practice access.
+        Their lesson progress is not used here.
+      */
+
+      if (
+        sessionStorage.getItem("curio_guest") ===
+        "true"
+      ) {
+        setCompletedLessonIds([]);
+        return;
+      }
+
+      try {
+        const stored = localStorage.getItem(
+          "curio_completed_lessons"
+        );
+
+        if (!stored) {
+          setCompletedLessonIds([]);
+          return;
+        }
+
+        const parsed = JSON.parse(stored);
+
+        if (!Array.isArray(parsed)) {
+          setCompletedLessonIds([]);
+          return;
+        }
+
+        const validIds = parsed
+          .map(Number)
+          .filter(
+            (id) =>
+              Number.isInteger(id) &&
+              id >= 1 &&
+              id <= totalLessons
+          );
+
+        setCompletedLessonIds(
+          Array.from(new Set(validIds)).sort(
+            (a, b) => a - b
+          )
+        );
+      } catch {
+        setCompletedLessonIds([]);
+      }
+    };
+
     loadLessonProgress();
-  };
 
-  window.addEventListener(
-    "curio:lesson-completed",
-    handleLessonCompleted
-  );
+    /*
+      Lesson pages dispatch this event after completion.
+      This makes the dashboard update immediately.
+    */
 
-  window.addEventListener(
-    "storage",
-    handleLessonCompleted
-  );
+    const handleLessonCompleted = () => {
+      loadLessonProgress();
+    };
 
-  window.addEventListener(
-    "focus",
-    loadLessonProgress
-  );
-
-  return () => {
-    window.removeEventListener(
+    window.addEventListener(
       "curio:lesson-completed",
       handleLessonCompleted
     );
 
-    window.removeEventListener(
+    window.addEventListener(
       "storage",
       handleLessonCompleted
     );
 
-    window.removeEventListener(
+    window.addEventListener(
       "focus",
       loadLessonProgress
     );
-  };
-}, []);
+
+    return () => {
+      window.removeEventListener(
+        "curio:lesson-completed",
+        handleLessonCompleted
+      );
+
+      window.removeEventListener(
+        "storage",
+        handleLessonCompleted
+      );
+
+      window.removeEventListener(
+        "focus",
+        loadLessonProgress
+      );
+    };
+  }, []);
 
   /*
     =========================================
@@ -621,9 +651,7 @@ useEffect(() => {
     =========================================
     GUEST LESSON ACCESS
   =========================================
-  */
 
-  /*
     Lesson 1 is the only free trial lesson.
 
     Lessons 2-8 are visible but locked.
@@ -663,6 +691,66 @@ useEffect(() => {
     navigate(
       `/learn/lesson/${lessonId}`
     );
+  };
+
+  /*
+    =========================================
+    FEATURE ACCESS HELPERS
+  =========================================
+  */
+
+  /*
+    Practice:
+      Guest -> login
+      Logged-in but incomplete -> Learn AI
+  */
+
+  const openPractice = () => {
+    if (isGuest) {
+      navigate("/login");
+      return;
+    }
+
+    if (!canPractice) {
+      navigate("/learn");
+      return;
+    }
+
+    navigate("/practice");
+  };
+
+  /*
+    AI Literacy:
+      Guest -> login
+      Logged-in -> Reality Check
+  */
+
+  const openAILiteracy = () => {
+    if (!canAccessAILiteracy) {
+      navigate("/login");
+      return;
+    }
+
+    navigate("/reality-check");
+  };
+
+  /*
+    =========================================
+    AI SIMULATION ACCESS
+  =========================================
+  
+    Guest -> login
+  
+    Logged-in -> AI Simulation
+  */
+
+  const openAISimulation = () => {
+    if (!canAccessAISimulation) {
+      navigate("/login");
+      return;
+    }
+
+    navigate("/ai-simulation");
   };
 
   /*
@@ -803,17 +891,45 @@ useEffect(() => {
       path: "/learn",
       className:
         "dashboard-action-green",
+      locked: false,
     },
 
     {
       title: "Practice",
-      description: "Test your knowledge",
-      icon: "✏️",
+      description:
+        isGuest
+          ? "Sign in to unlock practice"
+          : "Test your knowledge",
+      icon: isGuest ? "🔒" : "✏️",
       path: "/practice",
       className:
         "dashboard-action-blue",
+      locked: isGuest || !canPractice,
     },
-    
+
+    /*
+      =========================================
+      AI LITERACY / REALITY CHECK
+      =========================================
+
+      Guest users can see that the feature
+      exists, but cannot enter it.
+
+      Logged-in users can access it normally.
+    */
+
+    {
+      title: "AI Literacy",
+      description:
+        isGuest
+          ? "Sign in to unlock AI Literacy"
+          : "Understand AI, spot synthetic content & think critically",
+      icon: isGuest ? "🔒" : "🧠",
+      path: "/reality-check",
+      className:
+        "dashboard-action-reality",
+      locked: isGuest,
+    },
   ];
 
   /*
@@ -855,7 +971,6 @@ useEffect(() => {
         {/* LOGO */}
 
         <div className="dashboard-logo">
-
           <img
             src="/curio-symbol.png"
             alt="CURIO"
@@ -863,7 +978,6 @@ useEffect(() => {
           />
 
           <div>
-
             <div className="dashboard-logo-name">
               CURIO
             </div>
@@ -871,11 +985,8 @@ useEffect(() => {
             <div className="dashboard-logo-tagline">
               Learn AI. Use AI. Question AI.
             </div>
-
           </div>
-
         </div>
-
 
         {/* NAVIGATION */}
 
@@ -895,6 +1006,16 @@ useEffect(() => {
           </Link>
 
 
+          {/* =========================================
+              LEARN AI
+
+              Guests can enter Learn AI because
+              Lesson 1 is the free trial.
+
+              Lessons 2-8 remain locked inside
+              the learning area.
+          ========================================== */}
+
           <Link
             to="/learn"
             className="dashboard-nav-item"
@@ -909,47 +1030,130 @@ useEffect(() => {
           </Link>
 
 
+          {/* =========================================
+              AI SIMULATION
+
+              Guests cannot enter.
+
+              Logged-in users can access the
+              AI Simulation page.
+          ========================================== */}
+
+          {canAccessAISimulation ? (
+            <Link
+              to="/ai-simulation"
+              className="dashboard-nav-item"
+            >
+              <span className="dashboard-nav-icon">
+                🤖
+              </span>
+
+              <span>
+                AI Simulation
+              </span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="dashboard-nav-item dashboard-nav-locked"
+              onClick={openAISimulation}
+              title="Sign in to unlock AI Simulation"
+            >
+              <span className="dashboard-nav-icon">
+                🔒
+              </span>
+
+              <span>
+                AI Simulation
+              </span>
+            </button>
+          )}
+
+
+          {/* =========================================
+              AI LITERACY
+
+              Guests cannot enter.
+          ========================================== */}
+
+          {canAccessAILiteracy ? (
+            <Link
+              to="/reality-check"
+              className="dashboard-nav-item"
+            >
+              <span className="dashboard-nav-icon">
+                🧠
+              </span>
+
+              <span>
+                AI Literacy
+              </span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="dashboard-nav-item dashboard-nav-locked"
+              onClick={openAILiteracy}
+              title="Sign in to unlock AI Literacy"
+            >
+              <span className="dashboard-nav-icon">
+                🔒
+              </span>
+
+              <span>
+                AI Literacy
+              </span>
+            </button>
+          )}
+
+
+          {/* =========================================
+              PRACTICE
+
+              Guest:
+                locked
+
+              Logged-in but lessons incomplete:
+                locked
+
+              Logged-in + all 8 lessons:
+                unlocked
+          ========================================== */}
+
           {canPractice ? (
-  <Link
-    to="/practice"
-    className="dashboard-nav-item"
-  >
-    <span className="dashboard-nav-icon">
-      ✨
-    </span>
+            <Link
+              to="/practice"
+              className="dashboard-nav-item"
+            >
+              <span className="dashboard-nav-icon">
+                ✨
+              </span>
 
-    <span>
-      Practice
-    </span>
-  </Link>
-) : (
-  <button
-    type="button"
-    className="dashboard-nav-item dashboard-nav-locked"
-    onClick={() => {
-      if (isGuest) {
-        navigate("/learn");
-        return;
-      }
+              <span>
+                Practice
+              </span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="dashboard-nav-item dashboard-nav-locked"
+              onClick={openPractice}
+              title={
+                isGuest
+                  ? "Sign in to unlock Practice"
+                  : `Complete all 8 lessons to unlock Practice (${lessonsCompleted}/8)`
+              }
+            >
+              <span className="dashboard-nav-icon">
+                🔒
+              </span>
 
-      navigate("/learn");
-    }}
-    title={
-      isGuest
-        ? "Sign in and complete all 8 lessons to unlock Practice"
-        : `Complete all 8 lessons to unlock Practice (${lessonsCompleted}/8)`
-    }
-  >
-    <span className="dashboard-nav-icon">
-      🔒
-    </span>
+              <span>
+                Practice
+              </span>
+            </button>
+          )}
 
-    <span>
-      Practice
-    </span>
-  </button>
-)}
-          
         </nav>
 
 
@@ -983,7 +1187,6 @@ useEffect(() => {
             onClick={handleLogout}
             disabled={isLoggingOut}
           >
-
             <span>
               ↪
             </span>
@@ -993,7 +1196,6 @@ useEffect(() => {
                 ? "Signing out..."
                 : "Sign out"}
             </span>
-
           </button>
 
         </div>
@@ -1006,7 +1208,6 @@ useEffect(() => {
       ========================================== */}
 
       <main className="dashboard-main">
-
 
         {/* =========================================
             TOP HEADER
@@ -1035,7 +1236,6 @@ useEffect(() => {
 
 
           <div className="dashboard-header-actions">
-
 
             {/* =====================================
                 CALM MODE
@@ -1188,7 +1388,6 @@ useEffect(() => {
 
               <div className="dashboard-profile-panel">
 
-
                 {/* PROFILE HEADER */}
 
                 <div className="dashboard-profile-panel-header">
@@ -1295,8 +1494,9 @@ useEffect(() => {
                       Lesson 1 is your free
                       trial. Sign in to unlock
                       the remaining CURIO
-                      lessons and save your
-                      progress.
+                      lessons, Practice and
+                      AI Literacy, and save
+                      your progress.
                     </p>
 
                   </div>
@@ -1393,13 +1593,11 @@ useEffect(() => {
                   onClick={handleLogout}
                   disabled={isLoggingOut}
                 >
-
                   ↪{" "}
 
                   {isLoggingOut
                     ? "Signing out..."
                     : "Sign out"}
-
                 </button>
 
               </div>
@@ -1470,7 +1668,6 @@ useEffect(() => {
                 <span>
                   →
                 </span>
-
               </Link>
 
             </div>
@@ -1667,6 +1864,7 @@ useEffect(() => {
 
                           )}
 
+
                         <h3>
                           {card.title}
                         </h3>
@@ -1745,8 +1943,9 @@ useEffect(() => {
                   <p>
                     Lesson 1 is free to explore.
                     Sign in to unlock Lessons
-                    2–8 and save your learning
-                    progress.
+                    2–8, Practice and AI
+                    Literacy, and save your
+                    learning progress.
                   </p>
 
                 </div>
@@ -1793,34 +1992,117 @@ useEffect(() => {
             <div className="dashboard-actions-grid">
 
               {quickActions.map(
-                (action) => (
+                (action) => {
 
-                  <Link
-                    key={action.title}
-                    to={action.path}
-                    className={`dashboard-action-card ${action.className}`}
-                  >
+                  /*
+                    =================================
+                    LOCKED QUICK ACTION
+                    =================================
 
-                    <div className="dashboard-action-icon">
-                      {action.icon}
-                    </div>
+                    Guests cannot directly enter
+                    Practice or AI Literacy.
+
+                    Clicking the card takes them
+                    to login instead.
+                  */
+
+                  if (action.locked) {
+
+                    return (
+
+                      <button
+                        key={action.title}
+                        type="button"
+                        className={`dashboard-action-card ${action.className} dashboard-action-locked`}
+                        onClick={() => {
+                          if (
+                            action.title ===
+                            "Practice"
+                          ) {
+                            openPractice();
+                            return;
+                          }
+
+                          if (
+                            action.title ===
+                            "AI Literacy"
+                          ) {
+                            openAILiteracy();
+                            return;
+                          }
+
+                          navigate("/login");
+                        }}
+                        title={
+                          isGuest
+                            ? `Sign in to unlock ${action.title}`
+                            : action.title ===
+                              "Practice"
+                            ? `Complete all 8 lessons to unlock Practice (${lessonsCompleted}/8)`
+                            : action.title
+                        }
+                      >
+
+                        <div className="dashboard-action-icon">
+                          {action.icon}
+                        </div>
 
 
-                    <div>
+                        <div>
 
-                      <h3>
-                        {action.title}
-                      </h3>
+                          <h3>
+                            {action.title}
+                          </h3>
 
-                      <p>
-                        {action.description}
-                      </p>
+                          <p>
+                            {action.description}
+                          </p>
 
-                    </div>
+                        </div>
 
-                  </Link>
+                      </button>
 
-                )
+                    );
+
+                  }
+
+
+                  /*
+                    =================================
+                    NORMAL QUICK ACTION
+                    =================================
+                  */
+
+                  return (
+
+                    <Link
+                      key={action.title}
+                      to={action.path}
+                      className={`dashboard-action-card ${action.className}`}
+                    >
+
+                      <div className="dashboard-action-icon">
+                        {action.icon}
+                      </div>
+
+
+                      <div>
+
+                        <h3>
+                          {action.title}
+                        </h3>
+
+                        <p>
+                          {action.description}
+                        </p>
+
+                      </div>
+
+                    </Link>
+
+                  );
+
+                }
               )}
 
             </div>

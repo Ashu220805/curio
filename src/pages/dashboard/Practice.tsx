@@ -1834,6 +1834,7 @@ const Practice: React.FC = () => {
             <div className="result-actions">
 
               <button
+                type="button"
                 className="result-secondary"
                 onClick={handleRetry}
               >
@@ -1841,6 +1842,7 @@ const Practice: React.FC = () => {
               </button>
 
               <button
+                type="button"
                 className="result-primary"
                 onClick={nextSession}
               >

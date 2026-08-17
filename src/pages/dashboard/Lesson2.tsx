@@ -281,7 +281,7 @@ function Lesson2() {
 
     setSection(nextSection.id);
 
-    window.scrollTo({
+    globalThis.scrollTo({
       top: 0,
       behavior: "smooth",
     });
@@ -294,7 +294,7 @@ function Lesson2() {
       LESSON_SECTIONS[currentIndex - 1].id
     );
 
-    window.scrollTo({
+    globalThis.scrollTo({
       top: 0,
       behavior: "smooth",
     });

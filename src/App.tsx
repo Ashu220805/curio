@@ -1,21 +1,23 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import Login from "./pages/auth/Login";
-import SignUp from "./pages/auth/Signup";
-import Guest from "./pages/Guest";
+import Login from "./pages/auth/Login.tsx";
+import SignUp from "./pages/auth/Signup.tsx";
+import Guest from "./pages/Guest.tsx";
 
-import Dashboard from "./pages/dashboard/Dashboard";
-import Learn from "./pages/dashboard/Learn";
-import Practice from "./pages/dashboard/Practice";
+import Dashboard from "./pages/dashboard/Dashboard.tsx";
+import Learn from "./pages/dashboard/Learn.tsx";
+import Practice from "./pages/dashboard/Practice.tsx";
+import RealityCheck from "./pages/dashboard/RealityCheck.tsx";
+import AISimulation from "./pages/dashboard/AISimulation.tsx";
 
-import Lesson1 from "./pages/dashboard/Lesson1";
-import Lesson2 from "./pages/dashboard/Lesson2";
-import Lesson3 from "./pages//dashboard/Lesson3";
-import Lesson4 from "./pages//dashboard/Lesson4";
-import Lesson5 from "./pages/dashboard/Lesson5";
-import Lesson6 from "./pages/dashboard/Lesson6";
-import Lesson7 from "./pages/dashboard/Lesson7";
-import Lesson8 from "./pages/dashboard/Lesson8";
+import Lesson1 from "./pages/dashboard/Lesson1.tsx";
+import Lesson2 from "./pages/dashboard/Lesson2.tsx";
+import Lesson3 from "./pages//dashboard/Lesson3.tsx";
+import Lesson4 from "./pages//dashboard/Lesson4.tsx";
+import Lesson5 from "./pages/dashboard/Lesson5.tsx";
+import Lesson6 from "./pages/dashboard/Lesson6.tsx";
+import Lesson7 from "./pages/dashboard/Lesson7.tsx";
+import Lesson8 from "./pages/dashboard/Lesson8.tsx";
 
 function App() {
   return (
@@ -30,6 +32,7 @@ function App() {
           path="/"
           element={<Navigate to="/login" replace />}
         />
+
 
         {/* =========================================
             AUTHENTICATION
@@ -50,6 +53,7 @@ function App() {
           element={<Guest />}
         />
 
+
         {/* =========================================
             CURIO DASHBOARD
         ========================================== */}
@@ -58,6 +62,7 @@ function App() {
           path="/dashboard"
           element={<Dashboard />}
         />
+
 
         {/* =========================================
             CURIO LEARN AI
@@ -68,6 +73,17 @@ function App() {
           element={<Learn />}
         />
 
+
+        {/* =========================================
+            CURIO AI SIMULATION
+        ========================================== */}
+
+        <Route
+          path="/ai-simulation"
+          element={<AISimulation />}
+        />
+
+
         {/* =========================================
             CURIO PRACTICE
         ========================================== */}
@@ -76,6 +92,17 @@ function App() {
           path="/practice"
           element={<Practice />}
         />
+
+
+        {/* =========================================
+            CURIO REALITY CHECK
+        ========================================== */}
+
+        <Route
+          path="/reality-check"
+          element={<RealityCheck />}
+        />
+
 
         {/* =========================================
             CURIO LESSON 1
@@ -86,6 +113,7 @@ function App() {
           element={<Lesson1 />}
         />
 
+
         {/* =========================================
             CURIO LESSON 2
         ========================================== */}
@@ -94,6 +122,7 @@ function App() {
           path="/learn/lesson/2"
           element={<Lesson2 />}
         />
+
 
         {/* =========================================
             CURIO LESSON 3
@@ -104,6 +133,7 @@ function App() {
           element={<Lesson3 />}
         />
 
+
         {/* =========================================
             CURIO LESSON 4
         ========================================== */}
@@ -112,6 +142,7 @@ function App() {
           path="/learn/lesson/4"
           element={<Lesson4 />}
         />
+
 
         {/* =========================================
             CURIO LESSON 5
@@ -122,6 +153,7 @@ function App() {
           element={<Lesson5 />}
         />
 
+
         {/* =========================================
             CURIO LESSON 6
         ========================================== */}
@@ -130,6 +162,7 @@ function App() {
           path="/learn/lesson/6"
           element={<Lesson6 />}
         />
+
 
         {/* =========================================
             CURIO LESSON 7
@@ -140,6 +173,7 @@ function App() {
           element={<Lesson7 />}
         />
 
+
         {/* =========================================
             CURIO LESSON 8
         ========================================== */}
@@ -148,6 +182,7 @@ function App() {
           path="/learn/lesson/8"
           element={<Lesson8 />}
         />
+
 
         {/* =========================================
             INVALID ROUTES

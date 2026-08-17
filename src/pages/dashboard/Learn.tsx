@@ -83,14 +83,19 @@ function Learn() {
     CURIO ACCESS MODE
     =========================================================
 
-    Guest mode is stored in sessionStorage.
+    Guest mode is controlled by:
 
-    IMPORTANT:
-    We intentionally do NOT use the normal
-    "curio_completed_lessons" localStorage key for guests.
+      sessionStorage.getItem("curio_guest")
 
-    That key belongs to the logged-in user's learning
-    progress and must never be exposed to Guest Mode.
+    Guest users:
+      • Can explore Lesson 1
+      • Cannot unlock Lessons 2–8
+      • Do not use authenticated progress
+
+    Logged-in users:
+      • Use curio_completed_lessons
+      • Follow the normal lesson progression
+  =========================================================
   */
 
   const [isGuest, setIsGuest] = useState<boolean>(() => {
@@ -101,24 +106,10 @@ function Learn() {
     =========================================================
     COMPLETED LESSONS
     =========================================================
-
-    LOGGED-IN USER:
-      Read the existing CURIO completion storage.
-
-    GUEST:
-      Never read the logged-in user's completion storage.
-
-      Guest has only Lesson 1 as a free trial.
-
-      We also support a separate guest-only key:
-        curio_guest_completed_lessons
-
-      This is optional and allows Lesson 1 to become
-      completed if the lesson page stores guest completion.
   */
 
-  const [completedLessonIds, setCompletedLessonIds] = useState<number[]>(
-    () => {
+  const [completedLessonIds, setCompletedLessonIds] =
+    useState<number[]>(() => {
       const guestMode =
         sessionStorage.getItem("curio_guest") === "true";
 
@@ -145,7 +136,7 @@ function Learn() {
           }
 
           /*
-            Guest can ONLY ever complete Lesson 1.
+            Guest can only complete Lesson 1.
           */
 
           return parsed.filter(
@@ -190,20 +181,16 @@ function Learn() {
       } catch {
         return [];
       }
-    }
-  );
+    });
 
   /*
     =========================================================
-    CHECK GUEST MODE
+    SYNC ACCESS + PROGRESS
     =========================================================
-
-    This protects the page if the user changes authentication
-    state while staying on the Learn page.
   */
 
   useEffect(() => {
-    const checkGuestMode = () => {
+    const syncLearnState = () => {
       const guestMode =
         sessionStorage.getItem("curio_guest") === "true";
 
@@ -211,7 +198,7 @@ function Learn() {
 
       /*
         -----------------------------------------
-        GUEST
+        GUEST MODE
         -----------------------------------------
       */
 
@@ -287,90 +274,67 @@ function Learn() {
       }
     };
 
-    /*
-      Initial synchronization.
-    */
-
-    checkGuestMode();
-
-    /*
-      Lesson completion event.
-    */
+    syncLearnState();
 
     window.addEventListener(
       "curio:lesson-completed",
-      checkGuestMode
+      syncLearnState
     );
-
-    /*
-      Storage changes.
-    */
 
     window.addEventListener(
       "storage",
-      checkGuestMode
+      syncLearnState
     );
-
-    /*
-      When user returns to this tab.
-    */
 
     window.addEventListener(
       "focus",
-      checkGuestMode
+      syncLearnState
     );
-
-    /*
-      Guest session changes.
-    */
 
     window.addEventListener(
       "curio:guest-mode-changed",
-      checkGuestMode
+      syncLearnState
     );
 
     return () => {
       window.removeEventListener(
         "curio:lesson-completed",
-        checkGuestMode
+        syncLearnState
       );
 
       window.removeEventListener(
         "storage",
-        checkGuestMode
+        syncLearnState
       );
 
       window.removeEventListener(
         "focus",
-        checkGuestMode
+        syncLearnState
       );
 
       window.removeEventListener(
         "curio:guest-mode-changed",
-        checkGuestMode
+        syncLearnState
       );
     };
   }, []);
 
-
   /*
     =========================================================
-    LESSON ACCESS / STATUS
+    LESSON STATUS
     =========================================================
-
-    LOGGED-IN USER:
-
-      Completed → completed
-      First incomplete → current
-      Everything after → locked
 
     GUEST:
 
       Lesson 1 → current / completed
-      Lesson 2–8 → locked
+      Lessons 2–8 → locked
 
-    This is the important separation that prevents
-    Ashu's progress from appearing in Guest Mode.
+    LOGGED-IN:
+
+      Completed → completed
+      First incomplete → current
+      Everything after → locked
+  =========================================================
   */
 
   const lessonsWithStatus = lessons.map((lesson) => {
@@ -381,10 +345,6 @@ function Learn() {
     */
 
     if (isGuest) {
-      /*
-        Guest completed Lesson 1.
-      */
-
       if (
         lesson.id === 1 &&
         completedLessonIds.includes(1)
@@ -395,21 +355,12 @@ function Learn() {
         };
       }
 
-      /*
-        Lesson 1 is the free trial.
-      */
-
       if (lesson.id === 1) {
         return {
           ...lesson,
           status: "current" as const,
         };
       }
-
-      /*
-        Every lesson after Lesson 1 is locked
-        until the user signs in.
-      */
 
       return {
         ...lesson,
@@ -443,7 +394,6 @@ function Learn() {
     };
   });
 
-
   /*
     =========================================================
     PROGRESS
@@ -454,16 +404,27 @@ function Learn() {
     ? completedLessonIds.filter((id) => id === 1).length
     : completedLessonIds.length;
 
-
   const currentLesson = lessonsWithStatus.find(
     (lesson) => lesson.status === "current"
   );
-
 
   const progress = Math.round(
     (completedLessons / lessons.length) * 100
   );
 
+  /*
+    =========================================================
+    GUEST SIGN-IN HANDLER
+    =========================================================
+  */
+
+  const handleGuestSignIn = () => {
+    sessionStorage.removeItem("curio_guest");
+
+    window.dispatchEvent(
+      new Event("curio:guest-mode-changed")
+    );
+  };
 
   return (
     <div className="learn-page">
@@ -484,7 +445,6 @@ function Learn() {
           </Link>
 
           <div>
-
             <span className="learn-header-label">
               CURIO LEARNING
             </span>
@@ -492,11 +452,9 @@ function Learn() {
             <h1>
               Learn AI
             </h1>
-
           </div>
 
         </div>
-
 
         <div className="learn-header-progress">
 
@@ -513,7 +471,6 @@ function Learn() {
             </strong>
 
           </div>
-
 
           <div className="learn-header-progress-track">
 
@@ -566,17 +523,7 @@ function Learn() {
             <Link
               to="/login"
               className="learn-guest-signin-button"
-              onClick={() => {
-                sessionStorage.removeItem(
-                  "curio_guest"
-                );
-
-                window.dispatchEvent(
-                  new Event(
-                    "curio:guest-mode-changed"
-                  )
-                );
-              }}
+              onClick={handleGuestSignIn}
             >
               Sign in
               <span>→</span>
@@ -621,6 +568,7 @@ function Learn() {
         ========================================== */}
 
         {currentLesson && (
+
           <section className="learn-continue-section">
 
             <div className="learn-section-title">
@@ -654,27 +602,20 @@ function Learn() {
               <div className="learn-continue-content">
 
                 <div className="learn-lesson-number">
-
                   {currentLesson.number}
-
                   {" • "}
-
                   {isGuest
                     ? "FREE TRIAL"
                     : "CURRENT LESSON"}
-
                 </div>
-
 
                 <h3>
                   {currentLesson.title}
                 </h3>
 
-
                 <p>
                   {currentLesson.description}
                 </p>
-
 
                 <div className="learn-continue-meta">
 
@@ -695,6 +636,10 @@ function Learn() {
               </div>
 
 
+              {/* IMPORTANT:
+                  Uses the actual current lesson.
+              */}
+
               <Link
                 to={`/learn/lesson/${currentLesson.id}`}
                 className="learn-continue-button"
@@ -706,12 +651,12 @@ function Learn() {
                 <span>
                   →
                 </span>
-
               </Link>
 
             </div>
 
           </section>
+
         )}
 
 
@@ -722,6 +667,7 @@ function Learn() {
         {isGuest &&
           !currentLesson &&
           completedLessonIds.includes(1) && (
+
             <section className="learn-guest-complete">
 
               <div className="learn-guest-complete-icon">
@@ -744,11 +690,7 @@ function Learn() {
               <Link
                 to="/login"
                 className="learn-guest-signin-button"
-                onClick={() => {
-                  sessionStorage.removeItem(
-                    "curio_guest"
-                  );
-                }}
+                onClick={handleGuestSignIn}
               >
                 Sign in to continue
                 <span>→</span>
@@ -783,13 +725,10 @@ function Learn() {
 
             </div>
 
-
             <div className="learn-path-count">
-
               {isGuest
                 ? "1 free lesson"
                 : `${completedLessons} completed`}
-
             </div>
 
           </div>
@@ -804,7 +743,6 @@ function Learn() {
                   key={lesson.id}
                   className={`learn-lesson-card learn-lesson-${lesson.status}`}
                 >
-
 
                   {/* =================================
                       LESSON NUMBER
@@ -821,7 +759,6 @@ function Learn() {
                         : lesson.number}
 
                     </div>
-
 
                     {index !== lessons.length - 1 && (
                       <div className="learn-lesson-line" />
@@ -883,7 +820,6 @@ function Learn() {
                       {lesson.title}
                     </h3>
 
-
                     <p>
                       {lesson.description}
                     </p>
@@ -914,9 +850,7 @@ function Learn() {
 
                   <div className="learn-lesson-action">
 
-                    {/* ---------------------------------
-                        COMPLETED
-                    ---------------------------------- */}
+                    {/* COMPLETED */}
 
                     {lesson.status === "completed" && (
                       <>
@@ -936,9 +870,7 @@ function Learn() {
                     )}
 
 
-                    {/* ---------------------------------
-                        CURRENT
-                    ---------------------------------- */}
+                    {/* CURRENT */}
 
                     {lesson.status === "current" && (
                       <Link
@@ -952,9 +884,7 @@ function Learn() {
                     )}
 
 
-                    {/* ---------------------------------
-                        LOCKED
-                    ---------------------------------- */}
+                    {/* LOCKED */}
 
                     {lesson.status === "locked" && (
                       <>
@@ -962,17 +892,7 @@ function Learn() {
                           <Link
                             to="/login"
                             className="learn-locked-text learn-guest-lock-link"
-                            onClick={() => {
-                              sessionStorage.removeItem(
-                                "curio_guest"
-                              );
-
-                              window.dispatchEvent(
-                                new Event(
-                                  "curio:guest-mode-changed"
-                                )
-                              );
-                            }}
+                            onClick={handleGuestSignIn}
                           >
                             🔒 Sign in to unlock
                           </Link>
@@ -1023,6 +943,8 @@ function Learn() {
           <div className="learn-method-grid">
 
 
+            {/* WATCH */}
+
             <div className="learn-method-card">
 
               <div className="learn-method-icon">
@@ -1040,6 +962,8 @@ function Learn() {
 
             </div>
 
+
+            {/* SEE */}
 
             <div className="learn-method-card">
 
@@ -1059,6 +983,8 @@ function Learn() {
             </div>
 
 
+            {/* TRY */}
+
             <div className="learn-method-card">
 
               <div className="learn-method-icon">
@@ -1077,7 +1003,15 @@ function Learn() {
             </div>
 
 
-            <div className="learn-method-card">
+            {/* PRACTICE */}
+
+            <div
+              className={`learn-method-card ${
+                isGuest
+                  ? "learn-method-card-locked"
+                  : ""
+              }`}
+            >
 
               <div className="learn-method-icon">
                 🧠
@@ -1092,6 +1026,20 @@ function Learn() {
                 knowledge stick.
               </p>
 
+              {isGuest && (
+                <div className="learn-method-lock">
+
+                  <span>
+                    🔒
+                  </span>
+
+                  <span>
+                    Sign in to unlock practice
+                  </span>
+
+                </div>
+              )}
+
             </div>
 
 
@@ -1099,6 +1047,47 @@ function Learn() {
 
         </section>
 
+
+        {/* =========================================
+            GUEST END MESSAGE
+        ========================================== */}
+
+        {isGuest && (
+          <section className="learn-signin-footer">
+
+            <div className="learn-signin-footer-icon">
+              🚀
+            </div>
+
+            <div className="learn-signin-footer-content">
+
+              <span>
+                READY FOR THE FULL CURIO EXPERIENCE?
+              </span>
+
+              <h2>
+                Go beyond the free lesson.
+              </h2>
+
+              <p>
+                Create an account to unlock the complete
+                learning path, practice activities and
+                save your learning progress.
+              </p>
+
+            </div>
+
+            <Link
+              to="/login"
+              className="learn-signin-footer-button"
+              onClick={handleGuestSignIn}
+            >
+              Sign in
+              <span>→</span>
+            </Link>
+
+          </section>
+        )}
 
       </main>
 

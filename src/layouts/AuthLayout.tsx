@@ -8,9 +8,13 @@ function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <main className="auth-page">
       <div className="auth-shell">
-        {/* LEFT — CURIO BRAND EXPERIENCE */}
+        {/* =====================================================
+            LEFT — CURIO BRAND EXPERIENCE
+        ====================================================== */}
         <section className="auth-brand-panel">
           <div className="auth-brand-content">
+
+            {/* ================= CURIO BRAND ================= */}
             <div className="curio-brand">
               <img
                 src="/curio-symbol.png"
@@ -19,7 +23,9 @@ function AuthLayout({ children }: AuthLayoutProps) {
               />
 
               <div>
-                <div className="curio-brand-name">CURIO</div>
+                <div className="curio-brand-name">
+                  CURIO
+                </div>
 
                 <div className="curio-tagline">
                   <span>LEARN</span>
@@ -31,8 +37,11 @@ function AuthLayout({ children }: AuthLayoutProps) {
               </div>
             </div>
 
+            {/* ================= HERO ================= */}
             <div className="auth-hero-content">
-              <p className="auth-eyebrow">YOUR AI LEARNING JOURNEY</p>
+              <p className="auth-eyebrow">
+                YOUR AI LEARNING JOURNEY
+              </p>
 
               <h1>
                 Learn AI.
@@ -49,46 +58,80 @@ function AuthLayout({ children }: AuthLayoutProps) {
               </p>
             </div>
 
+            {/* ================= FEATURES ================= */}
             <div className="auth-features">
+
               <div className="auth-feature">
-                <div className="feature-icon">▶</div>
+                <div className="feature-icon">
+                  ▶
+                </div>
 
                 <div>
-                  <h3>Interactive Learning</h3>
-                  <p>Engaging lessons with visual explanations</p>
+                  <h3>
+                    Interactive Learning
+                  </h3>
+
+                  <p>
+                    Engaging lessons with visual explanations
+                  </p>
                 </div>
               </div>
 
               <div className="auth-feature">
-                <div className="feature-icon">◉</div>
+                <div className="feature-icon">
+                  ◉
+                </div>
 
                 <div>
-                  <h3>AI Simulators</h3>
-                  <p>Experiment with AI in a safe environment</p>
+                  <h3>
+                    AI Simulators
+                  </h3>
+
+                  <p>
+                    Experiment with AI in a safe environment
+                  </p>
                 </div>
               </div>
 
               <div className="auth-feature">
-                <div className="feature-icon">✓</div>
+                <div className="feature-icon">
+                  ✓
+                </div>
 
                 <div>
-                  <h3>Safe & Responsible</h3>
-                  <p>Learn how to use AI ethically and responsibly</p>
+                  <h3>
+                    Safe & Responsible
+                  </h3>
+
+                  <p>
+                    Learn how to use AI ethically and responsibly
+                  </p>
                 </div>
               </div>
 
               <div className="auth-feature">
-                <div className="feature-icon">★</div>
+                <div className="feature-icon">
+                  ★
+                </div>
 
                 <div>
-                  <h3>Track Your Growth</h3>
-                  <p>Build skills through structured practice</p>
+                  <h3>
+                    Track Your Growth
+                  </h3>
+
+                  <p>
+                    Build skills through structured practice
+                  </p>
                 </div>
               </div>
+
             </div>
 
+            {/* ================= CURIO QUOTE ================= */}
             <div className="auth-quote">
-              <div className="quote-mark">“</div>
+              <div className="quote-mark">
+                “
+              </div>
 
               <div>
                 <p>
@@ -96,17 +139,34 @@ function AuthLayout({ children }: AuthLayoutProps) {
                   the intelligence shaping it.
                 </p>
 
-                <span>— CURIO</span>
+                <span>
+                  — CURIO
+                </span>
               </div>
             </div>
+
           </div>
 
-          <div className="auth-glow auth-glow-one" />
-          <div className="auth-glow auth-glow-two" />
-          <div className="auth-grid" />
+          {/* ================= BACKGROUND EFFECTS ================= */}
+          <div
+            className="auth-glow auth-glow-one"
+            aria-hidden="true"
+          />
+
+          <div
+            className="auth-glow auth-glow-two"
+            aria-hidden="true"
+          />
+
+          <div
+            className="auth-grid"
+            aria-hidden="true"
+          />
         </section>
 
-        {/* RIGHT — AUTHENTICATION */}
+        {/* =====================================================
+            RIGHT — AUTHENTICATION
+        ====================================================== */}
         <section className="auth-form-panel">
           <div className="auth-form-container">
             {children}

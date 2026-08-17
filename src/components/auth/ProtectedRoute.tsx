@@ -20,7 +20,10 @@ function ProtectedRoute({
     return (
       <div className="auth-loading-screen">
         <div className="auth-loading-spinner" />
-        <p>Loading CURIO...</p>
+
+        <p>
+          Loading CURIO...
+        </p>
       </div>
     );
   }
@@ -37,7 +40,11 @@ function ProtectedRoute({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+    </>
+  );
 }
 
 export default ProtectedRoute;

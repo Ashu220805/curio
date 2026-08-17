@@ -3691,3 +3691,2553 @@
   background: #f2efff;
   color: #5d35df;
 }
+/* =========================================================
+   AI LITERACY
+   ========================================================= */
+
+.dashboard-nav-ai-literacy {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dashboard-nav-ai-literacy:hover {
+  text-decoration: none;
+  transform: translateX(2px);
+}
+
+.dashboard-nav-ai-literacy .dashboard-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dashboard-nav-ai-literacy:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.dashboard-calm-mode .dashboard-nav-ai-literacy {
+  transition: none;
+}
+/* =========================================================
+   AI LITERACY / REALITY CHECK QUICK ACTION
+========================================================= */
+
+.dashboard-action-reality {
+  position: relative;
+
+  border: 1px solid rgba(105, 82, 175, 0.18);
+
+  background:
+    linear-gradient(
+      135deg,
+      #f7f4ff 0%,
+      #f3f7fb 100%
+    );
+
+  box-shadow:
+    0 8px 22px rgba(89, 70, 150, 0.07);
+
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.dashboard-action-reality:hover {
+  transform: translateY(-4px);
+
+  border-color: rgba(105, 82, 175, 0.32);
+
+  box-shadow:
+    0 14px 30px rgba(89, 70, 150, 0.13);
+}
+
+.dashboard-action-reality .dashboard-action-icon {
+  background: #ebe5fa;
+
+  color: #654caf;
+
+  box-shadow:
+    0 5px 14px rgba(101, 76, 175, 0.08);
+}
+
+.dashboard-action-reality h3 {
+  color: #3f3560;
+}
+
+.dashboard-action-reality p {
+  color: #747083;
+}
+/* =========================================================
+   AI LITERACY SIDEBAR ITEM
+========================================================= */
+
+.dashboard-navigation .dashboard-nav-item {
+  text-decoration: none;
+}
+
+
+.dashboard-navigation .dashboard-nav-item:hover {
+  text-decoration: none;
+}
+
+
+.dashboard-navigation .dashboard-nav-item:last-child {
+  margin-bottom: 8px;
+}
+/* =========================================================
+   CURIO — DASHBOARD VISUAL UPGRADE
+   DARK SYSTEM
+   ---------------------------------------------------------
+   IMPORTANT:
+   This is an ADDITIONAL override layer.
+   Existing Dashboard CSS is intentionally preserved.
+   Do not remove the CSS above.
+========================================================= */
+
+
+/* =========================================================
+   DASHBOARD ROOT
+========================================================= */
+
+.dashboard-page {
+  --curio-bg: #080a13;
+  --curio-bg-soft: #0d101c;
+  --curio-surface: #111522;
+  --curio-surface-2: #151927;
+  --curio-surface-3: #191d2d;
+
+  --curio-border: rgba(255, 255, 255, 0.08);
+  --curio-border-strong: rgba(255, 255, 255, 0.13);
+
+  --curio-text: #f5f7ff;
+  --curio-text-soft: rgba(245, 247, 255, 0.68);
+  --curio-text-muted: rgba(245, 247, 255, 0.42);
+
+  --curio-purple: #8d7aff;
+  --curio-purple-light: #a79aff;
+  --curio-blue: #55cfff;
+  --curio-pink: #ed78c8;
+  --curio-green: #67d6a0;
+  --curio-orange: #ffb66b;
+  --curio-red: #ff7777;
+
+  background:
+    radial-gradient(
+      circle at 82% 4%,
+      rgba(112, 91, 255, 0.16),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 18% 58%,
+      rgba(38, 181, 255, 0.07),
+      transparent 27%
+    ),
+    #080a13;
+
+  color: var(--curio-text);
+
+  min-height: 100vh;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.dashboard-page .dashboard-sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 18, 31, 0.98),
+      rgba(9, 11, 20, 0.98)
+    );
+
+  border-right: 1px solid var(--curio-border);
+
+  box-shadow:
+    14px 0 40px rgba(0, 0, 0, 0.16);
+
+  color: var(--curio-text);
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.dashboard-page .dashboard-logo-name {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-logo-tagline {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+
+/* =========================================================
+   SIDEBAR NAVIGATION
+========================================================= */
+
+.dashboard-page .dashboard-nav-item {
+  color: rgba(245, 247, 255, 0.58);
+
+  border: 1px solid transparent;
+
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.dashboard-page .dashboard-nav-item:hover {
+  background:
+    rgba(139, 122, 255, 0.08);
+
+  border-color:
+    rgba(139, 122, 255, 0.12);
+
+  color: #ffffff;
+
+  transform: translateX(2px);
+}
+
+.dashboard-page .dashboard-nav-active {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(125, 105, 255, 0.16),
+      rgba(83, 112, 255, 0.08)
+    );
+
+  border-color:
+    rgba(139, 122, 255, 0.18);
+
+  color: #ffffff;
+
+  box-shadow:
+    inset 3px 0 0 #8d7aff;
+}
+
+
+/* =========================================================
+   LEARNING STYLE CARD
+========================================================= */
+
+.dashboard-page .dashboard-learning-style {
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-page .dashboard-learning-style-title {
+  color: #a79aff;
+}
+
+.dashboard-page .dashboard-learning-style-value {
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.dashboard-page .dashboard-change-button {
+  background: rgba(255, 255, 255, 0.04);
+
+  border-color:
+    rgba(139, 122, 255, 0.22);
+
+  color: #a79aff;
+}
+
+.dashboard-page .dashboard-change-button:hover {
+  background:
+    rgba(139, 122, 255, 0.10);
+
+  border-color:
+    rgba(139, 122, 255, 0.36);
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+.dashboard-page .dashboard-logout-button,
+.dashboard-page .dashboard-guest-exit-button {
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  color:
+    rgba(255, 255, 255, 0.52);
+}
+
+.dashboard-page .dashboard-logout-button:hover,
+.dashboard-page .dashboard-guest-exit-button:hover {
+  background:
+    rgba(255, 255, 255, 0.055);
+
+  border-color:
+    rgba(139, 122, 255, 0.22);
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   MAIN AREA
+========================================================= */
+
+.dashboard-page .dashboard-main {
+  background:
+    transparent;
+
+  color: var(--curio-text);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.dashboard-page .dashboard-header {
+  background:
+    rgba(8, 10, 19, 0.82);
+
+  border-bottom:
+    1px solid var(--curio-border);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+
+/* =========================================================
+   MOBILE LOGO
+========================================================= */
+
+.dashboard-page .dashboard-mobile-logo {
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.dashboard-page .dashboard-search {
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-page .dashboard-search:focus-within {
+  border-color:
+    rgba(139, 122, 255, 0.55);
+
+  box-shadow:
+    0 0 0 3px rgba(139, 122, 255, 0.10);
+}
+
+.dashboard-page .dashboard-search-icon {
+  color:
+    rgba(255, 255, 255, 0.38);
+}
+
+.dashboard-page .dashboard-search input {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-search input::placeholder {
+  color:
+    rgba(255, 255, 255, 0.32);
+}
+
+
+/* =========================================================
+   HEADER BUTTONS
+========================================================= */
+
+.dashboard-page .dashboard-header-button {
+  color:
+    rgba(255, 255, 255, 0.65);
+}
+
+.dashboard-page .dashboard-header-button:hover {
+  background:
+    rgba(255, 255, 255, 0.05);
+
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-notification-button {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.dashboard-page .dashboard-notification-button:hover {
+  background:
+    rgba(255, 255, 255, 0.05);
+}
+
+
+/* =========================================================
+   PROFILE BUTTON
+========================================================= */
+
+.dashboard-page .dashboard-profile {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-profile:hover {
+  background:
+    rgba(255, 255, 255, 0.045);
+}
+
+.dashboard-page .dashboard-avatar {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(139, 122, 255, 0.24),
+      rgba(85, 207, 255, 0.14)
+    );
+
+  border:
+    1px solid rgba(139, 122, 255, 0.18);
+
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-profile-text strong {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-profile-text span {
+  color:
+    rgba(255, 255, 255, 0.38);
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.dashboard-page .dashboard-content {
+  color: var(--curio-text);
+}
+
+
+/* =========================================================
+   WELCOME
+========================================================= */
+
+.dashboard-page .dashboard-welcome h1 {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-welcome p {
+  color:
+    rgba(255, 255, 255, 0.52);
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.dashboard-page .dashboard-learning-hero {
+  position: relative;
+
+  border:
+    1px solid rgba(139, 122, 255, 0.18);
+
+  background:
+    radial-gradient(
+      circle at 78% 45%,
+      rgba(112, 91, 255, 0.20),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 20% 100%,
+      rgba(38, 181, 255, 0.08),
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      #111522,
+      #0e111c
+    );
+
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.20);
+}
+
+.dashboard-page .dashboard-hero-label {
+  color:
+    #9c8dff;
+}
+
+.dashboard-page .dashboard-hero-content h2 {
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-hero-content p {
+  color:
+    rgba(255, 255, 255, 0.56);
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON
+========================================================= */
+
+.dashboard-page .dashboard-primary-button {
+  background:
+    linear-gradient(
+      135deg,
+      #7664ff,
+      #526fe8
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 12px 30px rgba(103, 79, 230, 0.28);
+}
+
+.dashboard-page .dashboard-primary-button:hover {
+  box-shadow:
+    0 16px 35px rgba(103, 79, 230, 0.38);
+}
+
+
+/* =========================================================
+   HERO VISUAL
+========================================================= */
+
+.dashboard-page .dashboard-brain {
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      #b5aaff,
+      #6e7de8
+    );
+
+  box-shadow:
+    0 25px 60px rgba(104, 86, 225, 0.28);
+}
+
+.dashboard-page .dashboard-hero-circle {
+  background:
+    rgba(18, 21, 34, 0.92);
+
+  border:
+    1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+========================================================= */
+
+.dashboard-page .dashboard-section-heading h2 {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-section-heading p {
+  color:
+    rgba(255, 255, 255, 0.42);
+}
+
+.dashboard-page .dashboard-view-all {
+  color:
+    #9b8cff;
+}
+
+.dashboard-page .dashboard-view-all:hover {
+  color:
+    #b1a5ff;
+}
+
+
+/* =========================================================
+   LEARNING CARDS
+========================================================= */
+
+.dashboard-page .dashboard-learning-card {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  border:
+    1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.10);
+}
+
+.dashboard-page .dashboard-learning-card:hover {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(139, 122, 255, 0.08),
+      rgba(255, 255, 255, 0.035)
+    );
+
+  border-color:
+    rgba(139, 122, 255, 0.28);
+
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.dashboard-page .dashboard-learning-card-icon {
+  background:
+    rgba(139, 122, 255, 0.12);
+
+  border:
+    1px solid rgba(139, 122, 255, 0.10);
+}
+
+.dashboard-page .dashboard-learning-card h3 {
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-learning-card p {
+  color:
+    rgba(255, 255, 255, 0.45);
+}
+
+.dashboard-page .dashboard-card-meta {
+  color:
+    rgba(255, 255, 255, 0.36);
+}
+
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.dashboard-page .dashboard-progress-track {
+  background:
+    rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-page .dashboard-progress-bar {
+  background:
+    linear-gradient(
+      90deg,
+      #7664ff,
+      #55d4ff
+    );
+}
+
+.dashboard-page .dashboard-progress > span {
+  color:
+    rgba(255, 255, 255, 0.50);
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+========================================================= */
+
+.dashboard-page .dashboard-action-card {
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border:
+    1px solid rgba(255, 255, 255, 0.08);
+
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-action-card:hover {
+  background:
+    rgba(255, 255, 255, 0.055);
+
+  border-color:
+    rgba(139, 122, 255, 0.20);
+
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.18);
+}
+
+.dashboard-page .dashboard-action-card p {
+  color:
+    rgba(255, 255, 255, 0.42);
+}
+
+
+/* =========================================================
+   QUICK ACTION COLORS
+========================================================= */
+
+.dashboard-page .dashboard-action-green .dashboard-action-icon {
+  background: rgba(34, 197, 94, 0.10);
+}
+
+.dashboard-page .dashboard-action-green h3 {
+  color: #67d6a0;
+}
+
+.dashboard-page .dashboard-action-blue .dashboard-action-icon {
+  background: rgba(59, 130, 246, 0.11);
+}
+
+.dashboard-page .dashboard-action-blue h3 {
+  color: #70a9ff;
+}
+
+.dashboard-page .dashboard-action-purple .dashboard-action-icon {
+  background: rgba(139, 92, 246, 0.12);
+}
+
+.dashboard-page .dashboard-action-purple h3 {
+  color: #a18cff;
+}
+
+.dashboard-page .dashboard-action-orange .dashboard-action-icon {
+  background: rgba(249, 115, 22, 0.11);
+}
+
+.dashboard-page .dashboard-action-orange h3 {
+  color: #ffb66b;
+}
+
+.dashboard-page .dashboard-action-teal .dashboard-action-icon {
+  background: rgba(6, 182, 212, 0.11);
+}
+
+.dashboard-page .dashboard-action-teal h3 {
+  color: #63d7e8;
+}
+
+.dashboard-page .dashboard-action-red .dashboard-action-icon {
+  background: rgba(239, 68, 68, 0.11);
+}
+
+.dashboard-page .dashboard-action-red h3 {
+  color: #ff8888;
+}
+
+
+/* =========================================================
+   OVERALL PROGRESS
+========================================================= */
+
+.dashboard-page .dashboard-progress-section {
+  background:
+    radial-gradient(
+      circle at 80% 50%,
+      rgba(112, 91, 255, 0.12),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #111522,
+      #0e111c
+    );
+
+  border:
+    1px solid rgba(139, 122, 255, 0.16);
+
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.14);
+}
+
+.dashboard-page .dashboard-progress-label {
+  color:
+    #9b8cff;
+}
+
+.dashboard-page .dashboard-progress-section h2 {
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-progress-section p {
+  color:
+    rgba(255, 255, 255, 0.44);
+}
+
+.dashboard-page .dashboard-overall-progress-number {
+  color:
+    #a79aff;
+}
+
+.dashboard-page .dashboard-overall-progress-track {
+  background:
+    rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-page .dashboard-overall-progress-bar {
+  background:
+    linear-gradient(
+      90deg,
+      #7664ff,
+      #55d4ff
+    );
+}
+
+.dashboard-page .dashboard-overall-progress span {
+  color:
+    rgba(255, 255, 255, 0.38);
+}
+
+
+/* =========================================================
+   PROFILE PANEL
+   Both existing profile systems are supported.
+========================================================= */
+
+.dashboard-page .dashboard-profile-panel,
+.dashboard-page .profile-panel {
+  background:
+    linear-gradient(
+      145deg,
+      #111522,
+      #0d101b
+    );
+
+  border:
+    1px solid rgba(255, 255, 255, 0.09);
+
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.42);
+
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-profile-panel-header,
+.dashboard-page .profile-panel-header {
+  background:
+    rgba(255, 255, 255, 0.02);
+
+  border-bottom-color:
+    rgba(255, 255, 255, 0.07);
+}
+
+.dashboard-page .dashboard-profile-panel-header strong,
+.dashboard-page .profile-panel-name {
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-profile-panel-header span,
+.dashboard-page .profile-panel-role {
+  color:
+    rgba(255, 255, 255, 0.42);
+}
+
+.dashboard-page .dashboard-profile-large-avatar,
+.dashboard-page .profile-panel-avatar {
+  background:
+    rgba(139, 122, 255, 0.12);
+
+  border-color:
+    rgba(139, 122, 255, 0.18);
+
+  color:
+    #a79aff;
+}
+
+.dashboard-page .dashboard-profile-divider,
+.dashboard-page .profile-progress,
+.dashboard-page .profile-panel-actions {
+  border-color:
+    rgba(255, 255, 255, 0.07);
+}
+
+.dashboard-page .dashboard-profile-info span,
+.dashboard-page .profile-info-label,
+.dashboard-page .profile-panel-section-title {
+  color:
+    rgba(255, 255, 255, 0.38);
+}
+
+.dashboard-page .dashboard-profile-info strong,
+.dashboard-page .profile-info-value {
+  color:
+    rgba(255, 255, 255, 0.86);
+}
+
+.dashboard-page .profile-info-icon,
+.dashboard-page .profile-panel-action-icon {
+  background:
+    rgba(255, 255, 255, 0.05);
+}
+
+
+/* =========================================================
+   PROFILE ACTIONS
+========================================================= */
+
+.dashboard-page .profile-panel-action {
+  color:
+    rgba(255, 255, 255, 0.62);
+
+  border-color:
+    transparent;
+}
+
+.dashboard-page .profile-panel-action:hover {
+  background:
+    rgba(139, 122, 255, 0.08);
+
+  border-color:
+    rgba(139, 122, 255, 0.12);
+
+  color:
+    #ffffff;
+}
+
+.dashboard-page .profile-panel-signout {
+  color:
+    #ff8888;
+}
+
+.dashboard-page .profile-panel-signout:hover {
+  background:
+    rgba(239, 68, 68, 0.08);
+
+  border-color:
+    rgba(239, 68, 68, 0.14);
+
+  color:
+    #ff9999;
+}
+
+
+/* =========================================================
+   PASSWORD FORM
+========================================================= */
+
+.dashboard-page .profile-password-field input,
+.dashboard-page .dashboard-password-box input {
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  color:
+    #ffffff;
+}
+
+.dashboard-page .profile-password-field input:focus,
+.dashboard-page .dashboard-password-box input:focus {
+  background:
+    rgba(255, 255, 255, 0.05);
+
+  border-color:
+    rgba(139, 122, 255, 0.45);
+
+  box-shadow:
+    0 0 0 3px rgba(139, 122, 255, 0.08);
+}
+
+
+/* =========================================================
+   TEXT SIZE CONTROLS
+========================================================= */
+
+.dashboard-page .dashboard-text-size-control,
+.dashboard-page .dashboard-text-controls {
+  background:
+    rgba(255, 255, 255, 0.035);
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-page .dashboard-text-size-button,
+.dashboard-page .dashboard-text-size-control button {
+  color:
+    rgba(255, 255, 255, 0.65);
+}
+
+.dashboard-page .dashboard-text-size-button:hover:not(:disabled),
+.dashboard-page .dashboard-text-size-control button:hover {
+  background:
+    rgba(139, 122, 255, 0.10);
+
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-text-size-label,
+.dashboard-page .dashboard-text-size-value {
+  color:
+    rgba(255, 255, 255, 0.52);
+}
+
+
+/* =========================================================
+   GUEST NOTICE
+========================================================= */
+
+.dashboard-page .dashboard-guest-notice {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(139, 122, 255, 0.09),
+      rgba(255, 255, 255, 0.025)
+    );
+
+  border-color:
+    rgba(139, 122, 255, 0.16);
+}
+
+.dashboard-page .dashboard-guest-notice-icon {
+  background:
+    rgba(139, 122, 255, 0.12);
+
+  color:
+    #a79aff;
+}
+
+.dashboard-page .dashboard-guest-notice-text strong {
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-guest-notice-text span {
+  color:
+    rgba(255, 255, 255, 0.45);
+}
+
+.dashboard-page .dashboard-guest-signin-button {
+  background:
+    rgba(139, 122, 255, 0.08);
+
+  border-color:
+    rgba(139, 122, 255, 0.22);
+
+  color:
+    #a79aff;
+}
+
+.dashboard-page .dashboard-guest-signin-button:hover {
+  background:
+    rgba(139, 122, 255, 0.14);
+
+  border-color:
+    rgba(139, 122, 255, 0.35);
+}
+
+
+/* =========================================================
+   GUEST LOCKED LEARNING CARDS
+========================================================= */
+
+.dashboard-page .dashboard-learning-card.dashboard-guest-locked {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 255, 255, 0.015)
+    );
+
+  border-color:
+    rgba(255, 255, 255, 0.06);
+
+  opacity:
+    0.62;
+}
+
+.dashboard-page .dashboard-learning-card.dashboard-guest-locked h3 {
+  color:
+    rgba(255, 255, 255, 0.60);
+}
+
+.dashboard-page .dashboard-learning-card.dashboard-guest-locked p {
+  color:
+    rgba(255, 255, 255, 0.32);
+}
+
+.dashboard-page .dashboard-learning-card.dashboard-guest-locked
+  .dashboard-learning-card-icon {
+  background:
+    rgba(255, 255, 255, 0.04);
+
+  filter:
+    grayscale(0.4);
+}
+
+.dashboard-page .dashboard-guest-lock {
+  background:
+    rgba(255, 255, 255, 0.07);
+
+  border:
+    1px solid rgba(255, 255, 255, 0.08);
+
+  color:
+    rgba(255, 255, 255, 0.46);
+}
+
+
+/* =========================================================
+   GUEST TRIAL BADGE
+========================================================= */
+
+.dashboard-page .dashboard-guest-trial-badge {
+  background:
+    rgba(139, 122, 255, 0.12);
+
+  color:
+    #a79aff;
+
+  border:
+    1px solid rgba(139, 122, 255, 0.12);
+}
+
+
+/* =========================================================
+   GUEST ACCOUNT CTA
+========================================================= */
+
+.dashboard-page .dashboard-guest-account-card {
+  background:
+    radial-gradient(
+      circle at 80% 40%,
+      rgba(112, 91, 255, 0.13),
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      #111522,
+      #0e111c
+    );
+
+  border-color:
+    rgba(139, 122, 255, 0.16);
+
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.14);
+}
+
+.dashboard-page .dashboard-guest-account-content
+  .dashboard-guest-account-label {
+  color:
+    #9b8cff;
+}
+
+.dashboard-page .dashboard-guest-account-content h2 {
+  color:
+    #ffffff;
+}
+
+.dashboard-page .dashboard-guest-account-content p {
+  color:
+    rgba(255, 255, 255, 0.44);
+}
+
+.dashboard-page .dashboard-guest-account-button {
+  background:
+    linear-gradient(
+      135deg,
+      #7664ff,
+      #526fe8
+    );
+
+  box-shadow:
+    0 10px 25px rgba(103, 79, 230, 0.24);
+}
+
+
+/* =========================================================
+   GUEST ACTION LOCK
+========================================================= */
+
+.dashboard-page .dashboard-action-card.dashboard-guest-locked {
+  background:
+    rgba(255, 255, 255, 0.018);
+
+  border-color:
+    rgba(255, 255, 255, 0.055);
+
+  opacity:
+    0.48;
+}
+
+.dashboard-page .dashboard-action-card.dashboard-guest-locked:hover {
+  background:
+    rgba(255, 255, 255, 0.018);
+
+  border-color:
+    rgba(255, 255, 255, 0.055);
+}
+
+
+/* =========================================================
+   CALM MODE
+========================================================= */
+
+.dashboard-page.dashboard-calm-mode {
+  background:
+    #0a0c14;
+}
+
+.dashboard-page.dashboard-calm-mode
+  .dashboard-learning-hero,
+.dashboard-page.dashboard-calm-mode
+  .dashboard-progress-section {
+  box-shadow:
+    none;
+}
+
+
+/* =========================================================
+   FOCUS ACCESSIBILITY
+========================================================= */
+
+.dashboard-page button:focus-visible,
+.dashboard-page a:focus-visible,
+.dashboard-page input:focus-visible {
+  outline:
+    2px solid rgba(139, 122, 255, 0.85);
+
+  outline-offset:
+    3px;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.dashboard-page * {
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(139, 122, 255, 0.35)
+    transparent;
+}
+
+.dashboard-page *::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.dashboard-page *::-webkit-scrollbar-track {
+  background:
+    transparent;
+}
+
+.dashboard-page *::-webkit-scrollbar-thumb {
+  background:
+    rgba(139, 122, 255, 0.30);
+
+  border-radius:
+    20px;
+}
+
+.dashboard-page *::-webkit-scrollbar-thumb:hover {
+  background:
+    rgba(139, 122, 255, 0.48);
+}
+
+
+/* =========================================================
+   MOBILE DARK THEME
+========================================================= */
+
+@media (max-width: 650px) {
+
+  .dashboard-page .dashboard-sidebar {
+    background:
+      rgba(10, 12, 21, 0.96);
+
+    border-top:
+      1px solid rgba(255, 255, 255, 0.08);
+
+    box-shadow:
+      0 -12px 35px rgba(0, 0, 0, 0.22);
+
+    backdrop-filter:
+      blur(18px);
+
+    -webkit-backdrop-filter:
+      blur(18px);
+  }
+
+  .dashboard-page .dashboard-nav-item {
+    color:
+      rgba(255, 255, 255, 0.48);
+  }
+
+  .dashboard-page .dashboard-nav-active {
+    background:
+      rgba(139, 122, 255, 0.12);
+
+    color:
+      #ffffff;
+
+    box-shadow:
+      none;
+  }
+
+  .dashboard-page .dashboard-main {
+    background:
+      transparent;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+
+  .dashboard-page .dashboard-learning-hero {
+    border-radius:
+      18px;
+  }
+
+  .dashboard-page .dashboard-learning-card {
+    border-radius:
+      15px;
+  }
+
+  .dashboard-page .dashboard-action-card {
+    border-radius:
+      14px;
+  }
+
+  .dashboard-page .dashboard-progress-section {
+    border-radius:
+      16px;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .dashboard-page *,
+  .dashboard-page *::before,
+  .dashboard-page *::after {
+    animation:
+      none !important;
+
+    transition:
+      none !important;
+  }
+}
+
+
+/* =========================================================
+   END — CURIO DASHBOARD VISUAL UPGRADE
+========================================================= */
+/* =========================================================
+   CURIO DASHBOARD — TEXT VISIBILITY FIX
+   ---------------------------------------------------------
+   ADDITION ONLY
+   Do not remove or modify existing Dashboard CSS.
+   This fixes text inheriting the global white theme.
+========================================================= */
+
+
+/* =========================================================
+   MAIN DASHBOARD TEXT
+========================================================= */
+
+.dashboard-page .dashboard-main {
+  color: #172033;
+}
+
+
+/* =========================================================
+   WELCOME SECTION
+========================================================= */
+
+.dashboard-page .dashboard-welcome h1 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-welcome p {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+========================================================= */
+
+.dashboard-page .dashboard-section-title,
+.dashboard-page .dashboard-section-heading,
+.dashboard-page .dashboard-section-header {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-section-title h2,
+.dashboard-page .dashboard-section-heading h2,
+.dashboard-page .dashboard-section-header h2 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-section-title p,
+.dashboard-page .dashboard-section-heading p,
+.dashboard-page .dashboard-section-header p {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   CONTINUE LEARNING
+========================================================= */
+
+.dashboard-page .dashboard-continue-title,
+.dashboard-page .dashboard-continue-heading {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-continue-description {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   LEARNING CARDS
+========================================================= */
+
+.dashboard-page .dashboard-learning-card {
+  color: #172033;
+}
+
+.dashboard-page .dashboard-learning-card h3 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-learning-card p {
+  color: #69748a !important;
+}
+
+.dashboard-page .dashboard-learning-card span {
+  color: #78839a !important;
+}
+
+
+/* =========================================================
+   LESSON / PROGRESS TEXT
+========================================================= */
+
+.dashboard-page .dashboard-learning-card
+  .dashboard-card-description {
+  color: #69748a !important;
+}
+
+.dashboard-page .dashboard-learning-card
+  .dashboard-card-meta {
+  color: #7b8497 !important;
+}
+
+.dashboard-page .dashboard-learning-card
+  .dashboard-card-progress {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   LEARNING CARD LINKS
+========================================================= */
+
+.dashboard-page .dashboard-learning-card a {
+  color: #5f45d8;
+}
+
+
+/* =========================================================
+   QUICK ACTION SECTION
+========================================================= */
+
+.dashboard-page .dashboard-actions-title,
+.dashboard-page .dashboard-actions-heading {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-actions-description {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   QUICK ACTION CARDS
+========================================================= */
+
+.dashboard-page .dashboard-action-card {
+  color: #172033;
+}
+
+.dashboard-page .dashboard-action-card h3 {
+  color: #26304a !important;
+}
+
+.dashboard-page .dashboard-action-card p {
+  color: #737d91 !important;
+}
+
+.dashboard-page .dashboard-action-card span {
+  color: inherit;
+}
+
+
+/* =========================================================
+   YOUR PROGRESS SECTION
+========================================================= */
+
+.dashboard-page .dashboard-progress-section {
+  color: #172033;
+}
+
+.dashboard-page .dashboard-progress-section h2,
+.dashboard-page .dashboard-progress-section h3 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-progress-section p {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   PROGRESS CARD
+========================================================= */
+
+.dashboard-page .dashboard-progress-card {
+  color: #172033;
+}
+
+.dashboard-page .dashboard-progress-card h2,
+.dashboard-page .dashboard-progress-card h3 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-progress-card p {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   "WHAT WOULD YOU LIKE TO DO TODAY?"
+========================================================= */
+
+.dashboard-page .dashboard-today-section {
+  color: #172033;
+}
+
+.dashboard-page .dashboard-today-section h2,
+.dashboard-page .dashboard-today-section h3 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-today-section p {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   ACTION CARDS — TEXT
+========================================================= */
+
+.dashboard-page .dashboard-action-green h3,
+.dashboard-page .dashboard-action-blue h3,
+.dashboard-page .dashboard-action-purple h3,
+.dashboard-page .dashboard-action-orange h3,
+.dashboard-page .dashboard-action-teal h3,
+.dashboard-page .dashboard-action-red h3,
+.dashboard-page .dashboard-action-reality h3 {
+  color: #26304a !important;
+}
+
+.dashboard-page .dashboard-action-green p,
+.dashboard-page .dashboard-action-blue p,
+.dashboard-page .dashboard-action-purple p,
+.dashboard-page .dashboard-action-orange p,
+.dashboard-page .dashboard-action-teal p,
+.dashboard-page .dashboard-action-red p,
+.dashboard-page .dashboard-action-reality p {
+  color: #737d91 !important;
+}
+
+
+/* =========================================================
+   VIEW ALL
+========================================================= */
+
+.dashboard-page .dashboard-view-all {
+  color: #684fe3 !important;
+}
+
+
+/* =========================================================
+   HEADER — KEEP DARK HEADER TEXT CORRECT
+========================================================= */
+
+.dashboard-page .dashboard-header {
+  color: #e9ebf4;
+}
+
+
+/* =========================================================
+   HEADER SEARCH
+========================================================= */
+
+.dashboard-page .dashboard-search input {
+  color: #eef0f7;
+}
+
+.dashboard-page .dashboard-search input::placeholder {
+  color: #9297a8;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ---------------------------------------------------------
+   Sidebar intentionally remains dark.
+========================================================= */
+
+.dashboard-page .dashboard-sidebar {
+  color: #f4f5fb;
+}
+
+.dashboard-page .dashboard-sidebar
+  .dashboard-nav-item {
+  color: #aeb3c4;
+}
+
+.dashboard-page .dashboard-sidebar
+  .dashboard-nav-item:hover {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-sidebar
+  .dashboard-nav-active {
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   SIDEBAR LOGO
+========================================================= */
+
+.dashboard-page .dashboard-logo-name {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-logo-tagline {
+  color: #858b9e;
+}
+
+
+/* =========================================================
+   LEARNING STYLE BOX
+========================================================= */
+
+.dashboard-page .dashboard-learning-style {
+  color: #f0f1f6;
+}
+
+.dashboard-page .dashboard-learning-style
+  strong {
+  color: #a99aff;
+}
+
+.dashboard-page .dashboard-learning-style
+  span {
+  color: #8b91a3;
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+.dashboard-page .dashboard-logout-button {
+  color: #9298a9;
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   BUTTON TEXT SHOULD REMAIN WHITE
+========================================================= */
+
+.dashboard-page .dashboard-primary-button,
+.dashboard-page .dashboard-primary-button span,
+.dashboard-page .dashboard-action-button {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   LOCKED CONTENT
+========================================================= */
+
+.dashboard-page .dashboard-guest-locked {
+  color: #7e8494;
+}
+
+.dashboard-page .dashboard-nav-locked {
+  color: #8d92a5;
+}
+
+
+/* =========================================================
+   FALLBACK FOR UNSTYLED DASHBOARD CONTENT
+   ---------------------------------------------------------
+   Only applies to common text elements inside the main
+   content area. More specific existing rules still win.
+========================================================= */
+
+.dashboard-page .dashboard-main p {
+  color: #69748a;
+}
+
+.dashboard-page .dashboard-main h1,
+.dashboard-page .dashboard-main h2,
+.dashboard-page .dashboard-main h3 {
+  color: #101942;
+}
+
+
+/* =========================================================
+   FINAL SAFETY:
+   LINKS INSIDE CONTENT
+========================================================= */
+
+.dashboard-page .dashboard-main a {
+  color: #5f45d8;
+}
+
+.dashboard-page .dashboard-main button {
+  color: inherit;
+}
+/* =========================================================
+   CURIO DASHBOARD — DARK CARD TEXT OVERRIDE
+   ADDITION ONLY
+   ========================================================= */
+
+
+/* =========================================================
+   NEXT STEP / HERO
+   ========================================================= */
+
+.dashboard-page .dashboard-learning-hero .dashboard-hero-content h2 {
+  color: #ffffff !important;
+}
+
+.dashboard-page .dashboard-learning-hero .dashboard-hero-content p {
+  color: #aeb5c8 !important;
+}
+
+.dashboard-page .dashboard-learning-hero .dashboard-hero-label {
+  color: #a78bfa !important;
+}
+
+
+/* =========================================================
+   HERO BUTTON
+   ========================================================= */
+
+.dashboard-page .dashboard-learning-hero
+.dashboard-primary-button {
+  color: #ffffff !important;
+}
+
+.dashboard-page .dashboard-learning-hero
+.dashboard-primary-button span {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   YOUR PROGRESS — DARK VERSION
+   ========================================================= */
+
+.dashboard-page .dashboard-progress-section {
+  background:
+    linear-gradient(
+      110deg,
+      #101522,
+      #15152d
+    ) !important;
+
+  border-color: rgba(139, 119, 255, 0.22) !important;
+}
+
+
+/* PROGRESS LABEL */
+
+.dashboard-page .dashboard-progress-section
+.dashboard-progress-label {
+  color: #a78bfa !important;
+}
+
+
+/* PROGRESS MAIN HEADING */
+
+.dashboard-page .dashboard-progress-section h2 {
+  color: #ffffff !important;
+}
+
+
+/* PROGRESS DESCRIPTION */
+
+.dashboard-page .dashboard-progress-section p {
+  color: #8f97aa !important;
+}
+
+
+/* PROGRESS NUMBER */
+
+.dashboard-page .dashboard-overall-progress-number {
+  color: #a78bfa !important;
+}
+
+
+/* PROGRESS DESCRIPTION UNDER BAR */
+
+.dashboard-page .dashboard-overall-progress span {
+  color: #8f97aa !important;
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   KEEP LIGHT DASHBOARD SECTIONS LIGHT
+   ========================================================= */
+
+.dashboard-page .dashboard-section-heading h2 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-section-heading p {
+  color: #69748a !important;
+}
+
+
+/* =========================================================
+   LEARNING CARDS
+   ========================================================= */
+
+.dashboard-page .dashboard-learning-card h3 {
+  color: #101942 !important;
+}
+
+.dashboard-page .dashboard-learning-card p {
+  color: #69748a !important;
+}
+
+.dashboard-page .dashboard-card-meta {
+  color: #7a8397 !important;
+}
+
+
+/* =========================================================
+   QUICK ACTIONS
+   ========================================================= */
+
+.dashboard-page .dashboard-action-card p {
+  color: #737b99 !important;
+}
+
+
+/* =========================================================
+   QUICK ACTION TITLES
+   Preserve the existing CURIO colors.
+   ========================================================= */
+
+.dashboard-page .dashboard-action-green h3 {
+  color: #168348 !important;
+}
+
+.dashboard-page .dashboard-action-blue h3 {
+  color: #2b66d9 !important;
+}
+
+.dashboard-page .dashboard-action-purple h3 {
+  color: #6637d9 !important;
+}
+
+.dashboard-page .dashboard-action-orange h3 {
+  color: #db7a18 !important;
+}
+
+.dashboard-page .dashboard-action-teal h3 {
+  color: #148b7b !important;
+}
+
+.dashboard-page .dashboard-action-red h3 {
+  color: #d54848 !important;
+}
+/* =========================================================
+   CURIO DASHBOARD — GUEST AREA FIX
+   ADDITION ONLY
+   DO NOT REMOVE EXISTING CSS
+   ========================================================= */
+
+
+/* =========================================================
+   GUEST LEARNING MESSAGE
+   ========================================================= */
+
+.dashboard-page .dashboard-guest-learning-message {
+  width: 100%;
+  margin-top: 24px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 18px 20px;
+
+  background: rgba(255, 255, 255, 0.82);
+
+  border: 1px solid rgba(118, 102, 255, 0.16);
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 8px 24px rgba(40, 45, 80, 0.06);
+}
+
+
+/* =========================================================
+   GUEST MESSAGE ICON
+   ========================================================= */
+
+.dashboard-page .dashboard-guest-learning-icon {
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(118, 102, 255, 0.14),
+      rgba(78, 196, 255, 0.12)
+    );
+
+  font-size: 20px;
+}
+
+
+/* =========================================================
+   GUEST MESSAGE TITLE
+   ========================================================= */
+
+.dashboard-page .dashboard-guest-learning-message strong {
+  display: block;
+
+  margin: 0 0 4px;
+
+  color: #182044 !important;
+
+  font-size: 15px;
+  font-weight: 750;
+
+  line-height: 1.35;
+}
+
+
+/* =========================================================
+   GUEST MESSAGE DESCRIPTION
+   ========================================================= */
+
+.dashboard-page .dashboard-guest-learning-message p {
+  margin: 0;
+
+  color: #68748f !important;
+
+  font-size: 13px;
+
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   GUEST SIGN-IN BUTTON
+   ========================================================= */
+
+.dashboard-page .dashboard-guest-learning-message button {
+  flex: 0 0 auto;
+
+  margin-left: auto;
+
+  min-height: 40px;
+
+  padding: 9px 16px;
+
+  border: 1px solid rgba(102, 82, 235, 0.25);
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7664ff,
+      #5c7df5
+    );
+
+  color: #ffffff !important;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 7px 18px rgba(102, 91, 235, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+
+.dashboard-page .dashboard-guest-learning-message button:hover {
+  transform: translateY(-1px);
+
+  filter: brightness(1.04);
+
+  box-shadow:
+    0 10px 24px rgba(102, 91, 235, 0.24);
+}
+
+
+.dashboard-page .dashboard-guest-learning-message button:active {
+  transform: translateY(0);
+}
+
+
+/* =========================================================
+   LOCKED LESSON CARDS
+   ========================================================= */
+
+.dashboard-page .dashboard-learning-card-locked {
+  color: #182044 !important;
+
+  cursor: pointer;
+
+  opacity: 0.82;
+}
+
+
+/* Locked card title */
+
+.dashboard-page .dashboard-learning-card-locked h3 {
+  color: #394563 !important;
+}
+
+
+/* Locked card description */
+
+.dashboard-page .dashboard-learning-card-locked p {
+  color: #78839a !important;
+}
+
+
+/* Locked card metadata */
+
+.dashboard-page .dashboard-learning-card-locked
+.dashboard-card-meta {
+  color: #8a94a8 !important;
+}
+
+
+/* Locked text */
+
+.dashboard-page .dashboard-learning-card-locked
+.dashboard-progress > span {
+  color: #707b94 !important;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   SIGN-IN TO UNLOCK LABEL
+   ========================================================= */
+
+.dashboard-page .dashboard-guest-lock-label {
+  margin-bottom: 8px;
+
+  color: #7664ff !important;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+
+  line-height: 1.3;
+}
+
+
+/* =========================================================
+   FREE TRIAL LABEL
+   ========================================================= */
+
+.dashboard-page .dashboard-guest-trial-label {
+  margin-bottom: 8px;
+
+  color: #15966f !important;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+
+  line-height: 1.3;
+}
+
+
+/* =========================================================
+   QUICK ACTION HEADING
+   ========================================================= */
+
+.dashboard-page .dashboard-quick-section
+.dashboard-section-heading h2 {
+  color: #182044 !important;
+}
+
+
+.dashboard-page .dashboard-quick-section
+.dashboard-section-heading p {
+  color: #71809b !important;
+}
+
+
+/* =========================================================
+   RESPONSIVE — GUEST MESSAGE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  .dashboard-page .dashboard-guest-learning-message {
+    align-items: flex-start;
+
+    flex-wrap: wrap;
+
+    padding: 16px;
+  }
+
+
+  .dashboard-page .dashboard-guest-learning-message button {
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .dashboard-page .dashboard-guest-learning-message {
+    gap: 12px;
+  }
+
+  .dashboard-page .dashboard-guest-learning-icon {
+    width: 38px;
+    height: 38px;
+
+    flex-basis: 38px;
+  }
+
+  .dashboard-page .dashboard-guest-learning-message strong {
+    font-size: 14px;
+  }
+
+  .dashboard-page .dashboard-guest-learning-message p {
+    font-size: 12px;
+  }
+
+}
+/* =========================================================
+   CURIO — GUEST PROFILE PANEL FIX
+   ADDITION ONLY
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   PROFILE PANEL
+   --------------------------------------------------------- */
+
+.dashboard-page .dashboard-profile-menu,
+.dashboard-page .dashboard-profile-panel {
+  background:
+    linear-gradient(
+      145deg,
+      #111625 0%,
+      #0d1120 100%
+    ) !important;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.08) !important;
+
+  border-radius: 18px !important;
+
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.30),
+    0 4px 18px rgba(0, 0, 0, 0.16) !important;
+
+  color: #ffffff !important;
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE HEADER
+   --------------------------------------------------------- */
+
+.dashboard-page .dashboard-profile-panel-header,
+.dashboard-page .dashboard-profile-header {
+  background:
+    rgba(255, 255, 255, 0.025) !important;
+
+  border-radius: 13px !important;
+
+  color: #ffffff !important;
+}
+
+
+/* Guest name */
+
+.dashboard-page .dashboard-profile-panel strong,
+.dashboard-page .dashboard-profile-menu strong {
+  color: #f7f8ff !important;
+}
+
+
+/* Guest subtitle */
+
+.dashboard-page .dashboard-profile-panel span,
+.dashboard-page .dashboard-profile-menu span {
+  color: rgba(255, 255, 255, 0.48) !important;
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE DIVIDER
+   --------------------------------------------------------- */
+
+.dashboard-page .dashboard-profile-panel hr,
+.dashboard-page .dashboard-profile-menu hr {
+  border: 0 !important;
+
+  border-top:
+    1px solid rgba(255, 255, 255, 0.12) !important;
+
+  margin:
+    18px 0 !important;
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE INFORMATION LABELS
+   --------------------------------------------------------- */
+
+.dashboard-page .profile-info-label,
+.dashboard-page .dashboard-profile-info span {
+  color:
+    rgba(255, 255, 255, 0.40) !important;
+
+  font-size: 12px !important;
+
+  font-weight: 500 !important;
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE INFORMATION VALUES
+   --------------------------------------------------------- */
+
+.dashboard-page .profile-info-value,
+.dashboard-page .dashboard-profile-info strong {
+  color:
+    rgba(255, 255, 255, 0.88) !important;
+
+  font-size: 15px !important;
+
+  font-weight: 700 !important;
+}
+
+
+/* ---------------------------------------------------------
+   GUEST MESSAGE
+   --------------------------------------------------------- */
+
+.dashboard-page .dashboard-guest-message {
+  margin-top: 14px !important;
+
+  padding: 0 !important;
+
+  background: transparent !important;
+
+  border: none !important;
+
+  box-shadow: none !important;
+}
+
+
+.dashboard-page .dashboard-guest-message strong {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #f5f7ff !important;
+
+  font-size: 15px !important;
+
+  line-height: 1.35 !important;
+}
+
+
+.dashboard-page .dashboard-guest-message p {
+  margin: 0 !important;
+
+  color:
+    #75819a !important;
+
+  font-size: 13px !important;
+
+  line-height: 1.7 !important;
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE ACTIONS
+   --------------------------------------------------------- */
+
+.dashboard-page .dashboard-profile-action {
+  width: 100%;
+
+  margin-top: 12px;
+
+  padding: 11px 12px;
+
+  background:
+    rgba(255, 255, 255, 0.035) !important;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.07) !important;
+
+  border-radius: 10px !important;
+
+  color:
+    rgba(255, 255, 255, 0.72) !important;
+
+  text-align: left;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+
+.dashboard-page .dashboard-profile-action:hover {
+  background:
+    rgba(139, 122, 255, 0.09) !important;
+
+  border-color:
+    rgba(139, 122, 255, 0.18) !important;
+
+  color: #ffffff !important;
+}
+
+
+/* ---------------------------------------------------------
+   SIGN OUT BUTTON
+   --------------------------------------------------------- */
+
+.dashboard-page .dashboard-profile-logout {
+  width: 100% !important;
+
+  min-height: 48px !important;
+
+  margin-top: 22px !important;
+
+  padding: 12px 16px !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+
+  justify-content: center !important;
+
+  gap: 7px !important;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.08) !important;
+
+  border-radius: 12px !important;
+
+  background:
+    rgba(255, 255, 255, 0.045) !important;
+
+  color:
+    rgba(255, 255, 255, 0.78) !important;
+
+  font-family: inherit !important;
+
+  font-size: 14px !important;
+
+  font-weight: 650 !important;
+
+  cursor: pointer !important;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease !important;
+}
+
+
+.dashboard-page .dashboard-profile-logout:hover {
+  background:
+    rgba(239, 68, 68, 0.09) !important;
+
+  border-color:
+    rgba(239, 68, 68, 0.18) !important;
+
+  color:
+    #ff9b9b !important;
+
+  transform: translateY(-1px);
+}
+
+
+.dashboard-page .dashboard-profile-logout:active {
+  transform: translateY(0);
+}
+
+
+.dashboard-page .dashboard-profile-logout:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed !important;
+
+  transform: none;
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE PANEL — SMALL SCREENS
+   --------------------------------------------------------- */
+
+@media (max-width: 600px) {
+
+  .dashboard-page .dashboard-profile-menu,
+  .dashboard-page .dashboard-profile-panel {
+    width:
+      min(360px, calc(100vw - 24px)) !important;
+  }
+
+}
+/* =========================================================
+   AI SIMULATION SIDEBAR NAVIGATION
+   CURIO
+   ========================================================= */
+
+.dashboard-sidebar .dashboard-nav-item {
+  text-decoration: none;
+}
+
+.dashboard-sidebar .dashboard-nav-locked {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dashboard-sidebar .dashboard-nav-locked:hover {
+  background: rgba(109, 66, 232, 0.06);
+}
+
+.dashboard-sidebar .dashboard-nav-locked .dashboard-nav-icon {
+  opacity: 0.7;
+}
+
+
+/* =========================================================
+   AI SIMULATION ACTIVE STATE
+   ========================================================= */
+
+.dashboard-sidebar
+  .dashboard-nav-item.dashboard-nav-ai-simulation-active {
+  background: rgba(109, 66, 232, 0.08);
+  color: #6d42e8;
+  box-shadow: inset 3px 0 0 #6d42e8;
+}
+
+.dashboard-sidebar
+  .dashboard-nav-item.dashboard-nav-ai-simulation-active
+  .dashboard-nav-icon {
+  transform: scale(1.05);
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 850px) {
+
+  .dashboard-sidebar
+    .dashboard-nav-item.dashboard-nav-ai-simulation-active {
+    box-shadow: none;
+  }
+
+}
+
+@media (max-width: 650px) {
+
+  .dashboard-sidebar .dashboard-nav-item {
+    width: 45px;
+  }
+
+}
