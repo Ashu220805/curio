@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase.ts";
+
+import {
+  useAllLessonProgress,
+} from "../../hooks/useLessonProgress.ts";
+
 import "./Dashboard.css";
 
 function Dashboard() {
@@ -12,18 +17,8 @@ function Dashboard() {
     =========================================
     GUEST MODE
   =========================================
-    */
-
-  /*
-    IMPORTANT:
-    Guest mode is completely separate from
-    the logged-in user's learning progress.
-
-    A guest must NEVER read:
-    curio_completed_lessons
-
-    from localStorage.
   */
+
   const isGuest =
     sessionStorage.getItem("curio_guest") === "true";
 
@@ -31,21 +26,49 @@ function Dashboard() {
     =========================================
     LEARNING PROGRESS
   =========================================
-    */
+  */
 
   const [progressVersion, setProgressVersion] = useState(0);
 
   const TOTAL_LESSONS = 8;
   const TOTAL_SECTIONS_PER_LESSON = 8;
 
+  /*
+    =========================================
+    SUPABASE LESSON PROGRESS
+  =========================================
+
+    Learn.tsx already uses this same hook.
+
+    Dashboard now uses Supabase as the source
+    of truth instead of relying only on
+    localStorage.
+  =========================================
+  */
+
+  const {
+    progress: lessonProgress,
+    loading: lessonProgressLoading,
+    reload: reloadLessonProgress,
+  } = useAllLessonProgress();
+
+  /*
+    =========================================
+    READ COMPLETED LESSONS
+  =========================================
+
+    Keep the existing localStorage support.
+
+    Supabase progress will be used first for
+    the actual Dashboard progress.
+  =========================================
+  */
+
   const readCompletedLessons = (): number[] => {
     /*
       =========================================
       GUEST PROTECTION
       =========================================
-
-      Never use the logged-in user's
-      localStorage progress while in Guest Mode.
     */
 
     if (isGuest) {
@@ -80,6 +103,21 @@ function Dashboard() {
     }
   };
 
+  /*
+    =========================================
+    READ LESSON SECTION PROGRESS
+  =========================================
+
+    IMPORTANT:
+
+    Logged-in users:
+      Supabase -> primary source
+
+    Guest users:
+      0% progress
+  =========================================
+  */
+
   const readSectionProgress = (
     lessonId: number
   ): number => {
@@ -87,49 +125,113 @@ function Dashboard() {
       =========================================
       GUEST PROTECTION
       =========================================
-
-      Guests do not inherit progress from
-      an existing CURIO account.
     */
 
     if (isGuest) {
       return 0;
     }
 
+    /*
+      =========================================
+      SUPABASE PROGRESS
+      =========================================
+    */
+
+    const savedProgress =
+      lessonProgress.find(
+        (item) =>
+          item.lessonId === lessonId
+      );
+
+    if (savedProgress) {
+      const completedSections = Math.max(
+        0,
+        Math.min(
+          Number(
+            savedProgress.completedSections ?? 0
+          ),
+          TOTAL_SECTIONS_PER_LESSON
+        )
+      );
+
+      /*
+        If database says completed, always
+        display 100%.
+      */
+
+      if (
+        savedProgress.completed === true ||
+        completedSections >=
+          TOTAL_SECTIONS_PER_LESSON
+      ) {
+        return 100;
+      }
+
+      return Math.round(
+        (completedSections /
+          TOTAL_SECTIONS_PER_LESSON) *
+          100
+      );
+    }
+
+    /*
+      =========================================
+      LOCAL STORAGE FALLBACK
+      =========================================
+
+      This preserves your existing behavior
+      for older progress records.
+    =========================================
+    */
+
     try {
       const completedLessons =
         readCompletedLessons();
 
-      if (completedLessons.includes(lessonId)) {
+      if (
+        completedLessons.includes(
+          lessonId
+        )
+      ) {
         return 100;
       }
 
-      const matchingKeys = Object.keys(
-        localStorage
-      ).filter((key) => {
-        const lowerKey = key.toLowerCase();
+      const matchingKeys =
+        Object.keys(localStorage).filter(
+          (key) => {
+            const lowerKey =
+              key.toLowerCase();
 
-        return (
-          lowerKey.includes(`lesson${lessonId}`) &&
-          lowerKey.includes("sections") &&
-          lowerKey.includes("completed")
+            return (
+              lowerKey.includes(
+                `lesson${lessonId}`
+              ) &&
+              lowerKey.includes(
+                "sections"
+              ) &&
+              lowerKey.includes(
+                "completed"
+              )
+            );
+          }
         );
-      });
 
       let bestCount = 0;
 
       matchingKeys.forEach((key) => {
         try {
           const parsed = JSON.parse(
-            localStorage.getItem(key) || "null"
+            localStorage.getItem(key) ||
+              "null"
           );
 
           if (Array.isArray(parsed)) {
-            const validSections = parsed.filter(
-              (item) =>
-                item !== null &&
-                item !== undefined
-            );
+            const validSections =
+              parsed.filter(
+                (item) =>
+                  item !== null &&
+                  item !== undefined
+              );
 
             bestCount = Math.max(
               bestCount,
@@ -137,11 +239,16 @@ function Dashboard() {
             );
           }
         } catch {
-          // Ignore unrelated localStorage values.
+          /*
+            Ignore unrelated localStorage
+            values.
+          */
         }
       });
 
-      if (bestCount <= 0) return 0;
+      if (bestCount <= 0) {
+        return 0;
+      }
 
       return Math.min(
         100,
@@ -156,31 +263,42 @@ function Dashboard() {
     }
   };
 
+  /*
+    =========================================
+    GET LESSON PROGRESS
+  =========================================
+  */
+
   const getLessonProgress = (
     lessonId: number
   ): number => {
-    /*
-      =========================================
-      GUEST MODE
-      =========================================
-
-      Guests always see zero dashboard
-      progress because their progress is
-      intentionally not connected to the
-      logged-in user's localStorage.
-    */
-
     if (isGuest) {
       return 0;
     }
 
-    return readSectionProgress(lessonId);
+    return readSectionProgress(
+      lessonId
+    );
   };
+
+  /*
+    =========================================
+    REFRESH LEARNING PROGRESS
+  =========================================
+  */
 
   const refreshLearningProgress = () => {
     setProgressVersion(
       (previous) => previous + 1
     );
+
+    /*
+      Reload the actual Supabase data.
+    */
+
+    if (!isGuest) {
+      void reloadLessonProgress();
+    }
   };
 
   /*
@@ -193,9 +311,10 @@ function Dashboard() {
     isGuest ? "Guest" : "User"
   );
 
-  const [userEmail, setUserEmail] = useState(
-    isGuest ? "Guest account" : ""
-  );
+  const [userEmail, setUserEmail] =
+    useState(
+      isGuest ? "Guest account" : ""
+    );
 
   const [showProfile, setShowProfile] =
     useState(false);
@@ -204,14 +323,6 @@ function Dashboard() {
     =========================================
     ACCESSIBILITY
   =========================================
-  */
-
-  /*
-    1.0 = 100%
-    0.9 = 90%
-    1.1 = 110%
-    1.2 = 120%
-    1.3 = 130%
   */
 
   const [textScale, setTextScale] =
@@ -223,8 +334,10 @@ function Dashboard() {
   =========================================
   */
 
-  const [completedLessonIds, setCompletedLessonIds] =
-    useState<number[]>([]);
+  const [
+    completedLessonIds,
+    setCompletedLessonIds,
+  ] = useState<number[]>([]);
 
   const totalLessons = 8;
 
@@ -232,25 +345,14 @@ function Dashboard() {
     completedLessonIds.length;
 
   const lessonsCompleted =
-    Math.min(completedLessons, totalLessons);
+    Math.min(
+      completedLessons,
+      totalLessons
+    );
 
   /*
     =========================================
     FEATURE ACCESS
-    =========================================
-
-    Guest:
-      Practice      -> locked
-      AI Literacy   -> locked
-      AI Simulation  -> locked
-
-    Logged-in:
-      Practice      -> unlocked only after
-                      all 8 lessons
-
-      AI Literacy   -> unlocked
-
-      AI Simulation -> unlocked
   =========================================
   */
 
@@ -279,20 +381,30 @@ function Dashboard() {
   =========================================
   */
 
-  const [showChangePassword, setShowChangePassword] =
-    useState(false);
+  const [
+    showChangePassword,
+    setShowChangePassword,
+  ] = useState(false);
 
-  const [newPassword, setNewPassword] =
-    useState("");
+  const [
+    newPassword,
+    setNewPassword,
+  ] = useState("");
 
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] = useState("");
 
-  const [passwordMessage, setPasswordMessage] =
-    useState("");
+  const [
+    passwordMessage,
+    setPasswordMessage,
+  ] = useState("");
 
-  const [isChangingPassword, setIsChangingPassword] =
-    useState(false);
+  const [
+    isChangingPassword,
+    setIsChangingPassword,
+  ] = useState(false);
 
   /*
     =========================================
@@ -304,9 +416,6 @@ function Dashboard() {
     const loadUser = async () => {
       /*
         GUEST MODE
-        -------------------------------------
-        Do NOT ask Supabase for a user.
-        Do NOT redirect to login.
       */
 
       if (
@@ -325,7 +434,8 @@ function Dashboard() {
 
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } =
+        await supabase.auth.getUser();
 
       if (!user) {
         navigate("/login");
@@ -349,69 +459,72 @@ function Dashboard() {
     =========================================
     LOAD LESSON COMPLETION
   =========================================
+
+    IMPORTANT:
+
+    Use Supabase lesson progress.
+
+    A lesson is completed when:
+      completed === true
+
+    OR
+
+      completedSections >= 8
+  =========================================
   */
 
   useEffect(() => {
-    const loadLessonProgress = () => {
-      /*
-        Guest users NEVER get practice access.
-        Their lesson progress is not used here.
-      */
+    if (isGuest) {
+      setCompletedLessonIds([]);
+      return;
+    }
 
-      if (
-        sessionStorage.getItem("curio_guest") ===
-        "true"
-      ) {
-        setCompletedLessonIds([]);
-        return;
-      }
+    if (lessonProgressLoading) {
+      return;
+    }
 
-      try {
-        const stored = localStorage.getItem(
-          "curio_completed_lessons"
+    const completedIds =
+      lessonProgress
+        .filter(
+          (lesson) =>
+            lesson.completed === true ||
+            Number(
+              lesson.completedSections ?? 0
+            ) >=
+              TOTAL_SECTIONS_PER_LESSON
+        )
+        .map(
+          (lesson) => lesson.lessonId
+        )
+        .filter(
+          (id) =>
+            Number.isInteger(id) &&
+            id >= 1 &&
+            id <= totalLessons
         );
 
-        if (!stored) {
-          setCompletedLessonIds([]);
-          return;
-        }
+    setCompletedLessonIds(
+      Array.from(
+        new Set(completedIds)
+      ).sort((a, b) => a - b)
+    );
+  }, [
+    lessonProgress,
+    lessonProgressLoading,
+    isGuest,
+  ]);
 
-        const parsed = JSON.parse(stored);
+  /*
+    =========================================
+    LESSON COMPLETION EVENTS
+  =========================================
+  */
 
-        if (!Array.isArray(parsed)) {
-          setCompletedLessonIds([]);
-          return;
-        }
-
-        const validIds = parsed
-          .map(Number)
-          .filter(
-            (id) =>
-              Number.isInteger(id) &&
-              id >= 1 &&
-              id <= totalLessons
-          );
-
-        setCompletedLessonIds(
-          Array.from(new Set(validIds)).sort(
-            (a, b) => a - b
-          )
-        );
-      } catch {
-        setCompletedLessonIds([]);
-      }
-    };
-
-    loadLessonProgress();
-
-    /*
-      Lesson pages dispatch this event after completion.
-      This makes the dashboard update immediately.
-    */
-
-    const handleLessonCompleted = () => {
-      loadLessonProgress();
-    };
+  useEffect(() => {
+    const handleLessonCompleted =
+      () => {
+        refreshLearningProgress();
+      };
 
     globalThis.addEventListener(
       "curio:lesson-completed",
@@ -425,7 +538,7 @@ function Dashboard() {
 
     globalThis.addEventListener(
       "focus",
-      loadLessonProgress
+      handleLessonCompleted
     );
 
     return () => {
@@ -441,10 +554,10 @@ function Dashboard() {
 
       globalThis.removeEventListener(
         "focus",
-        loadLessonProgress
+        handleLessonCompleted
       );
     };
-  }, []);
+  }, [isGuest, reloadLessonProgress]);
 
   /*
     =========================================
@@ -453,9 +566,17 @@ function Dashboard() {
   */
 
   useEffect(() => {
-    const handleProgressChange = () => {
-      refreshLearningProgress();
-    };
+    const handleProgressChange =
+      () => {
+        setProgressVersion(
+          (previous) =>
+            previous + 1
+        );
+
+        if (!isGuest) {
+          void reloadLessonProgress();
+        }
+      };
 
     globalThis.addEventListener(
       "storage",
@@ -467,14 +588,15 @@ function Dashboard() {
       handleProgressChange
     );
 
-    const handleVisibilityChange = () => {
-      if (
-        document.visibilityState ===
-        "visible"
-      ) {
-        refreshLearningProgress();
-      }
-    };
+    const handleVisibilityChange =
+      () => {
+        if (
+          document.visibilityState ===
+          "visible"
+        ) {
+          handleProgressChange();
+        }
+      };
 
     document.addEventListener(
       "visibilitychange",
@@ -497,7 +619,10 @@ function Dashboard() {
         handleVisibilityChange
       );
     };
-  }, []);
+  }, [
+    isGuest,
+    reloadLessonProgress,
+  ]);
 
   /*
     =========================================
@@ -535,11 +660,6 @@ function Dashboard() {
     setIsLoggingOut(true);
 
     try {
-      /*
-        GUEST LOGOUT
-        -------------------------------------
-      */
-
       if (
         sessionStorage.getItem(
           "curio_guest"
@@ -554,10 +674,6 @@ function Dashboard() {
         navigate("/login");
         return;
       }
-
-      /*
-        NORMAL SUPABASE LOGOUT
-      */
 
       const { error } =
         await supabase.auth.signOut();
@@ -583,78 +699,76 @@ function Dashboard() {
   =========================================
   */
 
-  const handleChangePassword = async () => {
-    setPasswordMessage("");
+  const handleChangePassword =
+    async () => {
+      setPasswordMessage("");
 
-    if (!newPassword) {
-      setPasswordMessage(
-        "Please enter a new password."
-      );
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setPasswordMessage(
-        "Password must be at least 6 characters."
-      );
-      return;
-    }
-
-    if (
-      newPassword !== confirmPassword
-    ) {
-      setPasswordMessage(
-        "Passwords do not match."
-      );
-      return;
-    }
-
-    setIsChangingPassword(true);
-
-    try {
-      const { error } =
-        await supabase.auth.updateUser({
-          password: newPassword,
-        });
-
-      if (error) {
-        throw error;
+      if (!newPassword) {
+        setPasswordMessage(
+          "Please enter a new password."
+        );
+        return;
       }
 
-      setPasswordMessage(
-        "Password changed successfully."
-      );
-
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error) {
-      console.error(
-        "CURIO password change error:",
-        error
-      );
-
-      if (error instanceof Error) {
+      if (newPassword.length < 6) {
         setPasswordMessage(
-          error.message
+          "Password must be at least 6 characters."
         );
-      } else {
-        setPasswordMessage(
-          "Unable to change password."
-        );
+        return;
       }
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
+
+      if (
+        newPassword !==
+        confirmPassword
+      ) {
+        setPasswordMessage(
+          "Passwords do not match."
+        );
+        return;
+      }
+
+      setIsChangingPassword(true);
+
+      try {
+        const { error } =
+          await supabase.auth.updateUser({
+            password: newPassword,
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        setPasswordMessage(
+          "Password changed successfully."
+        );
+
+        setNewPassword("");
+        setConfirmPassword("");
+      } catch (error) {
+        console.error(
+          "CURIO password change error:",
+          error
+        );
+
+        if (error instanceof Error) {
+          setPasswordMessage(
+            error.message
+          );
+        } else {
+          setPasswordMessage(
+            "Unable to change password."
+          );
+        }
+      } finally {
+        setIsChangingPassword(false);
+      }
+    };
 
   /*
     =========================================
     GUEST LESSON ACCESS
   =========================================
-
-    Lesson 1 is the only free trial lesson.
-
-    Lessons 2-8 are visible but locked.
   */
 
   const canGuestOpenLesson = (
@@ -667,26 +781,18 @@ function Dashboard() {
     return lessonId === 1;
   };
 
-  const openLesson = (lessonId: number) => {
-    /*
-      =========================================
-      GUEST
-      =========================================
-    */
-
+  const openLesson = (
+    lessonId: number
+  ) => {
     if (
       isGuest &&
-      !canGuestOpenLesson(lessonId)
+      !canGuestOpenLesson(
+        lessonId
+      )
     ) {
       navigate("/login");
       return;
     }
-
-    /*
-      =========================================
-      NORMAL USER
-      =========================================
-    */
 
     navigate(
       `/learn/lesson/${lessonId}`
@@ -697,12 +803,6 @@ function Dashboard() {
     =========================================
     FEATURE ACCESS HELPERS
   =========================================
-  */
-
-  /*
-    Practice:
-      Guest -> login
-      Logged-in but incomplete -> Learn AI
   */
 
   const openPractice = () => {
@@ -719,12 +819,6 @@ function Dashboard() {
     navigate("/practice");
   };
 
-  /*
-    AI Literacy:
-      Guest -> login
-      Logged-in -> Reality Check
-  */
-
   const openAILiteracy = () => {
     if (!canAccessAILiteracy) {
       navigate("/login");
@@ -738,10 +832,6 @@ function Dashboard() {
     =========================================
     AI SIMULATION ACCESS
   =========================================
-  
-    Guest -> login
-  
-    Logged-in -> AI Simulation
   */
 
   const openAISimulation = () => {
@@ -900,23 +990,15 @@ function Dashboard() {
         isGuest
           ? "Sign in to unlock practice"
           : "Test your knowledge",
-      icon: isGuest ? "🔒" : "✏️",
+      icon: isGuest
+        ? "🔒"
+        : "✏️",
       path: "/practice",
       className:
         "dashboard-action-blue",
-      locked: isGuest || !canPractice,
+      locked:
+        isGuest || !canPractice,
     },
-
-    /*
-      =========================================
-      AI LITERACY / REALITY CHECK
-      =========================================
-
-      Guest users can see that the feature
-      exists, but cannot enter it.
-
-      Logged-in users can access it normally.
-    */
 
     {
       title: "AI Literacy",
@@ -924,7 +1006,9 @@ function Dashboard() {
         isGuest
           ? "Sign in to unlock AI Literacy"
           : "Understand AI, spot synthetic content & think critically",
-      icon: isGuest ? "🔒" : "🧠",
+      icon: isGuest
+        ? "🔒"
+        : "🧠",
       path: "/reality-check",
       className:
         "dashboard-action-reality",
@@ -949,12 +1033,6 @@ function Dashboard() {
           ? "dashboard-calm-mode"
           : ""
       }`}
-      /*
-        IMPORTANT:
-        This variable allows Dashboard.css
-        to control the dashboard scale without
-        changing the profile panel scale.
-      */
       style={
         {
           "--dashboard-text-scale":
@@ -962,13 +1040,7 @@ function Dashboard() {
         } as React.CSSProperties
       }
     >
-      {/* =========================================
-          SIDEBAR
-      ========================================== */}
-
       <aside className="dashboard-sidebar">
-
-        {/* LOGO */}
 
         <div className="dashboard-logo">
           <img
@@ -988,8 +1060,6 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* NAVIGATION */}
-
         <nav className="dashboard-navigation">
 
           <Link
@@ -1005,17 +1075,6 @@ function Dashboard() {
             </span>
           </Link>
 
-
-          {/* =========================================
-              LEARN AI
-
-              Guests can enter Learn AI because
-              Lesson 1 is the free trial.
-
-              Lessons 2-8 remain locked inside
-              the learning area.
-          ========================================== */}
-
           <Link
             to="/learn"
             className="dashboard-nav-item"
@@ -1028,16 +1087,6 @@ function Dashboard() {
               Learn AI
             </span>
           </Link>
-
-
-          {/* =========================================
-              AI SIMULATION
-
-              Guests cannot enter.
-
-              Logged-in users can access the
-              AI Simulation page.
-          ========================================== */}
 
           {canAccessAISimulation ? (
             <Link
@@ -1056,7 +1105,9 @@ function Dashboard() {
             <button
               type="button"
               className="dashboard-nav-item dashboard-nav-locked"
-              onClick={openAISimulation}
+              onClick={
+                openAISimulation
+              }
               title="Sign in to unlock AI Simulation"
             >
               <span className="dashboard-nav-icon">
@@ -1068,13 +1119,6 @@ function Dashboard() {
               </span>
             </button>
           )}
-
-
-          {/* =========================================
-              AI LITERACY
-
-              Guests cannot enter.
-          ========================================== */}
 
           {canAccessAILiteracy ? (
             <Link
@@ -1093,7 +1137,9 @@ function Dashboard() {
             <button
               type="button"
               className="dashboard-nav-item dashboard-nav-locked"
-              onClick={openAILiteracy}
+              onClick={
+                openAILiteracy
+              }
               title="Sign in to unlock AI Literacy"
             >
               <span className="dashboard-nav-icon">
@@ -1105,20 +1151,6 @@ function Dashboard() {
               </span>
             </button>
           )}
-
-
-          {/* =========================================
-              PRACTICE
-
-              Guest:
-                locked
-
-              Logged-in but lessons incomplete:
-                locked
-
-              Logged-in + all 8 lessons:
-                unlocked
-          ========================================== */}
 
           {canPractice ? (
             <Link
@@ -1153,16 +1185,11 @@ function Dashboard() {
               </span>
             </button>
           )}
-
         </nav>
-
-
-        {/* SIDEBAR BOTTOM */}
 
         <div className="dashboard-sidebar-bottom">
 
           <div className="dashboard-learning-style">
-
             <div className="dashboard-learning-style-title">
               Your Learning Style
             </div>
@@ -1177,15 +1204,15 @@ function Dashboard() {
             >
               Change
             </button>
-
           </div>
-
 
           <button
             type="button"
             className="dashboard-logout-button"
             onClick={handleLogout}
-            disabled={isLoggingOut}
+            disabled={
+              isLoggingOut
+            }
           >
             <span>
               ↪
@@ -1199,19 +1226,9 @@ function Dashboard() {
           </button>
 
         </div>
-
       </aside>
 
-
-      {/* =========================================
-          MAIN AREA
-      ========================================== */}
-
       <main className="dashboard-main">
-
-        {/* =========================================
-            TOP HEADER
-        ========================================== */}
 
         <header className="dashboard-header">
 
@@ -1219,9 +1236,7 @@ function Dashboard() {
             CURIO
           </div>
 
-
           <div className="dashboard-search">
-
             <span className="dashboard-search-icon">
               ⌕
             </span>
@@ -1231,15 +1246,9 @@ function Dashboard() {
               placeholder="Search lessons, topics or AI tools..."
               aria-label="Search"
             />
-
           </div>
 
-
           <div className="dashboard-header-actions">
-
-            {/* =====================================
-                CALM MODE
-            ====================================== */}
 
             <button
               type="button"
@@ -1254,9 +1263,10 @@ function Dashboard() {
                     !previous
                 )
               }
-              aria-pressed={calmMode}
+              aria-pressed={
+                calmMode
+              }
             >
-
               <span
                 className="dashboard-calm-icon"
                 aria-hidden="true"
@@ -1269,23 +1279,18 @@ function Dashboard() {
                   ? "Calm On"
                   : "Calm Mode"}
               </span>
-
             </button>
-
-
-            {/* =====================================
-                TEXT SIZE
-            ====================================== */}
 
             <div
               className="dashboard-text-controls"
               aria-label="Text size controls"
             >
-
               <button
                 type="button"
                 className="dashboard-text-size-button"
-                onClick={decreaseTextSize}
+                onClick={
+                  decreaseTextSize
+                }
                 aria-label="Decrease text size"
                 disabled={
                   textScale <= 0.9
@@ -1293,7 +1298,6 @@ function Dashboard() {
               >
                 A−
               </button>
-
 
               <span
                 className="dashboard-text-size-label"
@@ -1304,11 +1308,12 @@ function Dashboard() {
                 )}%
               </span>
 
-
               <button
                 type="button"
                 className="dashboard-text-size-button"
-                onClick={increaseTextSize}
+                onClick={
+                  increaseTextSize
+                }
                 aria-label="Increase text size"
                 disabled={
                   textScale >= 1.3
@@ -1316,13 +1321,7 @@ function Dashboard() {
               >
                 A+
               </button>
-
             </div>
-
-
-            {/* =====================================
-                NOTIFICATIONS
-            ====================================== */}
 
             <button
               type="button"
@@ -1331,11 +1330,6 @@ function Dashboard() {
             >
               🔔
             </button>
-
-
-            {/* =====================================
-                PROFILE
-            ====================================== */}
 
             <button
               type="button"
@@ -1346,16 +1340,16 @@ function Dashboard() {
                     !previous
                 )
               }
-              aria-expanded={showProfile}
+              aria-expanded={
+                showProfile
+              }
               aria-label="Open profile menu"
             >
-
               <div className="dashboard-avatar">
                 🧑🏻
               </div>
 
               <div className="dashboard-profile-text">
-
                 <strong>
                   Hi, {userName} 👋
                 </strong>
@@ -1365,7 +1359,6 @@ function Dashboard() {
                     ? "Guest"
                     : "Beginner"}
                 </span>
-
               </div>
 
               <span
@@ -1376,28 +1369,17 @@ function Dashboard() {
                   ? "⌃"
                   : "⌄"}
               </span>
-
             </button>
 
-
-            {/* =========================================
-                PROFILE PANEL
-            ========================================== */}
-
             {showProfile && (
-
               <div className="dashboard-profile-panel">
 
-                {/* PROFILE HEADER */}
-
                 <div className="dashboard-profile-panel-header">
-
                   <div className="dashboard-profile-large-avatar">
                     🧑🏻
                   </div>
 
                   <div>
-
                     <strong>
                       {userName}
                     </strong>
@@ -1407,21 +1389,14 @@ function Dashboard() {
                         ? "Exploring CURIO"
                         : "Beginner learner"}
                     </span>
-
                   </div>
-
                 </div>
 
-
                 <div className="dashboard-profile-divider" />
-
-
-                {/* PROFILE INFORMATION */}
 
                 <div className="dashboard-profile-info">
 
                   <div>
-
                     <span>
                       Full name
                     </span>
@@ -1429,12 +1404,9 @@ function Dashboard() {
                     <strong>
                       {userName}
                     </strong>
-
                   </div>
 
-
                   <div>
-
                     <span>
                       Email address
                     </span>
@@ -1442,12 +1414,9 @@ function Dashboard() {
                     <strong>
                       {userEmail}
                     </strong>
-
                   </div>
 
-
                   <div>
-
                     <span>
                       Account
                     </span>
@@ -1457,14 +1426,10 @@ function Dashboard() {
                         ? "Guest"
                         : "CURIO Learner"}
                     </strong>
-
                   </div>
 
-
                   {!isGuest && (
-
                     <div>
-
                       <span>
                         Password
                       </span>
@@ -1472,20 +1437,13 @@ function Dashboard() {
                       <strong>
                         ••••••••
                       </strong>
-
                     </div>
-
                   )}
 
                 </div>
 
-
-                {/* GUEST MESSAGE */}
-
                 {isGuest && (
-
                   <div className="dashboard-guest-message">
-
                     <strong>
                       ✨ You're exploring as a guest
                     </strong>
@@ -1498,16 +1456,10 @@ function Dashboard() {
                       AI Literacy, and save
                       your progress.
                     </p>
-
                   </div>
-
                 )}
 
-
-                {/* CHANGE PASSWORD */}
-
                 {!isGuest && (
-
                   <button
                     type="button"
                     className="dashboard-profile-action"
@@ -1520,42 +1472,41 @@ function Dashboard() {
                   >
                     🔐 Change Password
                   </button>
-
                 )}
-
-
-                {/* PASSWORD FORM */}
 
                 {!isGuest &&
                   showChangePassword && (
-
                     <div className="dashboard-password-box">
 
                       <input
                         type="password"
                         placeholder="New password"
-                        value={newPassword}
+                        value={
+                          newPassword
+                        }
                         onChange={(event) =>
                           setNewPassword(
-                            event.target.value
+                            event.target
+                              .value
                           )
                         }
                         autoComplete="new-password"
                       />
-
 
                       <input
                         type="password"
                         placeholder="Confirm new password"
-                        value={confirmPassword}
+                        value={
+                          confirmPassword
+                        }
                         onChange={(event) =>
                           setConfirmPassword(
-                            event.target.value
+                            event.target
+                              .value
                           )
                         }
                         autoComplete="new-password"
                       />
-
 
                       <button
                         type="button"
@@ -1571,57 +1522,38 @@ function Dashboard() {
                           : "Update Password"}
                       </button>
 
-
                       {passwordMessage && (
-
                         <p className="dashboard-password-message">
                           {passwordMessage}
                         </p>
-
                       )}
-
                     </div>
-
                   )}
-
-
-                {/* PROFILE LOGOUT */}
 
                 <button
                   type="button"
                   className="dashboard-profile-logout"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
+                  onClick={
+                    handleLogout
+                  }
+                  disabled={
+                    isLoggingOut
+                  }
                 >
                   ↪{" "}
-
                   {isLoggingOut
                     ? "Signing out..."
                     : "Sign out"}
                 </button>
 
               </div>
-
             )}
-
           </div>
-
         </header>
-
-
-        {/* =========================================
-            CONTENT
-        ========================================== */}
 
         <div className="dashboard-content">
 
-
-          {/* =========================================
-              WELCOME
-          ========================================== */}
-
           <section className="dashboard-welcome">
-
             <h1>
               Good morning, {userName}! 👋
             </h1>
@@ -1631,13 +1563,7 @@ function Dashboard() {
                 ? "Welcome to CURIO! Explore Lesson 1 as your free trial."
                 : "Welcome back! Continue your AI learning journey."}
             </p>
-
           </section>
-
-
-          {/* =========================================
-              MAIN LEARNING HERO
-          ========================================== */}
 
           <section className="dashboard-learning-hero">
 
@@ -1658,7 +1584,6 @@ function Dashboard() {
                 and real-world AI skills.
               </p>
 
-
               <Link
                 to="/learn"
                 className="dashboard-primary-button"
@@ -1671,7 +1596,6 @@ function Dashboard() {
               </Link>
 
             </div>
-
 
             <div className="dashboard-hero-visual">
 
@@ -1692,20 +1616,13 @@ function Dashboard() {
               </div>
 
             </div>
-
           </section>
-
-
-          {/* =========================================
-              CONTINUE LEARNING
-          ========================================== */}
 
           <section className="dashboard-section">
 
             <div className="dashboard-section-heading">
 
               <div>
-
                 <h2>
                   Continue Learning
                 </h2>
@@ -1715,9 +1632,7 @@ function Dashboard() {
                     ? "Start with your free Lesson 1 trial."
                     : "Pick up where you left off."}
                 </p>
-
               </div>
-
 
               <Link
                 to="/learn"
@@ -1728,31 +1643,16 @@ function Dashboard() {
 
             </div>
 
-
             <div className="dashboard-learning-grid">
 
               {learningCards.map(
                 (card) => {
 
-                  /*
-                    =================================
-                    GUEST LOCKED LESSON
-                    =================================
-
-                    Lesson 1:
-                    freely accessible.
-
-                    Lessons 2-8:
-                    visible but locked.
-                  */
-
                   if (
                     isGuest &&
                     card.id !== 1
                   ) {
-
                     return (
-
                       <button
                         type="button"
                         className="dashboard-learning-card dashboard-learning-card-locked"
@@ -1763,11 +1663,9 @@ function Dashboard() {
                           )
                         }
                       >
-
                         <div className="dashboard-learning-card-icon">
                           {card.icon}
                         </div>
-
 
                         <div className="dashboard-learning-card-content">
 
@@ -1783,9 +1681,7 @@ function Dashboard() {
                             {card.description}
                           </p>
 
-
                           <div className="dashboard-card-meta">
-
                             <span>
                               {card.lesson}
                             </span>
@@ -1797,21 +1693,18 @@ function Dashboard() {
                             <span>
                               {card.duration}
                             </span>
-
                           </div>
-
 
                           <div className="dashboard-progress">
 
                             <div className="dashboard-progress-track">
-
                               <div
                                 className="dashboard-progress-bar"
                                 style={{
-                                  width: "0%",
+                                  width:
+                                    "0%",
                                 }}
                               />
-
                             </div>
 
                             <span>
@@ -1821,22 +1714,11 @@ function Dashboard() {
                           </div>
 
                         </div>
-
                       </button>
-
                     );
-
                   }
 
-
-                  /*
-                    =================================
-                    NORMAL LESSON CARD
-                    =================================
-                  */
-
                   return (
-
                     <Link
                       to={`/learn/lesson/${card.id}`}
                       className={`dashboard-learning-card ${
@@ -1847,23 +1729,18 @@ function Dashboard() {
                       }`}
                       key={card.id}
                     >
-
                       <div className="dashboard-learning-card-icon">
                         {card.icon}
                       </div>
-
 
                       <div className="dashboard-learning-card-content">
 
                         {isGuest &&
                           card.id === 1 && (
-
                             <div className="dashboard-guest-trial-label">
                               FREE TRIAL
                             </div>
-
                           )}
-
 
                         <h3>
                           {card.title}
@@ -1872,7 +1749,6 @@ function Dashboard() {
                         <p>
                           {card.description}
                         </p>
-
 
                         <div className="dashboard-card-meta">
 
@@ -1890,18 +1766,15 @@ function Dashboard() {
 
                         </div>
 
-
                         <div className="dashboard-progress">
 
                           <div className="dashboard-progress-track">
-
                             <div
                               className="dashboard-progress-bar"
                               style={{
                                 width: `${card.progress}%`,
                               }}
                             />
-
                           </div>
 
                           <span>
@@ -1911,23 +1784,14 @@ function Dashboard() {
                         </div>
 
                       </div>
-
                     </Link>
-
                   );
-
                 }
               )}
 
             </div>
 
-
-            {/* =========================================
-                GUEST SIGN-IN MESSAGE
-            ========================================== */}
-
             {isGuest && (
-
               <div className="dashboard-guest-learning-message">
 
                 <div className="dashboard-guest-learning-icon">
@@ -1935,7 +1799,6 @@ function Dashboard() {
                 </div>
 
                 <div>
-
                   <strong>
                     Enjoying CURIO?
                   </strong>
@@ -1947,7 +1810,6 @@ function Dashboard() {
                     Literacy, and save your
                     learning progress.
                   </p>
-
                 </div>
 
                 <button
@@ -1960,22 +1822,15 @@ function Dashboard() {
                 </button>
 
               </div>
-
             )}
 
           </section>
-
-
-          {/* =========================================
-              QUICK ACTIONS
-          ========================================== */}
 
           <section className="dashboard-section dashboard-quick-section">
 
             <div className="dashboard-section-heading">
 
               <div>
-
                 <h2>
                   What would you like to do today?
                 </h2>
@@ -1983,38 +1838,23 @@ function Dashboard() {
                 <p>
                   Choose a path and keep building your AI skills.
                 </p>
-
               </div>
 
             </div>
-
 
             <div className="dashboard-actions-grid">
 
               {quickActions.map(
                 (action) => {
 
-                  /*
-                    =================================
-                    LOCKED QUICK ACTION
-                    =================================
-
-                    Guests cannot directly enter
-                    Practice or AI Literacy.
-
-                    Clicking the card takes them
-                    to login instead.
-                  */
-
                   if (action.locked) {
-
                     return (
-
                       <button
                         key={action.title}
                         type="button"
                         className={`dashboard-action-card ${action.className} dashboard-action-locked`}
                         onClick={() => {
+
                           if (
                             action.title ===
                             "Practice"
@@ -2031,7 +1871,9 @@ function Dashboard() {
                             return;
                           }
 
-                          navigate("/login");
+                          navigate(
+                            "/login"
+                          );
                         }}
                         title={
                           isGuest
@@ -2042,14 +1884,11 @@ function Dashboard() {
                             : action.title
                         }
                       >
-
                         <div className="dashboard-action-icon">
                           {action.icon}
                         </div>
 
-
                         <div>
-
                           <h3>
                             {action.title}
                           </h3>
@@ -2057,37 +1896,22 @@ function Dashboard() {
                           <p>
                             {action.description}
                           </p>
-
                         </div>
-
                       </button>
-
                     );
-
                   }
 
-
-                  /*
-                    =================================
-                    NORMAL QUICK ACTION
-                    =================================
-                  */
-
                   return (
-
                     <Link
                       key={action.title}
                       to={action.path}
                       className={`dashboard-action-card ${action.className}`}
                     >
-
                       <div className="dashboard-action-icon">
                         {action.icon}
                       </div>
 
-
                       <div>
-
                         <h3>
                           {action.title}
                         </h3>
@@ -2095,29 +1919,18 @@ function Dashboard() {
                         <p>
                           {action.description}
                         </p>
-
                       </div>
-
                     </Link>
-
                   );
-
                 }
               )}
 
             </div>
-
           </section>
-
-
-          {/* =========================================
-              SIMPLE PROGRESS
-          ========================================== */}
 
           <section className="dashboard-progress-section">
 
             <div>
-
               <span className="dashboard-progress-label">
                 YOUR PROGRESS
               </span>
@@ -2133,16 +1946,13 @@ function Dashboard() {
                   ? "Lesson 1 is your free starting point. Sign in to save your progress."
                   : "Keep learning a little every day."}
               </p>
-
             </div>
-
 
             <div className="dashboard-overall-progress">
 
               <div className="dashboard-overall-progress-number">
                 {overallProgress}%
               </div>
-
 
               <div className="dashboard-overall-progress-track">
 
@@ -2155,7 +1965,6 @@ function Dashboard() {
 
               </div>
 
-
               <span>
                 {isGuest
                   ? "Guest trial progress"
@@ -2166,11 +1975,8 @@ function Dashboard() {
 
           </section>
 
-
         </div>
-
       </main>
-
     </div>
   );
 }
