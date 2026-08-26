@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase.ts";
+import { runAISimulation } from "../../lib/aiSimulator.ts";
 import "./AiSimulation.css";
 
 type AnalysisResult = {
@@ -25,8 +26,7 @@ function AISimulation() {
   =========================================
   */
 
-  const [isGuest, setIsGuest] =
-    useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   /*
     =========================================
@@ -34,8 +34,7 @@ function AISimulation() {
   =========================================
   */
 
-  const [_userName, setUserName] =
-    useState("User");
+  const [_userName, setUserName] = useState("User");
 
   /*
     =========================================
@@ -43,8 +42,7 @@ function AISimulation() {
   =========================================
   */
 
-  const [prompt, setPrompt] =
-    useState("");
+  const [prompt, setPrompt] = useState("");
 
   const [analysis, setAnalysis] =
     useState<AnalysisResult | null>(null);
@@ -55,16 +53,44 @@ function AISimulation() {
   =========================================
   */
 
-  const [isLoading, setIsLoading] =
-    useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [errorMessage, setErrorMessage] =
-    useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [
     showImprovedPrompt,
     setShowImprovedPrompt,
   ] = useState(false);
+
+  /*
+    =========================================
+    CURIO MEDIATOR
+  =========================================
+
+    The mediator checks the prompt BEFORE
+    sending it to the AI simulation.
+
+    Private information is detected locally
+    in the browser.
+  =========================================
+  */
+
+  const [
+    mediatorStatus,
+    setMediatorStatus,
+  ] = useState<"idle" | "warning" | "blocked">(
+    "idle",
+  );
+
+  const [
+    mediatorMessage,
+    setMediatorMessage,
+  ] = useState("");
+
+  const [
+    mediatorDetails,
+    setMediatorDetails,
+  ] = useState<string[]>([]);
 
   /*
     =========================================
@@ -75,9 +101,8 @@ function AISimulation() {
   useEffect(() => {
     const loadUser = async () => {
       const guest =
-        sessionStorage.getItem(
-          "curio_guest",
-        ) === "true";
+        sessionStorage.getItem("curio_guest") ===
+        "true";
 
       setIsGuest(guest);
 
@@ -104,12 +129,247 @@ function AISimulation() {
       setUserName(fullName);
     };
 
-    loadUser();
+    void loadUser();
   }, [navigate]);
 
   /*
     =========================================
+    CURIO MEDIATOR
+    =========================================
+
+    FIRST VERSION
+
+    Checks for common private/sensitive
+    information before the prompt is sent
+    to the AI simulation.
+
+    This check happens locally.
+  =========================================
+  */
+
+  const checkMediator = (
+    text: string,
+  ): {
+    status: "safe" | "warning" | "blocked";
+    message: string;
+    details: string[];
+  } => {
+    const value = text.trim();
+
+    const findings: string[] = [];
+
+    /*
+      =========================================
+      EMAIL
+      =========================================
+    */
+
+    if (
+      /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(
+        value,
+      )
+    ) {
+      findings.push(
+        "Your prompt appears to contain an email address.",
+      );
+    }
+
+    /*
+      =========================================
+      PHONE NUMBER
+      =========================================
+    */
+
+    if (
+      /(?:\+?\d[\d\s().-]{8,}\d)/.test(value)
+    ) {
+      findings.push(
+        "Your prompt appears to contain a phone number.",
+      );
+    }
+
+    /*
+      =========================================
+      CREDIT / DEBIT CARD
+      =========================================
+    */
+
+    if (
+      /\b(?:\d[ -]*?){13,19}\b/.test(value)
+    ) {
+      findings.push(
+        "Your prompt may contain a card or financial number.",
+      );
+    }
+
+    /*
+      =========================================
+      PASSWORD
+      =========================================
+    */
+
+    if (
+      /\b(password|passwd|passcode|login password|secret key)\b\s*(is|:|=)/i.test(
+        value,
+      )
+    ) {
+      findings.push(
+        "Your prompt appears to contain a password or secret.",
+      );
+    }
+
+    /*
+      =========================================
+      OTP
+      =========================================
+    */
+
+    if (
+      /\b(?:otp|one[- ]time password|verification code|security code)\b\s*(is|:|=)/i.test(
+        value,
+      )
+    ) {
+      findings.push(
+        "Your prompt appears to contain a verification code.",
+      );
+    }
+
+    /*
+      =========================================
+      API KEYS / TOKENS
+      =========================================
+    */
+
+    if (
+      /\b(?:api[_ -]?key|access[_ -]?token|secret[_ -]?key|bearer token)\b\s*(is|:|=)/i.test(
+        value,
+      )
+    ) {
+      findings.push(
+        "Your prompt appears to contain an API key or access token.",
+      );
+    }
+
+    /*
+      =========================================
+      SENSITIVE IDENTITY INFORMATION
+      =========================================
+    */
+
+    if (
+      /\b(?:aadhaar|pan card|passport|social security|ssn)\b\s*(number|no\.?|#)?\s*(is|:|=)?/i.test(
+        value,
+      )
+    ) {
+      findings.push(
+        "Your prompt appears to reference sensitive identity information.",
+      );
+    }
+
+    /*
+      =========================================
+      PRIVATE ADDRESS
+      =========================================
+    */
+
+    if (
+      /\b(?:home address|residential address|my address|house address)\b\s*(is|:|=)/i.test(
+        value,
+      )
+    ) {
+      findings.push(
+        "Your prompt appears to contain a private address.",
+      );
+    }
+
+    /*
+      =========================================
+      PERSONAL INFORMATION COMBINATION
+      =========================================
+    */
+
+    if (
+      /\b(?:my|our)\b.{0,30}\b(?:address|phone|email|location)\b/i.test(
+        value,
+      )
+    ) {
+      findings.push(
+        "Your prompt may contain personally identifying information.",
+      );
+    }
+
+    /*
+      =========================================
+      STRONG SECRET INDICATORS
+      =========================================
+    */
+
+    const strongSecret =
+      /\b(?:password|otp|one[- ]time password|api[_ -]?key|access[_ -]?token|secret key|credit card|debit card|cvv|pin)\b/i.test(
+        value,
+      );
+
+    /*
+      =========================================
+      BLOCK SENSITIVE SECRETS
+      =========================================
+    */
+
+    if (strongSecret) {
+      return {
+        status: "blocked",
+
+        message:
+          "CURIO stopped this prompt because it may contain private or sensitive information.",
+
+        details: findings,
+      };
+    }
+
+    /*
+      =========================================
+      WARNING
+      =========================================
+    */
+
+    if (findings.length > 0) {
+      return {
+        status: "warning",
+
+        message:
+          "CURIO noticed information that may be private. Review your prompt before sending it.",
+
+        details: findings,
+      };
+    }
+
+    /*
+      =========================================
+      SAFE
+      =========================================
+    */
+
+    return {
+      status: "safe",
+
+      message:
+        "Your prompt looks safe to continue.",
+
+      details: [],
+    };
+  };
+
+  /*
+    =========================================
     RUN AI SIMULATION
+    =========================================
+
+    The actual AI request is handled by:
+
+      lib/aiSimulation.ts
+
+    This keeps the frontend clean and ensures
+    the OpenAI/API key stays on the server.
   =========================================
   */
 
@@ -117,6 +377,14 @@ function AISimulation() {
     setErrorMessage("");
     setAnalysis(null);
     setShowImprovedPrompt(false);
+
+    /*
+      Reset mediator state
+    */
+
+    setMediatorStatus("idle");
+    setMediatorMessage("");
+    setMediatorDetails([]);
 
     if (!prompt.trim()) {
       setErrorMessage(
@@ -129,6 +397,39 @@ function AISimulation() {
       setErrorMessage(
         "Your prompt is too short. Add more context about what you want the AI to do.",
       );
+      return;
+    }
+
+    /*
+      =========================================
+      CURIO MEDIATOR
+      =========================================
+
+      IMPORTANT:
+
+      This happens BEFORE the prompt reaches
+      the AI simulation.
+    */
+
+    const mediator = checkMediator(prompt);
+
+    if (mediator.status === "blocked") {
+      setMediatorStatus("blocked");
+
+      setMediatorMessage(mediator.message);
+
+      setMediatorDetails(mediator.details);
+
+      return;
+    }
+
+    if (mediator.status === "warning") {
+      setMediatorStatus("warning");
+
+      setMediatorMessage(mediator.message);
+
+      setMediatorDetails(mediator.details);
+
       return;
     }
 
@@ -148,130 +449,142 @@ function AISimulation() {
     try {
       /*
         =========================================
-        SUPABASE EDGE FUNCTION
+        AI SIMULATOR SERVICE
         =========================================
+
+        Do NOT call supabase.functions.invoke()
+        directly here.
+
+        lib/aiSimulation.ts handles:
+        - authentication
+        - Edge Function
+        - response validation
+        - normalization
+        - errors
       */
 
-      const {
-        data,
-        error: functionError,
-      } =
-        await supabase.functions.invoke(
-          "ai-simulation",
-          {
-            body: {
-              prompt:
-                prompt.trim(),
-
-              category:
-                "Prompting Practice",
-            },
-          },
-        );
-
-      if (functionError) {
-        throw functionError;
-      }
-
-      if (!data) {
-        throw new Error(
-          "The AI simulation returned no response.",
-        );
-      }
+      const simulatorResult =
+        await runAISimulation({
+          prompt: prompt.trim(),
+          category: "Prompting Practice",
+        });
 
       /*
         =========================================
-        EDGE FUNCTION RESULT
+        SERVICE RESPONSE
         =========================================
-      */
 
-      if (data.success === false) {
-        throw new Error(
-          data.error ||
-            "The AI simulation failed.",
-        );
-      }
+        runAISimulation() returns:
+
+        {
+          response: string,
+          analysis: {
+            score,
+            clarity,
+            context,
+            specificity,
+            goal,
+            outputFormat,
+            strengths,
+            improvements,
+            tip,
+            improvedPrompt
+          }
+        }
+      */
 
       const result =
-        data.result ||
-        data.analysis ||
-        data;
+        simulatorResult.analysis;
 
       /*
         =========================================
-        NORMALIZE RESULT
+        NORMALIZE FOR EXISTING UI
         =========================================
+
+        The existing UI expects:
+
+        feedback
+        missing
+        suggestions
+        response
+        answer
+        skillTips
+
+        We map the service response into that
+        existing structure without changing
+        your UI.
       */
 
+      const missing: string[] = [];
+
+      if (result.clarity < 60) {
+        missing.push(
+          "Clear and understandable instructions.",
+        );
+      }
+
+      if (result.context < 60) {
+        missing.push(
+          "More context about the task or situation.",
+        );
+      }
+
+      if (result.specificity < 60) {
+        missing.push(
+          "More specific details about what you want.",
+        );
+      }
+
+      if (result.goal < 60) {
+        missing.push(
+          "A clearly defined goal or desired outcome.",
+        );
+      }
+
+      if (result.outputFormat < 60) {
+        missing.push(
+          "A clear description of the desired output format.",
+        );
+      }
+
+      const suggestions =
+        result.improvements.length > 0
+          ? result.improvements
+          : [];
+
+      const feedback =
+        result.tip ||
+        "Review the score and try improving the weaker parts of your prompt.";
+
       setAnalysis({
-        score:
-          result.score ??
-          result.accuracy ??
-          0,
+        score: result.score,
 
-        accuracy:
-          result.accuracy ??
-          result.score ??
-          0,
+        accuracy: result.score,
 
-        feedback:
-          result.feedback ??
-          result.summary ??
-          result.message ??
-          "",
+        feedback,
 
-        strengths:
-          Array.isArray(
-            result.strengths,
-          )
-            ? result.strengths
-            : [],
+        strengths: result.strengths,
 
-        missing:
-          Array.isArray(
-            result.missing,
-          )
-            ? result.missing
-            : Array.isArray(
-                result.missingElements,
-              )
-            ? result.missingElements
-            : [],
+        missing,
 
-        suggestions:
-          Array.isArray(
-            result.suggestions,
-          )
-            ? result.suggestions
-            : Array.isArray(
-                result.improvements,
-              )
-            ? result.improvements
-            : [],
+        suggestions,
 
         improvedPrompt:
-          result.improvedPrompt ||
-          result.betterPrompt ||
-          result.improved_prompt ||
-          "",
+          result.improvedPrompt,
 
         response:
-          result.response ||
-          result.answer ||
-          result.aiResponse ||
-          "",
+          simulatorResult.response,
 
         answer:
-          result.answer ||
-          result.response ||
-          "",
+          simulatorResult.response,
 
-        skillTips:
-          Array.isArray(
-            result.skillTips,
-          )
-            ? result.skillTips
-            : [],
+        skillTips: [
+          `Clarity: ${result.clarity}/100`,
+          `Context: ${result.context}/100`,
+          `Specificity: ${result.specificity}/100`,
+          `Goal: ${result.goal}/100`,
+          `Output format: ${result.outputFormat}/100`,
+        ],
       });
     } catch (error) {
       console.error(
@@ -290,7 +603,8 @@ function AISimulation() {
               error as {
                 message?: string;
               }
-            ).message,
+            ).message ??
+              "Unable to connect to the AI simulation. Please try again.",
           ),
         );
       } else {
@@ -306,7 +620,7 @@ function AISimulation() {
   /*
     =========================================
     CLEAR SIMULATION
-  =========================================
+    =========================================
   */
 
   const clearSimulation = () => {
@@ -314,23 +628,29 @@ function AISimulation() {
     setAnalysis(null);
     setErrorMessage("");
     setShowImprovedPrompt(false);
+
+    /*
+      Reset mediator
+    */
+
+    setMediatorStatus("idle");
+    setMediatorMessage("");
+    setMediatorDetails([]);
   };
 
   /*
     =========================================
     USE IMPROVED PROMPT
-  =========================================
+    =========================================
   */
 
   const useImprovedPrompt = () => {
     if (analysis?.improvedPrompt) {
-      setPrompt(
-        analysis.improvedPrompt,
-      );
+      setPrompt(analysis.improvedPrompt);
 
       setShowImprovedPrompt(false);
 
-      globalThis.globalThis?.scrollTo({
+      globalThis.scrollTo({
         top: 0,
         behavior: "smooth",
       });
@@ -340,7 +660,7 @@ function AISimulation() {
   /*
     =========================================
     SCORE
-  =========================================
+    =========================================
   */
 
   const score = Math.max(
@@ -378,14 +698,13 @@ function AISimulation() {
   /*
     =========================================
     GUEST LOCK SCREEN
-  =========================================
+    =========================================
   */
 
   if (isGuest) {
     return (
       <div className="ai-simulation-page">
         <div className="ai-simulation-locked">
-
           <div className="ai-simulation-lock-icon">
             🔒
           </div>
@@ -425,7 +744,6 @@ function AISimulation() {
           >
             Back to Dashboard
           </button>
-
         </div>
       </div>
     );
@@ -434,20 +752,17 @@ function AISimulation() {
   /*
     =========================================
     MAIN PAGE
-  =========================================
+    =========================================
   */
 
   return (
     <div className="ai-simulation-page">
-
       {/* =====================================
           HEADER
       ====================================== */}
 
       <header className="ai-simulation-header">
-
         <div>
-
           <button
             type="button"
             className="ai-simulation-back-button"
@@ -476,17 +791,12 @@ function AISimulation() {
             how you can make your prompt
             stronger.
           </p>
-
         </div>
 
         <div className="ai-simulation-header-badge">
-
-          <span>
-            🧠
-          </span>
+          <span>🧠</span>
 
           <div>
-
             <strong>
               Prompt Coach
             </strong>
@@ -494,30 +804,22 @@ function AISimulation() {
             <small>
               Learn • Try • Improve
             </small>
-
           </div>
-
         </div>
-
       </header>
-
 
       {/* =====================================
           MAIN WORKSPACE
       ====================================== */}
 
       <main className="ai-simulation-workspace">
-
         {/* ===================================
             PROMPT AREA
         ==================================== */}
 
         <section className="ai-simulation-prompt-card">
-
           <div className="ai-simulation-card-heading">
-
             <div>
-
               <span className="ai-simulation-step">
                 STEP 01
               </span>
@@ -531,24 +833,18 @@ function AISimulation() {
                 to do. Don't worry about being
                 perfect.
               </p>
-
             </div>
 
             <div className="ai-simulation-prompt-icon">
               💬
             </div>
-
           </div>
 
-
           <div className="ai-simulation-input-wrapper">
-
             <textarea
               value={prompt}
               onChange={(event) =>
-                setPrompt(
-                  event.target.value,
-                )
+                setPrompt(event.target.value)
               }
               placeholder="Example: Explain photosynthesis to a Class 10 student using a simple real-life example."
               maxLength={4000}
@@ -556,7 +852,6 @@ function AISimulation() {
             />
 
             <div className="ai-simulation-input-footer">
-
               <span>
                 {prompt.length}/4000
               </span>
@@ -564,40 +859,111 @@ function AISimulation() {
               <span>
                 💡 Be specific about your goal.
               </span>
-
             </div>
-
           </div>
-
 
           {/* ERROR */}
 
           {errorMessage && (
             <div className="ai-simulation-error">
+              <span>⚠️</span>
 
-              <span>
-                ⚠️
-              </span>
-
-              <p>
-                {errorMessage}
-              </p>
-
+              <p>{errorMessage}</p>
             </div>
           )}
 
+          {/* =====================================
+              CURIO MEDIATOR
+          ====================================== */}
+
+          {mediatorStatus !== "idle" && (
+            <div
+              className={
+                mediatorStatus === "blocked"
+                  ? "ai-simulation-mediator ai-simulation-mediator-blocked"
+                  : "ai-simulation-mediator ai-simulation-mediator-warning"
+              }
+            >
+              <div className="ai-simulation-mediator-icon">
+                {mediatorStatus === "blocked"
+                  ? "🛡️"
+                  : "⚠️"}
+              </div>
+
+              <div className="ai-simulation-mediator-content">
+                <span className="ai-simulation-mediator-label">
+                  CURIO MEDIATOR
+                </span>
+
+                <h3>
+                  {mediatorStatus ===
+                  "blocked"
+                    ? "Prompt stopped for your safety"
+                    : "Please review your prompt"}
+                </h3>
+
+                <p>
+                  {mediatorMessage}
+                </p>
+
+                {mediatorDetails.length >
+                  0 && (
+                  <ul>
+                    {mediatorDetails.map(
+                      (
+                        detail,
+                        index,
+                      ) => (
+                        <li
+                          key={`${detail}-${index}`}
+                        >
+                          {detail}
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                )}
+
+                <div className="ai-simulation-mediator-help">
+                  <strong>
+                    What should you do?
+                  </strong>
+
+                  <p>
+                    Remove private information
+                    such as passwords, OTPs,
+                    financial details, contact
+                    information, or sensitive
+                    identity information.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="ai-simulation-mediator-edit"
+                  onClick={() => {
+                    setMediatorStatus(
+                      "idle",
+                    );
+
+                    setMediatorMessage("");
+
+                    setMediatorDetails([]);
+                  }}
+                >
+                  Edit my prompt
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="ai-simulation-prompt-actions">
-
             <button
               type="button"
               className="ai-simulation-clear-button"
-              onClick={
-                clearSimulation
-              }
+              onClick={clearSimulation}
               disabled={
-                isLoading ||
-                !prompt
+                isLoading || !prompt
               }
             >
               Clear
@@ -606,15 +972,12 @@ function AISimulation() {
             <button
               type="button"
               className="ai-simulation-run-button"
-              onClick={
-                runSimulation
-              }
+              onClick={runSimulation}
               disabled={
                 isLoading ||
                 !prompt.trim()
               }
             >
-
               {isLoading ? (
                 <>
                   <span className="ai-simulation-spinner" />
@@ -626,22 +989,16 @@ function AISimulation() {
                   <span>→</span>
                 </>
               )}
-
             </button>
-
           </div>
-
         </section>
-
 
         {/* ===================================
             ANALYSIS
         ==================================== */}
 
         {analysis && (
-
           <section className="ai-simulation-results">
-
             {/* =================================
                 SCORE
             ================================== */}
@@ -654,9 +1011,7 @@ function AISimulation() {
                 } as React.CSSProperties
               }
             >
-
               <div className="ai-simulation-score-left">
-
                 <span className="ai-simulation-step">
                   STEP 02
                 </span>
@@ -668,43 +1023,30 @@ function AISimulation() {
                 <p>
                   {getScoreLabel()}
                 </p>
-
               </div>
 
-
               <div className="ai-simulation-score-circle">
-
                 <div>
-
                   <strong>
                     {score}
                   </strong>
 
-                  <span>
-                    /100
-                  </span>
-
+                  <span>/100</span>
                 </div>
-
               </div>
-
             </div>
-
 
             {/* =================================
                 FEEDBACK
             ================================== */}
 
             {analysis.feedback && (
-
               <div className="ai-simulation-feedback-card">
-
                 <div className="ai-simulation-result-icon">
                   💡
                 </div>
 
                 <div>
-
                   <span>
                     COACH FEEDBACK
                   </span>
@@ -716,120 +1058,84 @@ function AISimulation() {
                   <p>
                     {analysis.feedback}
                   </p>
-
                 </div>
-
               </div>
-
             )}
-
 
             {/* =================================
                 STRENGTHS / MISSING
             ================================== */}
 
             <div className="ai-simulation-analysis-grid">
-
               <div className="ai-simulation-analysis-card">
-
                 <div className="ai-simulation-analysis-title">
-
-                  <span>
-                    ✓
-                  </span>
+                  <span>✓</span>
 
                   <h3>
                     What's working
                   </h3>
-
                 </div>
 
                 {analysis.strengths &&
                 analysis.strengths.length >
                   0 ? (
-
                   <ul>
-
                     {analysis.strengths.map(
                       (
                         item,
                         index,
                       ) => (
-
                         <li
                           key={`${item}-${index}`}
                         >
                           {item}
                         </li>
-
                       ),
                     )}
-
                   </ul>
-
                 ) : (
-
                   <p className="ai-simulation-empty">
                     Your prompt doesn't have
                     clear strengths identified
                     yet.
                   </p>
-
                 )}
-
               </div>
 
-
               <div className="ai-simulation-analysis-card">
-
                 <div className="ai-simulation-analysis-title">
-
-                  <span>
-                    !
-                  </span>
+                  <span>!</span>
 
                   <h3>
                     What is missing
                   </h3>
-
                 </div>
 
                 {analysis.missing &&
                 analysis.missing.length >
                   0 ? (
-
                   <ul>
-
                     {analysis.missing.map(
                       (
                         item,
                         index,
                       ) => (
-
                         <li
                           key={`${item}-${index}`}
                         >
                           {item}
                         </li>
-
                       ),
                     )}
-
                   </ul>
-
                 ) : (
-
                   <p className="ai-simulation-empty">
                     Great! No major missing
                     elements were detected.
                   </p>
-
                 )}
-
               </div>
-
             </div>
-
 
             {/* =================================
                 SUGGESTIONS
@@ -838,11 +1144,8 @@ function AISimulation() {
             {analysis.suggestions &&
             analysis.suggestions.length >
               0 && (
-
               <div className="ai-simulation-suggestions-card">
-
                 <div className="ai-simulation-section-title">
-
                   <span>
                     STEP 03
                   </span>
@@ -856,23 +1159,18 @@ function AISimulation() {
                     your instructions clearer
                     and more useful.
                   </p>
-
                 </div>
 
-
                 <div className="ai-simulation-suggestions-list">
-
                   {analysis.suggestions.map(
                     (
                       suggestion,
                       index,
                     ) => (
-
                       <div
                         className="ai-simulation-suggestion"
                         key={`${suggestion}-${index}`}
                       >
-
                         <div>
                           {index + 1}
                         </div>
@@ -880,29 +1178,20 @@ function AISimulation() {
                         <p>
                           {suggestion}
                         </p>
-
                       </div>
-
                     ),
                   )}
-
                 </div>
-
               </div>
-
             )}
-
 
             {/* =================================
                 IMPROVED PROMPT
             ================================== */}
 
             {analysis.improvedPrompt && (
-
               <div className="ai-simulation-improved-card">
-
                 <div className="ai-simulation-section-title">
-
                   <span>
                     STEP 04
                   </span>
@@ -915,9 +1204,7 @@ function AISimulation() {
                     Compare your original prompt
                     with a more structured version.
                   </p>
-
                 </div>
-
 
                 <button
                   type="button"
@@ -929,7 +1216,6 @@ function AISimulation() {
                     )
                   }
                 >
-
                   {showImprovedPrompt
                     ? "Hide improved prompt"
                     : "Show improved prompt"}
@@ -939,26 +1225,19 @@ function AISimulation() {
                       ? "↑"
                       : "↓"}
                   </span>
-
                 </button>
 
-
                 {showImprovedPrompt && (
-
                   <div className="ai-simulation-improved-prompt">
-
                     <div className="ai-simulation-code-header">
-
                       <span>
                         ✨ CURIO SUGGESTED PROMPT
                       </span>
-
                     </div>
 
                     <p>
                       {analysis.improvedPrompt}
                     </p>
-
 
                     <button
                       type="button"
@@ -968,19 +1247,13 @@ function AISimulation() {
                       className="ai-simulation-use-button"
                     >
                       Use this prompt
-                      <span>
-                        →
-                      </span>
+
+                      <span>→</span>
                     </button>
-
                   </div>
-
                 )}
-
               </div>
-
             )}
-
 
             {/* =================================
                 AI RESPONSE
@@ -988,11 +1261,8 @@ function AISimulation() {
 
             {(analysis.response ||
               analysis.answer) && (
-
               <div className="ai-simulation-response-card">
-
                 <div className="ai-simulation-section-title">
-
                   <span>
                     AI RESPONSE
                   </span>
@@ -1000,12 +1270,9 @@ function AISimulation() {
                   <h2>
                     What the AI would answer
                   </h2>
-
                 </div>
 
-
                 <div className="ai-simulation-response">
-
                   <div className="ai-simulation-response-avatar">
                     ✨
                   </div>
@@ -1014,17 +1281,11 @@ function AISimulation() {
                     {analysis.response ||
                       analysis.answer}
                   </div>
-
                 </div>
-
               </div>
-
             )}
-
           </section>
-
         )}
-
 
         {/* =====================================
             EMPTY STATE
@@ -1032,11 +1293,8 @@ function AISimulation() {
 
         {!analysis &&
           !isLoading && (
-
             <section className="ai-simulation-how-it-works">
-
               <div>
-
                 <span>
                   HOW IT WORKS
                 </span>
@@ -1046,17 +1304,11 @@ function AISimulation() {
                   <br />
                   Learn how to use it well.
                 </h2>
-
               </div>
 
-
               <div className="ai-simulation-how-grid">
-
                 <div>
-
-                  <strong>
-                    01
-                  </strong>
+                  <strong>01</strong>
 
                   <h3>
                     Write
@@ -1065,15 +1317,10 @@ function AISimulation() {
                   <p>
                     Write your prompt naturally.
                   </p>
-
                 </div>
 
-
                 <div>
-
-                  <strong>
-                    02
-                  </strong>
+                  <strong>02</strong>
 
                   <h3>
                     Analyse
@@ -1083,15 +1330,10 @@ function AISimulation() {
                     CURIO identifies what's
                     helping or hurting your prompt.
                   </p>
-
                 </div>
 
-
                 <div>
-
-                  <strong>
-                    03
-                  </strong>
+                  <strong>03</strong>
 
                   <h3>
                     Improve
@@ -1101,17 +1343,11 @@ function AISimulation() {
                     Apply the feedback and try
                     again.
                   </p>
-
                 </div>
-
               </div>
-
             </section>
-
           )}
-
       </main>
-
     </div>
   );
 }

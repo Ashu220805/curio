@@ -1881,3 +1881,130 @@ li::before {
     transition-duration: 0.01ms !important;
   }
 }
+/* =========================================================
+   CURIO MEDIATOR
+   ========================================================= */
+
+.ai-simulation-mediator {
+  display: flex;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid;
+}
+
+.ai-simulation-mediator-warning {
+  background: #fffaf0;
+  border-color: #f0c36d;
+}
+
+.ai-simulation-mediator-blocked {
+  background: #fff4f4;
+  border-color: #e7a1a1;
+}
+
+.ai-simulation-mediator-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+  background: #ffffff;
+
+  font-size: 20px;
+}
+
+.ai-simulation-mediator-content {
+  flex: 1;
+}
+
+.ai-simulation-mediator-label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  color: #6d42e8;
+}
+
+.ai-simulation-mediator-content h3 {
+  margin: 0 0 7px;
+
+  font-size: 16px;
+  color: #38443e;
+}
+
+.ai-simulation-mediator-content > p {
+  margin: 0;
+
+  color: #59655f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ai-simulation-mediator-content ul {
+  margin: 12px 0;
+  padding-left: 20px;
+}
+
+.ai-simulation-mediator-content li {
+  margin-bottom: 5px;
+
+  color: #59655f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ai-simulation-mediator-help {
+  margin-top: 14px;
+  padding: 12px 14px;
+
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.ai-simulation-mediator-help strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 12px;
+  color: #38443e;
+}
+
+.ai-simulation-mediator-help p {
+  margin: 0;
+
+  color: #69756f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ai-simulation-mediator-edit {
+  margin-top: 14px;
+  padding: 9px 15px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #6d42e8;
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.ai-simulation-mediator-edit:hover {
+  opacity: 0.9;
+}
