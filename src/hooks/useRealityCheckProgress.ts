@@ -8,9 +8,8 @@ import {
   getRealityCheckProgress,
   saveRealityCheckProgress,
   completeRealityCheck,
-  resetRealityCheck,
   type RealityCheckProgress,
-} from "../lib/realityCheckProgress";
+} from "../lib/realityCheckProgress.ts";
 
 export function useRealityCheckProgress(
   totalQuestions: number
@@ -132,7 +131,8 @@ export function useRealityCheckProgress(
         const success =
           await completeRealityCheck(
             totalQuestions,
-            score
+            score,
+            totalQuestions
           );
 
         if (!success) {
@@ -178,7 +178,12 @@ export function useRealityCheckProgress(
 
       try {
         const success =
-          await resetRealityCheck();
+          await saveRealityCheckProgress(
+            0,
+            0,
+            totalQuestions,
+            0
+          );
 
         if (!success) {
           setError(
@@ -206,7 +211,7 @@ export function useRealityCheckProgress(
         setSaving(false);
       }
     },
-    []
+    [totalQuestions]
   );
 
   /* =========================================
@@ -214,10 +219,18 @@ export function useRealityCheckProgress(
   ========================================= */
 
   const completedQuestions =
-    progress?.completedQuestions ?? 0;
+    (progress as
+      | (RealityCheckProgress & {
+          completedQuestions?: number;
+        })
+      | null)?.completedQuestions ?? 0;
 
   const currentQuestion =
-    progress?.currentQuestion ?? 0;
+    (progress as
+      | (RealityCheckProgress & {
+          currentQuestion?: number;
+        })
+      | null)?.currentQuestion ?? 0;
 
   const score =
     progress?.score ?? 0;

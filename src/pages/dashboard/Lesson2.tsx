@@ -109,7 +109,7 @@ function Lesson2() {
   /* =========================================
      SAVE CURRENT SECTION BEFORE MOVING FORWARD
   ========================================== */
-  const markCurrentSectionComplete = async () => {
+  const markCurrentSectionComplete = () => {
     const newCompletedCount = Math.max(
       savedCompletedSections,
       currentIndex + 1

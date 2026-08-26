@@ -1,16 +1,34 @@
 import { supabase } from "./supabase.ts";
 
-export interface LessonProgress {
-  lessonId: number;
+export interface RealityCheckProgress {
+  userId: string;
+  realityCheckId: number;
+
   completed: boolean;
-  currentSection: number;
-  totalSections: number;
-  completedSections: number;
-  lastAccessedAt: string;
-  completedAt: string | null;
+
+  currentQuestion: number;
+  completedQuestions: number;
+  totalQuestions: number;
+
+  totalScore: number;
+
+  lastAccessedAt?: string;
+  completedAt?: string | null;
 }
 
-const PROGRESS_TABLE = "lesson_progress";
+const REALITY_CHECK_TABLE = "reality_check_progress";
+
+interface RealityCheckProgressRow {
+  user_id: string;
+  reality_check_id: number;
+  completed: boolean;
+  current_question: number | null;
+  completed_questions: number | null;
+  total_questions: number | null;
+  total_score: number | null;
+  last_accessed_at: string | null;
+  completed_at: string | null;
+}
 
 /* =========================================
    GET CURRENT USER
@@ -22,12 +40,9 @@ async function getCurrentUserId(): Promise<string | null> {
     error,
   } = await supabase.auth.getUser();
 
-  console.log("CURIO AUTH USER:", user);
-  console.log("CURIO AUTH ERROR:", error);
-
   if (error) {
     console.error(
-      "CURIO: Unable to get current user:",
+      "CURIO REALITY CHECK AUTH ERROR:",
       error
     );
 
@@ -36,14 +51,58 @@ async function getCurrentUserId(): Promise<string | null> {
 
   return user?.id ?? null;
 }
+
 /* =========================================
-   GET LESSON PROGRESS
+   MAP DATABASE ROW
 ========================================= */
 
-export async function getLessonProgress(
-  lessonId: number
-): Promise<LessonProgress | null> {
-  const userId = await getCurrentUserId();
+function mapProgress(
+  row: RealityCheckProgressRow
+): RealityCheckProgress {
+  return {
+    userId: row.user_id,
+    realityCheckId: Number(
+      row.reality_check_id
+    ),
+
+    completed: Boolean(
+      row.completed
+    ),
+
+    currentQuestion: Number(
+      row.current_question ?? 0
+    ),
+
+    completedQuestions: Number(
+      row.completed_questions ?? 0
+    ),
+
+    totalQuestions: Number(
+      row.total_questions ?? 0
+    ),
+
+    totalScore: Number(
+      row.total_score ?? 0
+    ),
+
+    lastAccessedAt:
+      row.last_accessed_at ??
+      undefined,
+
+    completedAt:
+      row.completed_at ?? null,
+  };
+}
+
+/* =========================================
+   GET REALITY CHECK PROGRESS
+========================================= */
+
+export async function getRealityCheckProgress(
+  realityCheckId: number
+): Promise<RealityCheckProgress | null> {
+  const userId =
+    await getCurrentUserId();
 
   if (!userId) {
     return null;
@@ -53,15 +112,18 @@ export async function getLessonProgress(
     data,
     error,
   } = await supabase
-    .from(PROGRESS_TABLE)
+    .from(REALITY_CHECK_TABLE)
     .select("*")
     .eq("user_id", userId)
-    .eq("lesson_id", lessonId)
+    .eq(
+      "reality_check_id",
+      realityCheckId
+    )
     .maybeSingle();
 
   if (error) {
     console.error(
-      "CURIO: Failed to load lesson progress:",
+      "CURIO: Failed to load Reality Check progress:",
       error
     );
 
@@ -72,34 +134,18 @@ export async function getLessonProgress(
     return null;
   }
 
-  return {
-    lessonId: Number(data.lesson_id),
-    completed: Boolean(data.completed),
-    currentSection: Number(
-      data.current_section ?? 0
-    ),
-    totalSections: Number(
-      data.total_sections ?? 0
-    ),
-    completedSections: Number(
-      data.completed_sections ?? 0
-    ),
-    lastAccessedAt:
-      data.last_accessed_at ??
-      new Date().toISOString(),
-    completedAt:
-      data.completed_at ?? null,
-  };
+  return mapProgress(data);
 }
 
 /* =========================================
-   GET ALL LESSON PROGRESS
+   GET ALL REALITY CHECK PROGRESS
 ========================================= */
 
-export async function getAllLessonProgress(): Promise<
-  LessonProgress[]
+export async function getAllRealityCheckProgress(): Promise<
+  RealityCheckProgress[]
 > {
-  const userId = await getCurrentUserId();
+  const userId =
+    await getCurrentUserId();
 
   if (!userId) {
     return [];
@@ -109,99 +155,118 @@ export async function getAllLessonProgress(): Promise<
     data,
     error,
   } = await supabase
-    .from(PROGRESS_TABLE)
+    .from(REALITY_CHECK_TABLE)
     .select("*")
     .eq("user_id", userId)
-    .order("lesson_id", {
-      ascending: true,
-    });
+    .order(
+      "reality_check_id",
+      {
+        ascending: true,
+      }
+    );
 
   if (error) {
     console.error(
-      "CURIO: Failed to load all lesson progress:",
+      "CURIO: Failed to load all Reality Check progress:",
       error
     );
 
     return [];
   }
 
-  return (data ?? []).map((item) => ({
-    lessonId: Number(item.lesson_id),
-    completed: Boolean(item.completed),
-    currentSection: Number(
-      item.current_section ?? 0
-    ),
-    totalSections: Number(
-      item.total_sections ?? 0
-    ),
-    completedSections: Number(
-      item.completed_sections ?? 0
-    ),
-    lastAccessedAt:
-      item.last_accessed_at ??
-      new Date().toISOString(),
-    completedAt:
-      item.completed_at ?? null,
-  }));
+  return (data ?? []).map(mapProgress);
 }
 
 /* =========================================
-   SAVE SECTION PROGRESS
+   SAVE REALITY CHECK PROGRESS
 ========================================= */
 
-export async function saveLessonProgress(
-  lessonId: number,
-  currentSection: number,
-  completedSections: number,
-  totalSections: number
+export async function saveRealityCheckProgress(
+  realityCheckId: number,
+  currentQuestion: number,
+  completedQuestions: number,
+  totalQuestions: number,
+  totalScore = 0
 ): Promise<boolean> {
-  const userId = await getCurrentUserId();
+  const userId =
+    await getCurrentUserId();
 
   if (!userId) {
     return false;
   }
 
-  const safeCurrentSection = Math.max(
-    0,
-    Math.min(currentSection, totalSections)
-  );
+  const safeCurrentQuestion =
+    Math.max(
+      0,
+      Math.min(
+        currentQuestion,
+        totalQuestions
+      )
+    );
 
-  const safeCompletedSections = Math.max(
+  const safeCompletedQuestions =
+    Math.max(
+      0,
+      Math.min(
+        completedQuestions,
+        totalQuestions
+      )
+    );
+
+  const safeScore = Math.max(
     0,
-    Math.min(completedSections, totalSections)
+    totalScore
   );
 
   const isCompleted =
-    totalSections > 0 &&
-    safeCompletedSections >= totalSections;
+    totalQuestions > 0 &&
+    safeCompletedQuestions >=
+      totalQuestions;
+
+  const now =
+    new Date().toISOString();
 
   const {
     error,
   } = await supabase
-    .from(PROGRESS_TABLE)
+    .from(REALITY_CHECK_TABLE)
     .upsert(
       {
         user_id: userId,
-        lesson_id: lessonId,
-        current_section: safeCurrentSection,
-        completed_sections:
-          safeCompletedSections,
-        total_sections: totalSections,
-        completed: isCompleted,
+
+        reality_check_id:
+          realityCheckId,
+
+        current_question:
+          safeCurrentQuestion,
+
+        completed_questions:
+          safeCompletedQuestions,
+
+        total_questions:
+          totalQuestions,
+
+        total_score:
+          safeScore,
+
+        completed:
+          isCompleted,
+
         last_accessed_at:
-          new Date().toISOString(),
-        completed_at: isCompleted
-          ? new Date().toISOString()
-          : null,
+          now,
+
+        completed_at:
+          isCompleted ? now : null,
       },
       {
-        onConflict: "user_id,lesson_id",
+        onConflict:
+          "user_id,reality_check_id",
       }
     );
 
   if (error) {
     console.error(
-      "CURIO: Failed to save lesson progress:",
+      "CURIO: Failed to save Reality Check progress:",
       error
     );
 
@@ -212,44 +277,64 @@ export async function saveLessonProgress(
 }
 
 /* =========================================
-   COMPLETE LESSON
+   COMPLETE REALITY CHECK
 ========================================= */
 
-export async function completeLesson(
-  lessonId: number,
-  totalSections: number
+export async function completeRealityCheck(
+  realityCheckId: number,
+  totalQuestions: number,
+  totalScore: number
 ): Promise<boolean> {
-  const userId = await getCurrentUserId();
+  const userId =
+    await getCurrentUserId();
 
   if (!userId) {
     return false;
   }
 
-  const now = new Date().toISOString();
+  const now =
+    new Date().toISOString();
 
   const {
     error,
   } = await supabase
-    .from(PROGRESS_TABLE)
+    .from(REALITY_CHECK_TABLE)
     .upsert(
       {
         user_id: userId,
-        lesson_id: lessonId,
-        current_section: totalSections,
-        completed_sections: totalSections,
-        total_sections: totalSections,
+
+        reality_check_id:
+          realityCheckId,
+
+        current_question:
+          totalQuestions,
+
+        completed_questions:
+          totalQuestions,
+
+        total_questions:
+          totalQuestions,
+
+        total_score:
+          totalScore,
+
         completed: true,
-        last_accessed_at: now,
-        completed_at: now,
+
+        last_accessed_at:
+          now,
+
+        completed_at:
+          now,
       },
       {
-        onConflict: "user_id,lesson_id",
+        onConflict:
+          "user_id,reality_check_id",
       }
     );
 
   if (error) {
     console.error(
-      "CURIO: Failed to complete lesson:",
+      "CURIO: Failed to complete Reality Check:",
       error
     );
 
@@ -260,60 +345,58 @@ export async function completeLesson(
 }
 
 /* =========================================
-   CHECK WHETHER LESSON IS COMPLETED
+   RESET REALITY CHECK
 ========================================= */
 
-export async function isLessonCompleted(
-  lessonId: number
+export async function resetRealityCheck(
+  realityCheckId: number
 ): Promise<boolean> {
-  const progress =
-    await getLessonProgress(lessonId);
+  const userId =
+    await getCurrentUserId();
 
-  return progress?.completed === true;
-}
-
-/* =========================================
-   CHECK WHETHER PREVIOUS LESSON IS COMPLETE
-========================================= */
-
-export function canAccessLesson(
-  lessonId: number
-): Promise<boolean> {
-  if (lessonId <= 1) {
-    return Promise.resolve(true);
+  if (!userId) {
+    return false;
   }
 
-  return isLessonCompleted(lessonId - 1);
-}
+  const {
+    error,
+  } = await supabase
+    .from(REALITY_CHECK_TABLE)
+    .delete()
+    .eq(
+      "user_id",
+      userId
+    )
+    .eq(
+      "reality_check_id",
+      realityCheckId
+    );
 
-/* =========================================
-   GET COMPLETED LESSON COUNT
-========================================= */
+  if (error) {
+    console.error(
+      "CURIO: Failed to reset Reality Check:",
+      error
+    );
 
-export async function getCompletedLessonCount(): Promise<number> {
-  const progress =
-    await getAllLessonProgress();
-
-  return progress.filter(
-    (lesson) => lesson.completed
-  ).length;
-}
-
-/* =========================================
-   GET OVERALL COURSE PROGRESS
-========================================= */
-
-export async function getCourseProgress(
-  totalLessons = 8
-): Promise<number> {
-  const completed =
-    await getCompletedLessonCount();
-
-  if (totalLessons <= 0) {
-    return 0;
+    return false;
   }
 
-  return Math.round(
-    (completed / totalLessons) * 100
+  return true;
+}
+
+/* =========================================
+   CHECK COMPLETION
+========================================= */
+
+export async function isRealityCheckCompleted(
+  realityCheckId: number
+): Promise<boolean> {
+  const progress =
+    await getRealityCheckProgress(
+      realityCheckId
+    );
+
+  return (
+    progress?.completed === true
   );
 }
