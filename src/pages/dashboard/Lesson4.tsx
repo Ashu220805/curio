@@ -258,7 +258,7 @@ export default function Lesson4() {
     if (!canOpenSection(index)) return;
 
     setActiveSection(id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const nextSection = () => {
@@ -266,14 +266,14 @@ export default function Lesson4() {
 
     markSectionComplete(sections[sectionIndex].id);
     setActiveSection(sections[sectionIndex + 1].id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goPrevious = () => {
     if (sectionIndex <= 0) return;
 
     setActiveSection(sections[sectionIndex - 1].id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const finishLesson = () => {
@@ -284,13 +284,13 @@ export default function Lesson4() {
     setCompletedSections(sections.map((section) => section.id));
     setCompletedLesson(true);
 
-    window.dispatchEvent(
+    globalThis.dispatchEvent(
       new CustomEvent("curio:lesson-completed", {
         detail: { lessonId: 4, completedLessons: updated },
       })
     );
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const chooseAnswer = (questionIndex: number, optionIndex: number) => {

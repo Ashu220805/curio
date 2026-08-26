@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth.ts";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -16,6 +16,9 @@ function ProtectedRoute({
 
   const location = useLocation();
 
+  // -----------------------------------------
+  // AUTHENTICATION CHECK IN PROGRESS
+  // -----------------------------------------
   if (loading) {
     return (
       <div className="auth-loading-screen">
@@ -28,18 +31,24 @@ function ProtectedRoute({
     );
   }
 
+  // -----------------------------------------
+  // USER NOT AUTHENTICATED
+  // -----------------------------------------
   if (!session) {
     return (
       <Navigate
         to="/login"
         replace
         state={{
-          from: location.pathname,
+          from: location,
         }}
       />
     );
   }
 
+  // -----------------------------------------
+  // USER AUTHENTICATED
+  // -----------------------------------------
   return (
     <>
       {children}

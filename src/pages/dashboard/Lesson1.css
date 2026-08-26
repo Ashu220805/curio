@@ -2469,3 +2469,861 @@
     font-size: 13px;
   }
 }
+/* =========================================================
+   CURIO LESSON 01 — FINAL LAYOUT STABILITY FIX
+   ---------------------------------------------------------
+   IMPORTANT:
+   - Do NOT modify Lesson1.tsx
+   - Do NOT modify lessonProgress.ts
+   - Do NOT remove existing Lesson1.css
+   - This block intentionally overrides layout conflicts
+========================================================= */
+
+
+/* =========================================================
+   GLOBAL LESSON BOX MODEL
+========================================================= */
+
+.lesson-page,
+.lesson-page * {
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   MAIN LESSON LAYOUT
+========================================================= */
+
+.lesson-layout {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+
+  gap: 42px;
+
+  align-items: start;
+
+  padding: 48px 0 90px;
+}
+
+
+/* =========================================================
+   LEFT JOURNEY NAVIGATION
+========================================================= */
+
+.lesson-navigation {
+  width: 220px;
+  min-width: 0;
+
+  position: sticky;
+  top: 24px;
+
+  align-self: start;
+}
+
+.lesson-nav-title {
+  margin: 0 0 14px;
+}
+
+.lesson-nav-item {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  white-space: normal;
+}
+
+.lesson-nav-item strong {
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   MAIN CONTENT COLUMN
+========================================================= */
+
+.lesson-content {
+  width: 100%;
+  min-width: 0;
+
+  display: block;
+}
+
+
+/* =========================================================
+   INTRODUCTION
+========================================================= */
+
+.lesson-intro {
+  width: 100%;
+  max-width: 850px;
+
+  margin: 0 0 30px;
+}
+
+.lesson-intro h2 {
+  display: block;
+
+  width: 100%;
+
+  margin: 0 0 14px;
+
+  white-space: normal;
+}
+
+.lesson-intro > p {
+  display: block;
+
+  width: 100%;
+
+  margin: 6px 0;
+
+  white-space: normal;
+}
+
+
+/* =========================================================
+   LEARNING PRINCIPLE
+========================================================= */
+
+.lesson-principle {
+  width: 100%;
+
+  display: flex;
+  align-items: flex-start;
+
+  min-width: 0;
+}
+
+.lesson-principle > div {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   LESSON CARD
+   This is the most important fix.
+========================================================= */
+
+.lesson-card {
+  width: 100%;
+  min-width: 0;
+
+  display: block;
+
+  position: relative;
+
+  overflow: visible;
+
+  margin: 0;
+
+  padding: clamp(28px, 4vw, 44px);
+
+  border-radius: 22px;
+}
+
+
+/* =========================================================
+   CARD DIRECT CHILDREN
+   Prevent accidental horizontal squeezing.
+========================================================= */
+
+.lesson-card > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+
+/* =========================================================
+   STEP LABEL
+========================================================= */
+
+.lesson-step-label {
+  display: block;
+
+  width: 100%;
+
+  margin: 0 0 10px;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   LESSON CARD HEADING
+   Forces heading onto its own full-width line.
+========================================================= */
+
+.lesson-card h3 {
+  display: block;
+
+  width: 100%;
+
+  margin: 0 0 14px;
+
+  clear: both;
+
+  white-space: normal;
+
+  word-break: normal;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   LESSON LEAD TEXT
+========================================================= */
+
+.lesson-lead {
+  display: block;
+
+  width: 100%;
+
+  max-width: 850px;
+
+  margin: 0 0 18px;
+
+  white-space: normal;
+
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   NORMAL CARD PARAGRAPHS
+========================================================= */
+
+.lesson-card p {
+  max-width: 100%;
+
+  white-space: normal;
+
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   FAMILIAR AI CARDS
+========================================================= */
+
+.familiar-grid {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+
+  margin-top: 26px;
+}
+
+.familiar-grid article {
+  width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.familiar-grid article p {
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   SIMPLE FLOW
+========================================================= */
+
+.simple-flow {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    minmax(0, 1fr)
+    auto
+    minmax(0, 1fr);
+
+  align-items: stretch;
+}
+
+.simple-flow > div:not(.flow-arrow) {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   COMPARISON
+========================================================= */
+
+.comparison {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto
+    minmax(0, 1fr);
+
+  align-items: stretch;
+}
+
+.comparison-box {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   PROMPT LADDER
+========================================================= */
+
+.prompt-ladder {
+  width: 100%;
+  min-width: 0;
+}
+
+.prompt-level {
+  width: 100%;
+  min-width: 0;
+}
+
+.prompt-level > div {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   MINI CHAT
+========================================================= */
+
+.mini-chat {
+  width: 100%;
+  max-width: 100%;
+
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.chat-header {
+  width: 100%;
+  min-width: 0;
+}
+
+.chat-header > div {
+  min-width: 0;
+}
+
+.chat-header strong,
+.chat-header small {
+  overflow-wrap: break-word;
+}
+
+.chat-body {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-message {
+  min-width: 0;
+
+  max-width: min(78%, 680px);
+
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.chat-message.ai {
+  align-self: flex-start;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+}
+
+
+/* =========================================================
+   CHAT INPUT
+========================================================= */
+
+.chat-input-area {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.chat-input-area input {
+  min-width: 0;
+  flex: 1 1 auto;
+
+  width: 100%;
+}
+
+
+/* =========================================================
+   CONTEXT / CHOICE AREAS
+========================================================= */
+
+.choice-grid {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.choice-grid button {
+  width: 100%;
+  min-width: 0;
+
+  white-space: normal;
+
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   SAFETY ITEMS
+========================================================= */
+
+.safety-item {
+  width: 100%;
+  min-width: 0;
+
+  overflow: hidden;
+}
+
+.safety-item > div {
+  min-width: 0;
+}
+
+.safety-item button {
+  max-width: 100%;
+}
+
+
+/* =========================================================
+   PRACTICE
+========================================================= */
+
+.practice-question {
+  width: 100%;
+  min-width: 0;
+}
+
+.practice-choice {
+  width: 100%;
+  min-width: 0;
+
+  white-space: normal;
+
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   FINAL CHALLENGE
+========================================================= */
+
+.final-challenge-intro {
+  width: 100%;
+  min-width: 0;
+}
+
+.final-challenge-intro > div {
+  min-width: 0;
+}
+
+.final-score-banner {
+  width: 100%;
+  min-width: 0;
+}
+
+.final-questions {
+  width: 100%;
+  min-width: 0;
+}
+
+.final-question {
+  width: 100%;
+  min-width: 0;
+}
+
+.final-question-heading {
+  min-width: 0;
+}
+
+.final-question-heading h4 {
+  min-width: 0;
+
+  overflow-wrap: break-word;
+}
+
+.final-options {
+  width: 100%;
+  min-width: 0;
+}
+
+.final-option {
+  width: 100%;
+  min-width: 0;
+
+  white-space: normal;
+
+  overflow-wrap: break-word;
+}
+
+.final-option strong {
+  min-width: 0;
+
+  overflow-wrap: break-word;
+}
+
+
+/* =========================================================
+   COMPLETION
+========================================================= */
+
+.completion-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.completion-panel > div:last-child {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   HEADER STABILITY
+========================================================= */
+
+.lesson-header {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+}
+
+.lesson-heading {
+  min-width: 0;
+}
+
+.lesson-heading h1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lesson-header-progress {
+  flex: 0 0 170px;
+}
+
+
+/* =========================================================
+   DESKTOP — LARGE SCREENS
+========================================================= */
+
+@media (min-width: 1200px) {
+
+  .lesson-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+
+    gap: 48px;
+  }
+
+  .lesson-content {
+    max-width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+  .lesson-layout {
+    width: min(100% - 36px, 900px);
+
+    grid-template-columns: 190px minmax(0, 1fr);
+
+    gap: 28px;
+  }
+
+  .lesson-navigation {
+    width: 190px;
+  }
+
+  .lesson-card {
+    padding: 30px;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET / SMALL LAPTOP
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .lesson-layout {
+    width: min(100% - 32px, 900px);
+
+    grid-template-columns: 1fr;
+
+    gap: 24px;
+
+    padding-top: 30px;
+  }
+
+  .lesson-navigation {
+    position: static;
+
+    width: 100%;
+
+    display: flex;
+    align-items: stretch;
+
+    gap: 8px;
+
+    overflow-x: auto;
+
+    padding: 2px 2px 10px;
+  }
+
+  .lesson-nav-title {
+    display: none;
+  }
+
+  .lesson-nav-item {
+    width: auto;
+
+    min-width: 130px;
+
+    flex: 0 0 auto;
+  }
+
+  .lesson-content {
+    width: 100%;
+  }
+
+  .lesson-intro {
+    max-width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .lesson-layout {
+    width: calc(100% - 24px);
+
+    padding: 24px 0 60px;
+  }
+
+  .lesson-header {
+    min-height: 72px;
+
+    padding: 12px;
+  }
+
+  .lesson-back-button {
+    width: 42px;
+    height: 42px;
+
+    flex: 0 0 42px;
+  }
+
+  .lesson-heading h1 {
+    font-size: 18px;
+  }
+
+  .lesson-heading > span {
+    font-size: 9px;
+  }
+
+  .lesson-header-progress {
+    display: none;
+  }
+
+  .lesson-card {
+    padding: 25px 20px;
+
+    border-radius: 18px;
+  }
+
+  .lesson-intro h2 {
+    font-size: 34px;
+
+    letter-spacing: -1px;
+  }
+
+  .lesson-intro > p {
+    font-size: 15px;
+  }
+
+  .lesson-principle {
+    align-items: flex-start;
+  }
+
+  .familiar-grid,
+  .choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-flow {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+  .flow-arrow {
+    transform: rotate(90deg);
+
+    text-align: center;
+  }
+
+  .comparison {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+  .comparison-arrow {
+    transform: rotate(90deg);
+
+    text-align: center;
+  }
+
+  .chat-message {
+    max-width: 90%;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .lesson-layout {
+    width: calc(100% - 18px);
+
+    padding-top: 18px;
+  }
+
+  .lesson-card {
+    padding: 22px 16px;
+
+    border-radius: 16px;
+  }
+
+  .lesson-intro h2 {
+    font-size: 30px;
+  }
+
+  .lesson-intro > p {
+    font-size: 14px;
+  }
+
+  .lesson-nav-item {
+    min-width: 112px;
+  }
+
+  .lesson-nav-item strong {
+    font-size: 11px;
+  }
+
+  .lesson-principle {
+    padding: 14px;
+  }
+
+  .chat-input-area {
+    gap: 7px;
+  }
+
+  .chat-input-area input {
+    font-size: 13px;
+  }
+
+  .final-question {
+    padding: 16px;
+  }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.lesson-page button:focus-visible,
+.lesson-page input:focus-visible {
+  outline: 3px solid rgba(112, 66, 233, 0.22);
+
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   PREVENT HORIZONTAL OVERFLOW
+========================================================= */
+
+.lesson-page {
+  width: 100%;
+  max-width: 100%;
+
+  overflow-x: hidden;
+}
+
+.lesson-layout,
+.lesson-content,
+.lesson-card,
+.lesson-intro,
+.mini-chat,
+.final-questions {
+  max-width: 100%;
+}

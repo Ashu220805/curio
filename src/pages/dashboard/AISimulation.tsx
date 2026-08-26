@@ -330,7 +330,7 @@ function AISimulation() {
 
       setShowImprovedPrompt(false);
 
-      globalThis.window?.scrollTo({
+      globalThis.globalThis?.scrollTo({
         top: 0,
         behavior: "smooth",
       });

@@ -1,19 +1,29 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+// =========================================
+// AUTHENTICATION
+// =========================================
 import Login from "./pages/auth/Login.tsx";
 import SignUp from "./pages/auth/Signup.tsx";
 import Guest from "./pages/Guest.tsx";
+import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 
+// =========================================
+// DASHBOARD / MAIN PAGES
+// =========================================
 import Dashboard from "./pages/dashboard/Dashboard.tsx";
 import Learn from "./pages/dashboard/Learn.tsx";
 import Practice from "./pages/dashboard/Practice.tsx";
 import RealityCheck from "./pages/dashboard/RealityCheck.tsx";
 import AISimulation from "./pages/dashboard/AISimulation.tsx";
 
+// =========================================
+// LESSONS
+// =========================================
 import Lesson1 from "./pages/dashboard/Lesson1.tsx";
 import Lesson2 from "./pages/dashboard/Lesson2.tsx";
-import Lesson3 from "./pages//dashboard/Lesson3.tsx";
-import Lesson4 from "./pages//dashboard/Lesson4.tsx";
+import Lesson3 from "./pages/dashboard/Lesson3.tsx";
+import Lesson4 from "./pages/dashboard/Lesson4.tsx";
 import Lesson5 from "./pages/dashboard/Lesson5.tsx";
 import Lesson6 from "./pages/dashboard/Lesson6.tsx";
 import Lesson7 from "./pages/dashboard/Lesson7.tsx";
@@ -30,12 +40,17 @@ function App() {
 
         <Route
           path="/"
-          element={<Navigate to="/login" replace />}
+          element={
+            <Navigate
+              to="/login"
+              replace
+            />
+          }
         />
 
 
         {/* =========================================
-            AUTHENTICATION
+            PUBLIC AUTHENTICATION ROUTES
         ========================================== */}
 
         <Route
@@ -55,12 +70,16 @@ function App() {
 
 
         {/* =========================================
-            CURIO DASHBOARD
+            PROTECTED CURIO APPLICATION
         ========================================== */}
 
         <Route
           path="/dashboard"
-          element={<Dashboard />}
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -70,7 +89,11 @@ function App() {
 
         <Route
           path="/learn"
-          element={<Learn />}
+          element={
+            <ProtectedRoute>
+              <Learn />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -80,7 +103,11 @@ function App() {
 
         <Route
           path="/ai-simulation"
-          element={<AISimulation />}
+          element={
+            <ProtectedRoute>
+              <AISimulation />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -90,7 +117,11 @@ function App() {
 
         <Route
           path="/practice"
-          element={<Practice />}
+          element={
+            <ProtectedRoute>
+              <Practice />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -100,7 +131,11 @@ function App() {
 
         <Route
           path="/reality-check"
-          element={<RealityCheck />}
+          element={
+            <ProtectedRoute>
+              <RealityCheck />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -110,7 +145,11 @@ function App() {
 
         <Route
           path="/learn/lesson/1"
-          element={<Lesson1 />}
+          element={
+            <ProtectedRoute>
+              <Lesson1 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -120,7 +159,11 @@ function App() {
 
         <Route
           path="/learn/lesson/2"
-          element={<Lesson2 />}
+          element={
+            <ProtectedRoute>
+              <Lesson2 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -130,7 +173,11 @@ function App() {
 
         <Route
           path="/learn/lesson/3"
-          element={<Lesson3 />}
+          element={
+            <ProtectedRoute>
+              <Lesson3 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -140,7 +187,11 @@ function App() {
 
         <Route
           path="/learn/lesson/4"
-          element={<Lesson4 />}
+          element={
+            <ProtectedRoute>
+              <Lesson4 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -150,7 +201,11 @@ function App() {
 
         <Route
           path="/learn/lesson/5"
-          element={<Lesson5 />}
+          element={
+            <ProtectedRoute>
+              <Lesson5 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -160,7 +215,11 @@ function App() {
 
         <Route
           path="/learn/lesson/6"
-          element={<Lesson6 />}
+          element={
+            <ProtectedRoute>
+              <Lesson6 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -170,7 +229,11 @@ function App() {
 
         <Route
           path="/learn/lesson/7"
-          element={<Lesson7 />}
+          element={
+            <ProtectedRoute>
+              <Lesson7 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -180,7 +243,11 @@ function App() {
 
         <Route
           path="/learn/lesson/8"
-          element={<Lesson8 />}
+          element={
+            <ProtectedRoute>
+              <Lesson8 />
+            </ProtectedRoute>
+          }
         />
 
 
@@ -190,7 +257,12 @@ function App() {
 
         <Route
           path="*"
-          element={<Navigate to="/login" replace />}
+          element={
+            <Navigate
+              to="/login"
+              replace
+            />
+          }
         />
 
       </Routes>

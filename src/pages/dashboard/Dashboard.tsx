@@ -413,33 +413,33 @@ function Dashboard() {
       loadLessonProgress();
     };
 
-    window.addEventListener(
+    globalThis.addEventListener(
       "curio:lesson-completed",
       handleLessonCompleted
     );
 
-    window.addEventListener(
+    globalThis.addEventListener(
       "storage",
       handleLessonCompleted
     );
 
-    window.addEventListener(
+    globalThis.addEventListener(
       "focus",
       loadLessonProgress
     );
 
     return () => {
-      window.removeEventListener(
+      globalThis.removeEventListener(
         "curio:lesson-completed",
         handleLessonCompleted
       );
 
-      window.removeEventListener(
+      globalThis.removeEventListener(
         "storage",
         handleLessonCompleted
       );
 
-      window.removeEventListener(
+      globalThis.removeEventListener(
         "focus",
         loadLessonProgress
       );
@@ -457,12 +457,12 @@ function Dashboard() {
       refreshLearningProgress();
     };
 
-    window.addEventListener(
+    globalThis.addEventListener(
       "storage",
       handleProgressChange
     );
 
-    window.addEventListener(
+    globalThis.addEventListener(
       "curio:lesson-completed",
       handleProgressChange
     );
@@ -482,12 +482,12 @@ function Dashboard() {
     );
 
     return () => {
-      window.removeEventListener(
+      globalThis.removeEventListener(
         "storage",
         handleProgressChange
       );
 
-      window.removeEventListener(
+      globalThis.removeEventListener(
         "curio:lesson-completed",
         handleProgressChange
       );

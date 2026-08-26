@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Lesson7.css";
+import { useLessonProgress } from "../../hooks/useLessonProgress.ts";
 
 type LessonSection =
   | "start"
@@ -92,52 +93,6 @@ const FINAL_QUESTIONS = [
   },
 ];
 
-function readCompletedLessons(): number[] {
-  try {
-    const stored = localStorage.getItem("curio_completed_lessons");
-    if (!stored) return [1];
-
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return [1];
-
-    const valid = parsed.filter(
-      (id): id is number => typeof id === "number"
-    );
-
-    return Array.from(new Set([1, ...valid])).sort((a, b) => a - b);
-  } catch {
-    return [1];
-  }
-}
-
-function saveCompletedLesson(lessonId: number) {
-  const completed = Array.from(
-    new Set([...readCompletedLessons(), lessonId])
-  ).sort((a, b) => a - b);
-
-  localStorage.setItem(
-    "curio_completed_lessons",
-    JSON.stringify(completed)
-  );
-
-  window.dispatchEvent(
-    new CustomEvent("curio:lesson-completed", {
-      detail: {
-        lesson: lessonId,
-        completedLessons: completed,
-      },
-    })
-  );
-
-  window.dispatchEvent(
-    new StorageEvent("storage", {
-      key: "curio_completed_lessons",
-      newValue: JSON.stringify(completed),
-      storageArea: localStorage,
-    })
-  );
-}
-
 function Lesson7() {
   const navigate = useNavigate();
 
@@ -151,61 +106,65 @@ function Lesson7() {
   const [finalChecked, setFinalChecked] = useState<number[]>([]);
   const [completed, setCompleted] = useState(false);
 
+  const {
+    loading: progressLoading,
+    saving: progressSaving,
+    error: progressError,
+    currentSection: savedCurrentSection,
+    completedSections: savedCompletedSections,
+    completed: savedCompleted,
+    updateProgress,
+    markComplete,
+  } = useLessonProgress(7, 8);
+
   const currentIndex = LESSON_SECTIONS.findIndex(
     (item) => item.id === section
   );
 
-  const progressCount = completedSections.length;
-  const progressPercent = Math.round(
-    (progressCount / LESSON_SECTIONS.length) * 100
-  );
+  const progressCount = Math.max(0, Math.min(savedCompletedSections, LESSON_SECTIONS.length));
+  const progressPercent = Math.round((progressCount / LESSON_SECTIONS.length) * 100);
 
-  const furthestUnlockedIndex = useMemo(() => {
-    let index = 0;
-
-    for (let i = 0; i < LESSON_SECTIONS.length - 1; i += 1) {
-      if (completedSections.includes(LESSON_SECTIONS[i].id)) {
-        index = i + 1;
-      } else {
-        break;
-      }
+  useEffect(() => {
+    if (progressLoading) return;
+    if (savedCompleted) {
+      setCompleted(true);
+      setCompletedSections(LESSON_SECTIONS.map((item) => item.id));
+      setSection("finish");
+      return;
     }
+    if (savedCurrentSection > 0) {
+      const nextIndex = Math.min(savedCurrentSection, LESSON_SECTIONS.length - 1);
+      setSection(LESSON_SECTIONS[nextIndex].id);
+    }
+    setCompletedSections(
+      LESSON_SECTIONS.filter((_, index) => index < savedCompletedSections).map((item) => item.id)
+    );
+  }, [progressLoading, savedCurrentSection, savedCompleted, savedCompletedSections]);
 
-    return index;
-  }, [completedSections]);
+  const furthestUnlockedIndex = Math.min(savedCompletedSections, LESSON_SECTIONS.length - 1);
 
   const canOpenSection = (index: number) =>
-    index <= furthestUnlockedIndex ||
-    completedSections.includes(LESSON_SECTIONS[index].id);
-
-  const markSectionComplete = (id: LessonSection) => {
-    setCompletedSections((previous) =>
-      previous.includes(id) ? previous : [...previous, id]
-    );
-  };
+    savedCompleted || index <= furthestUnlockedIndex;
 
   const openSection = (id: LessonSection, index: number) => {
     if (!canOpenSection(index)) return;
-
     setSection(id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const goNext = () => {
-    if (currentIndex < 0 || currentIndex >= LESSON_SECTIONS.length - 1) {
-      return;
-    }
-
-    markSectionComplete(LESSON_SECTIONS[currentIndex].id);
+  const goNext = async () => {
+    if (currentIndex < 0 || currentIndex >= LESSON_SECTIONS.length - 1) return;
+    const count = Math.min(8, Math.max(savedCompletedSections, currentIndex + 1));
+    const saved = await updateProgress(count, count);
+    if (!saved) return;
     setSection(LESSON_SECTIONS[currentIndex + 1].id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goPrevious = () => {
     if (currentIndex <= 0) return;
-
     setSection(LESSON_SECTIONS[currentIndex - 1].id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const finalScore = FINAL_QUESTIONS.reduce(
@@ -217,12 +176,14 @@ function Lesson7() {
   const finalReady = finalChecked.length === FINAL_QUESTIONS.length;
   const finalPerfect = finalReady && finalScore === FINAL_QUESTIONS.length;
 
-  const finishLesson = () => {
-    if (!finalPerfect) return;
-
-    markSectionComplete("finish");
+  const finishLesson = async () => {
+    if (!finalPerfect || progressSaving) return;
+    const saved = await markComplete();
+    if (!saved) return;
     setCompleted(true);
-    saveCompletedLesson(7);
+    setCompletedSections(LESSON_SECTIONS.map((item) => item.id));
+    setSection("finish");
+    globalThis.dispatchEvent(new Event("curio:lesson-completed"));
   };
 
   const renderSection = () => {
@@ -779,6 +740,14 @@ function Lesson7() {
     );
   }
 
+  if (progressLoading) {
+    return (
+      <div className="lesson7-page">
+        <div className="lesson7-loading">Loading your lesson progress...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="lesson7-page">
       <header className="lesson7-header">
@@ -812,6 +781,8 @@ function Lesson7() {
           </div>
         </div>
       </header>
+
+      {progressError && <div className="lesson7-progress-error">{progressError}</div>}
 
       <div className="lesson7-layout">
         <aside className="lesson7-navigation">

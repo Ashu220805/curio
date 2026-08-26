@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Lesson5.css";
+import { useLessonProgress } from "../../hooks/useLessonProgress.ts";
 
 type Section = {
   id: number;
@@ -51,7 +52,6 @@ const sections: Section[] = [
   },
 ];
 
-const STORAGE_KEY = "curio_completed_lessons";
 
 const safetyQuestions = [
   {
@@ -172,62 +172,53 @@ const safetyShortcuts = [
   },
 ];
 
-function getCompletedLessons(): number[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
-
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return [];
-
-    return [...new Set(
-      parsed
-        .map(Number)
-        .filter(
-          (id) =>
-            Number.isInteger(id) &&
-            id >= 1 &&
-            id <= 8
-        )
-    )];
-  } catch {
-    return [];
-  }
-}
-
-function saveLesson5Completion() {
-  const completed = [...new Set([...getCompletedLessons(), 5])];
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(completed)
-  );
-
-  window.dispatchEvent(
-    new CustomEvent("curio:lesson-completed", {
-      detail: {
-        lessonId: 5,
-        completedLessons: completed,
-      },
-    })
-  );
-}
-
 function Lesson5() {
   const [activeSection, setActiveSection] = useState(1);
   const [completedSections, setCompletedSections] = useState<number[]>([]);
-  const [] = useState<Record<number, number>>({});
-  const [] = useState<number[]>([]);
+  const [safetyAnswers, setSafetyAnswers] = useState<Record<number, number>>({});
+  const [checkedSafety, setCheckedSafety] = useState<number[]>([]);
   const [scenarioAnswers, setScenarioAnswers] = useState<Record<number, string>>({});
   const [checkedScenarios, setCheckedScenarios] = useState<number[]>([]);
   const [finalAnswers, setFinalAnswers] = useState<Record<number, number>>({});
   const [checkedFinal, setCheckedFinal] = useState<number[]>([]);
   const [showChecklist, setShowChecklist] = useState(false);
+  const [completed, setCompleted] = useState(false);
+
+  const {
+    loading: progressLoading,
+    saving: progressSaving,
+    error: progressError,
+    currentSection: savedCurrentSection,
+    completedSections: savedCompletedSections,
+    completed: savedCompleted,
+    updateProgress,
+    markComplete,
+  } = useLessonProgress(5, 8);
 
   const currentSectionIndex = activeSection - 1;
-  const progressPercent = Math.round(
-    ((currentSectionIndex + 1) / sections.length) * 100
-  );
+  const progressCount = Math.max(0, Math.min(savedCompletedSections, sections.length));
+  const progressPercent = Math.round((progressCount / sections.length) * 100);
+
+  useEffect(() => {
+    if (progressLoading) return;
+
+    if (savedCompleted) {
+      setCompleted(true);
+      setActiveSection(8);
+      setCompletedSections(sections.map((item) => item.id));
+      return;
+    }
+
+    if (savedCurrentSection > 0) {
+      setActiveSection(Math.min(savedCurrentSection + 1, sections.length));
+    }
+
+    setCompletedSections(
+      sections
+        .filter((_, index) => index < savedCompletedSections)
+        .map((item) => item.id)
+    );
+  }, [progressLoading, savedCurrentSection, savedCompleted, savedCompletedSections]);
 
   const finalScore = useMemo(
     () =>
@@ -240,32 +231,59 @@ function Lesson5() {
     [finalAnswers]
   );
 
+  const safetyPracticeComplete =
+    checkedSafety.length === safetyQuestions.length;
 
   const scenarioPracticeComplete =
     checkedScenarios.length === scenarioQuestions.length;
 
-  const completeSection = (sectionId: number) => {
-    setCompletedSections((current) =>
-      current.includes(sectionId)
-        ? current
-        : [...current, sectionId].sort((a, b) => a - b)
+  const completeSection = async (sectionId: number) => {
+    if (sectionId < 1 || sectionId > sections.length) return false;
+
+    const count = Math.min(
+      sections.length,
+      Math.max(savedCompletedSections, sectionId)
+    );
+
+    const saved = await updateProgress(count, count);
+    if (!saved) return false;
+
+    setCompletedSections(
+      sections
+        .filter((_, index) => index < count)
+        .map((item) => item.id)
     );
 
     if (sectionId < sections.length) {
       setActiveSection(sectionId + 1);
 
-      window.setTimeout(() => {
+      globalThis.setTimeout(() => {
         document
           .getElementById(`lesson5-section-${sectionId + 1}`)
-          ?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 80);
     }
+
+    return true;
   };
 
+  const chooseSafetyAnswer = (
+    questionIndex: number,
+    optionIndex: number
+  ) => {
+    setSafetyAnswers((current) => ({
+      ...current,
+      [questionIndex]: optionIndex,
+    }));
+  };
 
+  const checkSafetyAnswer = (questionIndex: number) => {
+    setCheckedSafety((current) =>
+      current.includes(questionIndex)
+        ? current
+        : [...current, questionIndex]
+    );
+  };
 
   const chooseScenarioAnswer = (
     questionIndex: number,
@@ -303,24 +321,22 @@ function Lesson5() {
     );
   };
 
-  const finishLesson = () => {
+  const finishLesson = async () => {
+    if (progressSaving) return;
+
     if (
       checkedFinal.length === safetyQuestions.length &&
       finalScore === safetyQuestions.length
     ) {
-      setCompletedSections((current) =>
-        current.includes(8)
-          ? current
-          : [...current, 8].sort((a, b) => a - b)
-      );
+      const saved = await markComplete();
+      if (!saved) return;
+
+      setCompleted(true);
+      setCompletedSections(sections.map((item) => item.id));
+      setActiveSection(8);
+      globalThis.dispatchEvent(new Event("curio:lesson-completed"));
     }
   };
-
-  useEffect(() => {
-    if (completedSections.includes(8)) {
-      saveLesson5Completion();
-    }
-  }, [completedSections]);
 
   const renderSection = () => {
     switch (activeSection) {
@@ -1203,28 +1219,24 @@ function Lesson5() {
   };
 
   const goToSection = (sectionId: number) => {
-    if (
-      sectionId !== 1 &&
-      !completedSections.includes(sectionId - 1)
-    ) {
-      return;
-    }
+    const unlocked =
+      savedCompleted ||
+      sectionId <= Math.min(savedCompletedSections + 1, sections.length);
+
+    if (!unlocked) return;
 
     setActiveSection(sectionId);
 
-    window.setTimeout(() => {
+    globalThis.setTimeout(() => {
       document
         .getElementById(`lesson5-section-${sectionId}`)
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   };
 
-  const nextSection = () => {
+  const nextSection = async () => {
     if (activeSection < sections.length) {
-      completeSection(activeSection);
+      await completeSection(activeSection);
     }
   };
 
@@ -1233,6 +1245,14 @@ function Lesson5() {
       setActiveSection(activeSection - 1);
     }
   };
+
+  if (progressLoading) {
+    return (
+      <div className="lesson5-page">
+        <div className="lesson5-loading">Loading your lesson progress...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="lesson5-page">
@@ -1264,6 +1284,8 @@ function Lesson5() {
         </div>
       </header>
 
+      {progressError && <div className="lesson5-progress-error">{progressError}</div>}
+
       <div className="lesson5-layout">
         <aside className="lesson5-navigation">
           <div className="lesson5-nav-title">
@@ -1272,12 +1294,11 @@ function Lesson5() {
 
           {sections.map((section) => {
             const locked =
-              section.id !== 1 &&
-              !completedSections.includes(section.id - 1);
+              !savedCompleted &&
+              section.id > Math.min(savedCompletedSections + 1, sections.length);
 
-            const completed = completedSections.includes(
-              section.id
-            );
+            const completed =
+              savedCompleted || section.id <= savedCompletedSections;
 
             return (
               <button
@@ -1389,8 +1410,10 @@ function Lesson5() {
                   className="lesson5-primary-button"
                   onClick={nextSection}
                   disabled={
-                    activeSection === 7 &&
-                    !scenarioPracticeComplete
+                    (activeSection === 4 &&
+                      !completedSections.includes(4)) ||
+                    (activeSection === 7 &&
+                      !scenarioPracticeComplete)
                   }
                 >
                   Continue →
