@@ -22,7 +22,9 @@ export function useLessonProgress(
   totalSections: number
 ) {
   const [progress, setProgress] =
-    useState<LessonProgress | null>(null);
+    useState<LessonProgress | null>(
+      null
+    );
 
   const [loading, setLoading] =
     useState(true);
@@ -31,85 +33,93 @@ export function useLessonProgress(
     useState(false);
 
   const [error, setError] =
-    useState<string | null>(null);
+    useState<string | null>(
+      null
+    );
 
   /* =========================================
-     LOAD SAVED PROGRESS
+     LOAD PROGRESS
   ========================================== */
 
-  const loadProgress = useCallback(
-    async () => {
-      setLoading(true);
-      setError(null);
+  const loadProgress =
+    useCallback(
+      async () => {
+        setLoading(true);
+        setError(null);
 
-      try {
-        const savedProgress =
-          await getLessonProgress(lessonId);
+        try {
+          const saved =
+            await getLessonProgress(
+              lessonId
+            );
 
-        /*
-          Supabase may return null when the user has
-          never started this lesson.
+          setProgress(
+            saved
+          );
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to load lesson progress:",
+            err
+          );
 
-          That is NOT an error.
-
-          null simply means:
-          0 sections completed.
-        */
-
-        setProgress(savedProgress);
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to load lesson progress:",
-          err
-        );
-
-        setError(
-          "Unable to load your lesson progress."
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [lessonId]
-  );
+          setError(
+            "Unable to load your lesson progress."
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      [lessonId]
+    );
 
   /* =========================================
-     LOAD WHEN LESSON OPENS
+     INITIAL LOAD
   ========================================== */
 
   useEffect(() => {
     let active = true;
 
-    const load = async () => {
-      setLoading(true);
-      setError(null);
+    const load =
+      async () => {
+        setLoading(true);
+        setError(null);
 
-      try {
-        const savedProgress =
-          await getLessonProgress(lessonId);
+        try {
+          const saved =
+            await getLessonProgress(
+              lessonId
+            );
 
-        if (!active) return;
-
-        setProgress(savedProgress);
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to load lesson progress:",
-          err
-        );
-
-        if (active) {
-          setError(
-            "Unable to load your lesson progress."
+          if (
+            active
+          ) {
+            setProgress(
+              saved
+            );
+          }
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to load lesson progress:",
+            err
           );
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
 
-    load();
+          if (
+            active
+          ) {
+            setError(
+              "Unable to load your lesson progress."
+            );
+          }
+        } finally {
+          if (
+            active
+          ) {
+            setLoading(false);
+          }
+        }
+      };
+
+    void load();
 
     return () => {
       active = false;
@@ -117,173 +127,242 @@ export function useLessonProgress(
   }, [lessonId]);
 
   /* =========================================
-     SAVE CURRENT SECTION PROGRESS
+     REFRESH WHEN PAGE BECOMES ACTIVE
   ========================================== */
 
-  const updateProgress = useCallback(
-    async (
-      currentSection: number,
-      completedSections: number
-    ) => {
-      setSaving(true);
-      setError(null);
+  useEffect(() => {
+    const handleRefresh =
+      () => {
+        void loadProgress();
+      };
 
-      try {
-        const success =
-          await saveLessonProgress(
-            lessonId,
-            currentSection,
-            completedSections,
-            totalSections
+    globalThis.addEventListener(
+      "focus",
+      handleRefresh
+    );
+
+    globalThis.addEventListener(
+      "pageshow",
+      handleRefresh
+    );
+
+    globalThis.addEventListener(
+      "curio:lesson-progress-updated",
+      handleRefresh
+    );
+
+    return () => {
+      globalThis.removeEventListener(
+        "focus",
+        handleRefresh
+      );
+
+      globalThis.removeEventListener(
+        "pageshow",
+        handleRefresh
+      );
+
+      globalThis.removeEventListener(
+        "curio:lesson-progress-updated",
+        handleRefresh
+      );
+    };
+  }, [loadProgress]);
+
+  /* =========================================
+     SAVE PROGRESS
+  ========================================== */
+
+  const updateProgress =
+    useCallback(
+      async (
+        currentSection: number,
+        completedSections: number
+      ) => {
+        if (saving) {
+          return false;
+        }
+
+        setSaving(true);
+        setError(null);
+
+        try {
+          const success =
+            await saveLessonProgress(
+              lessonId,
+              currentSection,
+              completedSections,
+              totalSections
+            );
+
+          if (!success) {
+            setError(
+              "Unable to save your progress."
+            );
+
+            return false;
+          }
+
+          /*
+           * Reload from Supabase.
+           */
+
+          const saved =
+            await getLessonProgress(
+              lessonId
+            );
+
+          setProgress(
+            saved
           );
 
-        if (!success) {
+          return true;
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to update lesson progress:",
+            err
+          );
+
           setError(
             "Unable to save your progress."
           );
 
           return false;
+        } finally {
+          setSaving(false);
         }
-
-        /*
-          Read the database again after saving.
-
-          Supabase remains the source of truth.
-        */
-
-        const savedProgress =
-          await getLessonProgress(lessonId);
-
-        setProgress(savedProgress);
-
-        return true;
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to update lesson progress:",
-          err
-        );
-
-        setError(
-          "Unable to save your progress."
-        );
-
-        return false;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [
-      lessonId,
-      totalSections,
-    ]
-  );
+      },
+      [
+        lessonId,
+        totalSections,
+        saving,
+      ]
+    );
 
   /* =========================================
      COMPLETE LESSON
   ========================================== */
 
   const markComplete =
-    useCallback(async () => {
-      setSaving(true);
-      setError(null);
+    useCallback(
+      async () => {
+        if (saving) {
+          return false;
+        }
 
-      try {
-        const success =
-          await completeLesson(
-            lessonId,
-            totalSections
+        setSaving(true);
+        setError(null);
+
+        try {
+          const success =
+            await completeLesson(
+              lessonId,
+              totalSections
+            );
+
+          if (!success) {
+            setError(
+              "Unable to mark this lesson as complete."
+            );
+
+            return false;
+          }
+
+          const saved =
+            await getLessonProgress(
+              lessonId
+            );
+
+          setProgress(
+            saved
           );
 
-        if (!success) {
+          return true;
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to complete lesson:",
+            err
+          );
+
           setError(
-            "Unable to mark this lesson as complete."
+            "Unable to complete this lesson."
+          );
+
+          return false;
+        } finally {
+          setSaving(false);
+        }
+      },
+      [
+        lessonId,
+        totalSections,
+        saving,
+      ]
+    );
+
+  /* =========================================
+     CHECK ACCESS
+  ========================================== */
+
+  const checkAccess =
+    useCallback(
+      async () => {
+        try {
+          return await canAccessLesson(
+            lessonId
+          );
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to check lesson access:",
+            err
           );
 
           return false;
         }
-
-        /*
-          Reload the completed database record.
-        */
-
-        const savedProgress =
-          await getLessonProgress(lessonId);
-
-        setProgress(savedProgress);
-
-        return true;
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to complete lesson:",
-          err
-        );
-
-        setError(
-          "Unable to complete this lesson."
-        );
-
-        return false;
-      } finally {
-        setSaving(false);
-      }
-    }, [
-      lessonId,
-      totalSections,
-    ]);
+      },
+      [lessonId]
+    );
 
   /* =========================================
-     CHECK LESSON ACCESS
+     SAFE VALUES
   ========================================== */
 
-  const checkAccess =
-    useCallback(async () => {
-      try {
-        return await canAccessLesson(
-          lessonId
-        );
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to check lesson access:",
-          err
-        );
-
-        return false;
-      }
-    }, [lessonId]);
-
-  /* =========================================
-     CALCULATED PROGRESS VALUES
-  ========================================== */
-
-  /*
-    If no database row exists yet, the lesson is
-    simply at 0 progress.
-
-    Example:
-
-    Lesson 3 doesn't have a row
-          ↓
-    progress === null
-          ↓
-    completedSections === 0
-          ↓
-    progressPercentage === 0
-  */
+  const safeTotalSections =
+    Math.max(
+      0,
+      totalSections
+    );
 
   const completedSections =
-    progress?.completedSections ?? 0;
+    Math.max(
+      0,
+      Math.min(
+        progress?.completedSections ??
+          0,
+        safeTotalSections
+      )
+    );
 
   const currentSection =
-    progress?.currentSection ?? 0;
+    Math.max(
+      0,
+      Math.min(
+        progress?.currentSection ??
+          0,
+        safeTotalSections
+      )
+    );
 
   const completed =
-    progress?.completed ?? false;
+    progress?.completed === true;
 
   const progressPercentage =
-    totalSections > 0
+    safeTotalSections > 0
       ? Math.round(
-          (completedSections /
-            totalSections) *
+          (
+            completedSections /
+            safeTotalSections
+          ) *
             100
         )
       : 0;
@@ -301,6 +380,10 @@ export function useLessonProgress(
 
     currentSection,
     completedSections,
+
+    totalSections:
+      safeTotalSections,
+
     completed,
 
     progressPercentage,
@@ -309,152 +392,174 @@ export function useLessonProgress(
     markComplete,
     checkAccess,
 
-    reload: loadProgress,
+    reload:
+      loadProgress,
   };
 }
 
-
 /* =========================================
-   ALL LESSONS PROGRESS HOOK
+   ALL LESSONS PROGRESS
 ========================================= */
 
 export function useAllLessonProgress(
-  totalCourseLessons: number = 8
+  totalCourseLessons = 8
 ) {
   const [progress, setProgress] =
-    useState<LessonProgress[]>([]);
+    useState<
+      LessonProgress[]
+    >([]);
 
   const [loading, setLoading] =
     useState(true);
 
   const [error, setError] =
-    useState<string | null>(null);
+    useState<string | null>(
+      null
+    );
 
   /* =========================================
-     LOAD ALL PROGRESS
+     LOAD ALL
   ========================================== */
 
   const loadAllProgress =
-    useCallback(async () => {
-      setLoading(true);
-      setError(null);
+    useCallback(
+      async () => {
+        setLoading(true);
+        setError(null);
 
-      try {
-        const savedProgress =
-          await getAllLessonProgress();
+        try {
+          const saved =
+            await getAllLessonProgress();
 
-        /*
-          Supabase only returns rows that actually
-          exist for this user.
+          setProgress(
+            Array.isArray(saved)
+              ? saved
+              : []
+          );
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to load all lesson progress:",
+            err
+          );
 
-          For example:
+          setError(
+            "Unable to load course progress."
+          );
 
-          Database:
-          Lesson 1 -> 8/8
-          Lesson 2 -> 1/8
-
-          It may NOT have rows for:
-
-          Lesson 3
-          Lesson 4
-          Lesson 5
-          Lesson 6
-          Lesson 7
-          Lesson 8
-
-          That is normal.
-
-          We keep the actual database rows here.
-        */
-
-        setProgress(
-          Array.isArray(savedProgress)
-            ? savedProgress
-            : []
-        );
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to load all lesson progress:",
-          err
-        );
-
-        setError(
-          "Unable to load course progress."
-        );
-
-        setProgress([]);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
+          setProgress([]);
+        } finally {
+          setLoading(false);
+        }
+      },
+      []
+    );
 
   /* =========================================
      INITIAL LOAD
   ========================================== */
 
   useEffect(() => {
-    loadAllProgress();
-  }, [loadAllProgress]);
+    void loadAllProgress();
+  }, [
+    loadAllProgress,
+  ]);
+
+  /* =========================================
+     REFRESH EVENTS
+  ========================================== */
+
+  useEffect(() => {
+    const refresh =
+      () => {
+        void loadAllProgress();
+      };
+
+    globalThis.addEventListener(
+      "focus",
+      refresh
+    );
+
+    globalThis.addEventListener(
+      "pageshow",
+      refresh
+    );
+
+    globalThis.addEventListener(
+      "curio:lesson-progress-updated",
+      refresh
+    );
+
+    globalThis.addEventListener(
+      "curio:lesson-completed",
+      refresh
+    );
+
+    return () => {
+      globalThis.removeEventListener(
+        "focus",
+        refresh
+      );
+
+      globalThis.removeEventListener(
+        "pageshow",
+        refresh
+      );
+
+      globalThis.removeEventListener(
+        "curio:lesson-progress-updated",
+        refresh
+      );
+
+      globalThis.removeEventListener(
+        "curio:lesson-completed",
+        refresh
+      );
+    };
+  }, [
+    loadAllProgress,
+  ]);
 
   /* =========================================
      COURSE CALCULATIONS
   ========================================== */
 
-  /*
-    IMPORTANT:
-
-    Do NOT use:
-
-      progress.length
-
-    as the number of lessons.
-
-    progress.length means:
-    "How many lessons have a database row?"
-
-    It does NOT mean:
-    "How many lessons are in the CURIO course?"
-  */
-
   const completedLessons =
     progress.filter(
-      (lesson) => lesson.completed === true
+      (lesson) =>
+        lesson.completed === true
     ).length;
 
-  /*
-    CURIO currently has 8 lessons.
-
-    Therefore:
-
-      totalLessons = 8
-
-    even if only Lesson 1 has a database row.
-  */
-
   const totalLessons =
-    totalCourseLessons;
+    Math.max(
+      0,
+      totalCourseLessons
+    );
 
   const courseProgress =
     totalLessons > 0
       ? Math.round(
-          (completedLessons /
-            totalLessons) *
+          (
+            completedLessons /
+            totalLessons
+          ) *
             100
         )
       : 0;
 
   /* =========================================
-     HELPER
-     GET PROGRESS FOR ONE LESSON
+     GET ONE LESSON
   ========================================== */
 
   const getProgressForLesson =
     useCallback(
-      (lessonId: number) => {
+      (
+        lessonId: number
+      ) => {
         return (
           progress.find(
             (lesson) =>
-              lesson.lessonId === lessonId
+              lesson.lessonId ===
+              lessonId
           ) ?? null
         );
       },
@@ -477,6 +582,7 @@ export function useAllLessonProgress(
 
     getProgressForLesson,
 
-    reload: loadAllProgress,
+    reload:
+      loadAllProgress,
   };
 }

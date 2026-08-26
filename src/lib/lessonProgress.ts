@@ -25,21 +25,45 @@ export interface LessonProgress {
 ========================================= */
 
 async function getCurrentUserId(): Promise<string | null> {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-  if (error) {
+    if (error) {
+      console.error(
+        "CURIO LESSON PROGRESS AUTH ERROR:",
+        error.message
+      );
+
+      return null;
+    }
+
+    return user?.id ?? null;
+  } catch (error) {
     console.error(
-      "CURIO LESSON PROGRESS AUTH ERROR:",
+      "CURIO LESSON PROGRESS AUTH EXCEPTION:",
       error
     );
 
     return null;
   }
+}
 
-  return user?.id ?? null;
+/* =========================================
+   NORMALIZE NUMBER
+========================================= */
+
+function safeNumber(
+  value: unknown,
+  fallback = 0
+): number {
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : fallback;
 }
 
 /* =========================================
@@ -50,34 +74,38 @@ function mapProgress(
   row: Record<string, unknown>
 ): LessonProgress {
   return {
-    userId: String(row.user_id),
-
-    lessonId: Number(
-      row.lesson_id ?? 0
+    userId: String(
+      row.user_id ?? ""
     ),
 
-    currentSection: Number(
-      row.current_section ?? 0
+    lessonId: safeNumber(
+      row.lesson_id
     ),
 
-    completedSections: Number(
-      row.completed_sections ?? 0
+    currentSection: safeNumber(
+      row.current_section
     ),
 
-    totalSections: Number(
-      row.total_sections ?? 0
+    completedSections: safeNumber(
+      row.completed_sections
+    ),
+
+    totalSections: safeNumber(
+      row.total_sections
     ),
 
     completed:
-      Boolean(row.completed),
+      row.completed === true,
 
     lastAccessedAt:
-      typeof row.last_accessed_at === "string"
+      typeof row.last_accessed_at ===
+      "string"
         ? row.last_accessed_at
         : null,
 
     completedAt:
-      typeof row.completed_at === "string"
+      typeof row.completed_at ===
+      "string"
         ? row.completed_at
         : null,
   };
@@ -102,15 +130,32 @@ export async function getLessonProgress(
     error,
   } = await supabase
     .from("lesson_progress")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("lesson_id", lessonId)
+    .select(
+      `
+        user_id,
+        lesson_id,
+        current_section,
+        completed_sections,
+        total_sections,
+        completed,
+        last_accessed_at,
+        completed_at
+      `
+    )
+    .eq(
+      "user_id",
+      userId
+    )
+    .eq(
+      "lesson_id",
+      lessonId
+    )
     .maybeSingle();
 
   if (error) {
     console.error(
       "CURIO: Failed to load Lesson progress:",
-      error
+      error.message
     );
 
     return null;
@@ -142,22 +187,41 @@ export async function getAllLessonProgress(): Promise<
     error,
   } = await supabase
     .from("lesson_progress")
-    .select("*")
-    .eq("user_id", userId)
-    .order("lesson_id", {
-      ascending: true,
-    });
+    .select(
+      `
+        user_id,
+        lesson_id,
+        current_section,
+        completed_sections,
+        total_sections,
+        completed,
+        last_accessed_at,
+        completed_at
+      `
+    )
+    .eq(
+      "user_id",
+      userId
+    )
+    .order(
+      "lesson_id",
+      {
+        ascending: true,
+      }
+    );
 
   if (error) {
     console.error(
       "CURIO: Failed to load all Lesson progress:",
-      error
+      error.message
     );
 
     return [];
   }
 
-  return (data ?? []).map((row) =>
+  return (
+    data ?? []
+  ).map((row) =>
     mapProgress(row)
   );
 }
@@ -184,13 +248,24 @@ export async function saveLessonProgress(
   }
 
   const safeTotalSections =
-    Math.max(0, totalSections);
+    Math.max(
+      0,
+      Math.floor(
+        safeNumber(
+          totalSections
+        )
+      )
+    );
 
   const safeCurrentSection =
     Math.max(
       0,
       Math.min(
-        currentSection,
+        Math.floor(
+          safeNumber(
+            currentSection
+          )
+        ),
         safeTotalSections
       )
     );
@@ -199,7 +274,11 @@ export async function saveLessonProgress(
     Math.max(
       0,
       Math.min(
-        completedSections,
+        Math.floor(
+          safeNumber(
+            completedSections
+          )
+        ),
         safeTotalSections
       )
     );
@@ -212,32 +291,88 @@ export async function saveLessonProgress(
   const now =
     new Date().toISOString();
 
+  /*
+   * IMPORTANT:
+   *
+   * Never move saved progress backwards.
+   *
+   * If the database already contains:
+   *
+   * 5 / 8
+   *
+   * and a component accidentally sends:
+   *
+   * 3 / 8
+   *
+   * we don't want to destroy the user's progress.
+   */
+
+  const existing =
+    await getLessonProgress(
+      lessonId
+    );
+
+  const finalCompletedSections =
+    Math.max(
+      existing?.completedSections ?? 0,
+      safeCompletedSections
+    );
+
+  const finalCurrentSection =
+    Math.max(
+      existing?.currentSection ?? 0,
+      safeCurrentSection
+    );
+
+  const finalCompleted =
+    completed ||
+    existing?.completed === true ||
+    (
+      safeTotalSections > 0 &&
+      finalCompletedSections >=
+        safeTotalSections
+    );
+
   const {
     error,
   } = await supabase
     .from("lesson_progress")
     .upsert(
       {
-        user_id: userId,
+        user_id:
+          userId,
 
-        lesson_id: lessonId,
+        lesson_id:
+          lessonId,
 
         current_section:
-          safeCurrentSection,
+          Math.min(
+            finalCurrentSection,
+            safeTotalSections
+          ),
 
         completed_sections:
-          safeCompletedSections,
+          Math.min(
+            finalCompletedSections,
+            safeTotalSections
+          ),
 
         total_sections:
           safeTotalSections,
 
-        completed,
+        completed:
+          finalCompleted,
 
         last_accessed_at:
           now,
 
         completed_at:
-          completed ? now : null,
+          finalCompleted
+            ? (
+                existing?.completedAt ??
+                now
+              )
+            : null,
       },
       {
         onConflict:
@@ -248,10 +383,58 @@ export async function saveLessonProgress(
   if (error) {
     console.error(
       "CURIO: Failed to save Lesson progress:",
-      error
+      error.message
     );
 
     return false;
+  }
+
+  /*
+   * Notify Learn.tsx and other pages.
+   *
+   * Supabase remains the source of truth.
+   * This event only tells the UI to reload.
+   */
+
+  if (
+    typeof globalThis !==
+    "undefined"
+  ) {
+    globalThis.dispatchEvent(
+      new CustomEvent(
+        "curio:lesson-progress-updated",
+        {
+          detail: {
+            lessonId,
+            currentSection:
+              Math.min(
+                finalCurrentSection,
+                safeTotalSections
+              ),
+            completedSections:
+              Math.min(
+                finalCompletedSections,
+                safeTotalSections
+              ),
+            completed:
+              finalCompleted,
+          },
+        }
+      )
+    );
+
+    if (finalCompleted) {
+      globalThis.dispatchEvent(
+        new CustomEvent(
+          "curio:lesson-completed",
+          {
+            detail: {
+              lessonId,
+            },
+          }
+        )
+      );
+    }
   }
 
   return true;
@@ -281,8 +464,9 @@ export async function canAccessLesson(
   lessonId: number
 ): Promise<boolean> {
   /*
-   * Lesson 1 is always available.
+   * Lesson 1 is always unlocked.
    */
+
   if (lessonId <= 1) {
     return true;
   }
@@ -295,17 +479,14 @@ export async function canAccessLesson(
       previousLessonId
     );
 
-  /*
-   * A lesson becomes available when
-   * the previous lesson is completed.
-   */
   return (
-    previousProgress?.completed === true
+    previousProgress?.completed ===
+    true
   );
 }
 
 /* =========================================
-   CHECK LESSON COMPLETION
+   CHECK COMPLETION
 ========================================= */
 
 export async function isLessonCompleted(

@@ -1,2826 +1,997 @@
 /* =========================================================
-   CURIO — REALITY CHECK
-   Reality.css
-
-   Clean stylesheet for the current RealityCheck.tsx
-
-   Structure:
-   Header
-   → Journey Sidebar
-   → Main Content
-   → Hero
-   → Step Indicator
-   → Lesson Cards
-   → Answer Choices
-   → Final Challenge
-   → Responsive Layout
-========================================================= */
-
-
-/* =========================================================
-   01. DESIGN TOKENS
+   CURIO · REALITY CHECK
+   Standalone styles for RealityCheck.tsx
 ========================================================= */
 
 .reality-page {
-  --reality-bg: #080a16;
-  --reality-bg-2: #0b0d1d;
-  --reality-panel: #111426;
-  --reality-panel-2: #15192d;
-
-  --reality-border: rgba(255, 255, 255, 0.09);
-  --reality-border-light: rgba(255, 255, 255, 0.06);
-
-  --reality-white: #f7f8ff;
-  --reality-text: #e8ebf7;
-  --reality-muted: #9da6bd;
-  --reality-muted-2: #707990;
-
-  --reality-purple: #806cff;
-  --reality-purple-light: #a99cff;
-  --reality-blue: #5d9dff;
-  --reality-cyan: #50d7e8;
-
-  --reality-green: #55dfbd;
-  --reality-yellow: #ffd166;
-  --reality-red: #ff7188;
-
   min-height: 100vh;
-  width: 100%;
-
   background:
-    radial-gradient(
-      circle at 80% 5%,
-      rgba(112, 83, 255, 0.16),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 15% 45%,
-      rgba(63, 126, 255, 0.06),
-      transparent 28%
-    ),
-    linear-gradient(
-      180deg,
-      #080a16 0%,
-      #090b18 100%
-    );
-
-  color: var(--reality-white);
-
-  font-family:
-    Inter,
-    Poppins,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
-    sans-serif;
-
-  font-size: 16px;
-  line-height: 1.6;
-
-  box-sizing: border-box;
-
-  overflow-x: hidden;
+    radial-gradient(circle at 10% 0%, rgba(94, 82, 255, 0.12), transparent 30%),
+    radial-gradient(circle at 90% 10%, rgba(0, 180, 255, 0.08), transparent 28%),
+    #f7f8fc;
+  color: #182033;
 }
-
-
-/* =========================================================
-   02. RESET
-========================================================= */
-
-.reality-page *,
-.reality-page *::before,
-.reality-page *::after {
-  box-sizing: border-box;
-}
-
-.reality-page h1,
-.reality-page h2,
-.reality-page h3,
-.reality-page h4,
-.reality-page p {
-  margin: 0;
-}
-
-.reality-page button {
-  font-family: inherit;
-}
-
-.reality-page button:focus-visible {
-  outline: 2px solid var(--reality-cyan);
-  outline-offset: 3px;
-}
-
-
-/* =========================================================
-   03. HEADER
-========================================================= */
 
 .reality-header {
   position: sticky;
   top: 0;
-  z-index: 100;
-
-  width: 100%;
-  min-height: 82px;
-
-  padding: 14px 32px;
-
+  z-index: 20;
+  min-height: 78px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   gap: 28px;
-
-  background:
-    rgba(7, 9, 18, 0.94);
-
-  border-bottom:
-    1px solid var(--reality-border);
-
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  padding: 14px clamp(18px, 4vw, 58px);
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid #e7e9f2;
+  backdrop-filter: blur(18px);
 }
-
-
-/* =========================================================
-   04. BRAND
-========================================================= */
 
 .reality-brand {
   display: flex;
   align-items: center;
-
+  gap: 12px;
   min-width: 0;
-
-  gap: 14px;
 }
-
-
-/* Back button */
 
 .reality-back-button {
   width: 42px;
   height: 42px;
-
-  flex: 0 0 42px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 1px solid var(--reality-border) !important;
+  border: 1px solid #e4e6ef;
   border-radius: 12px;
-
-  background:
-    rgba(255, 255, 255, 0.04) !important;
-
-  color: var(--reality-white) !important;
-
-  font-size: 21px;
-  line-height: 1;
-
+  background: #fff;
+  color: #20263a;
+  font-size: 20px;
   cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
 }
 
 .reality-back-button:hover {
-  background:
-    rgba(255, 255, 255, 0.08) !important;
-
-  border-color:
-    rgba(169, 156, 255, 0.35) !important;
-
-  transform: translateX(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(25, 31, 55, 0.08);
 }
 
-
-/* Logo */
-
-.reality-logo-mark {
+.reality-logo {
   width: 42px;
   height: 42px;
-
-  flex: 0 0 42px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  display: grid;
+  place-items: center;
   border-radius: 13px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(128, 108, 255, 0.28),
-      rgba(80, 215, 232, 0.12)
-    );
-
-  border:
-    1px solid rgba(169, 156, 255, 0.25);
-
-  box-shadow:
-    0 0 24px rgba(128, 108, 255, 0.14);
-
-  font-size: 21px;
+  background: linear-gradient(135deg, #252b6d, #715cff);
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 10px 28px rgba(67, 55, 190, 0.22);
 }
-
-
-/* Brand text */
 
 .reality-brand > div:last-child {
-  min-width: 0;
-
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.reality-brand > div:last-child strong {
-  color: #ffffff;
-
-  font-size: 18px;
-  line-height: 1.1;
-
-  font-weight: 900;
-
-  letter-spacing: 0.16em;
+.reality-brand strong {
+  font-size: 15px;
+  letter-spacing: 0.14em;
 }
 
-.reality-brand > div:last-child span {
-  margin-top: 5px;
-
-  color:
-    rgba(255, 255, 255, 0.45);
-
-  font-size: 10px;
-  line-height: 1.3;
-
-  font-weight: 600;
-
-  letter-spacing: 0.02em;
+.reality-brand span {
+  color: #737b91;
+  font-size: 12px;
 }
-
-
-/* =========================================================
-   05. HEADER PROGRESS
-========================================================= */
 
 .reality-header-progress {
-  width: 320px;
-  max-width: 35vw;
-
-  flex: 0 0 auto;
+  width: min(330px, 35vw);
 }
 
-.reality-progress-heading {
+.reality-progress-meta {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-
-  gap: 15px;
-
-  margin-bottom: 8px;
-}
-
-.reality-progress-heading span {
-  color:
-    rgba(255, 255, 255, 0.42);
-
-  font-size: 10px;
-
-  font-weight: 850;
-
-  letter-spacing: 0.12em;
-}
-
-.reality-progress-heading strong {
-  color: var(--reality-purple-light);
-
-  font-size: 15px;
-
+  margin-bottom: 7px;
+  font-size: 11px;
   font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #70788d;
 }
 
-.reality-progress-track {
-  width: 100%;
-  height: 7px;
+.reality-progress-meta strong {
+  color: #4f46d9;
+}
 
+.reality-progress-track,
+.reality-score-track {
+  height: 8px;
   overflow: hidden;
-
   border-radius: 999px;
-
-  background:
-    rgba(255, 255, 255, 0.08);
+  background: #e8eaf2;
 }
 
-.reality-progress-fill {
+.reality-progress-fill,
+.reality-score-track > div {
   height: 100%;
-
   border-radius: inherit;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--reality-purple),
-      var(--reality-blue),
-      var(--reality-cyan)
-    );
-
-  transition:
-    width 0.35s ease;
+  background: linear-gradient(90deg, #4f46d9, #7b61ff);
+  transition: width 0.35s ease;
 }
 
-
-/* =========================================================
-   06. ERROR BANNER
-========================================================= */
-
-.reality-error-banner {
-  width: 100%;
-
-  padding: 11px 24px;
-
+.reality-error {
+  margin: 18px auto 0;
+  width: min(1200px, calc(100% - 32px));
   display: flex;
+  gap: 10px;
   align-items: center;
-  justify-content: center;
-
-  gap: 7px;
-
-  background:
-    rgba(255, 209, 102, 0.09);
-
-  border-bottom:
-    1px solid rgba(255, 209, 102, 0.12);
-
-  color: #ffe6a1;
-
-  font-size: 13px;
+  padding: 13px 16px;
+  border: 1px solid #f2c5c5;
+  border-radius: 14px;
+  background: #fff4f4;
+  color: #9b3131;
 }
 
-.reality-error-banner strong {
-  font-weight: 750;
+.reality-error span {
+  color: #b45a5a;
 }
 
-.reality-error-banner span {
-  color:
-    rgba(255, 230, 161, 0.7);
-}
-
-
-/* =========================================================
-   07. MAIN LAYOUT
-========================================================= */
-
-.reality-layout {
-  width: min(1380px, 100%);
-
-  margin: 0 auto;
-
-  padding:
-    48px 34px
-    90px;
-
+.reality-shell {
+  width: min(1420px, calc(100% - 32px));
+  margin: 26px auto 60px;
   display: grid;
-
-  grid-template-columns:
-    250px
-    minmax(0, 1fr);
-
-  gap: 48px;
-
-  align-items: start;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 28px;
 }
-
-
-/* =========================================================
-   08. SIDEBAR
-========================================================= */
 
 .reality-sidebar {
   position: sticky;
-  top: 112px;
-
-  min-width: 0;
-
-  padding-top: 8px;
+  top: 104px;
+  align-self: start;
+  padding: 18px;
+  border: 1px solid #e5e7ef;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 55px rgba(31, 39, 73, 0.07);
 }
 
-.reality-sidebar-heading {
-  margin-bottom: 16px;
-
-  padding-left: 4px;
-
-  color:
-    rgba(255, 255, 255, 0.46);
-
-  font-size: 10px;
-
-  font-weight: 850;
-
-  letter-spacing: 0.16em;
+.reality-sidebar-title {
+  margin: 4px 8px 14px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #7b8194;
 }
 
-
-/* =========================================================
-   09. SIDEBAR SECTIONS
-========================================================= */
-
-.reality-section-list {
-  display: flex;
-  flex-direction: column;
-
+.reality-nav {
+  display: grid;
   gap: 7px;
 }
 
-.reality-section-button {
+.reality-nav-item {
   width: 100%;
-  min-height: 62px;
-
-  padding: 9px 10px;
-
   display: grid;
-
-  grid-template-columns:
-    36px
-    minmax(0, 1fr)
-    22px;
-
+  grid-template-columns: 34px 1fr 22px;
   align-items: center;
-
-  gap: 10px;
-
-  border:
-    1px solid transparent !important;
-
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid transparent;
   border-radius: 14px;
-
-  background:
-    transparent !important;
-
-  color:
-    var(--reality-text) !important;
-
+  background: transparent;
   text-align: left;
-
+  color: #252b3c;
   cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
 }
 
-.reality-section-button:hover:not(:disabled) {
-  background:
-    rgba(255, 255, 255, 0.045) !important;
-
-  border-color:
-    rgba(255, 255, 255, 0.06) !important;
-
-  transform:
-    translateX(2px);
+.reality-nav-item:hover:not(:disabled) {
+  background: #f5f5ff;
 }
 
-
-/* Active */
-
-.reality-section-button.active {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(128, 108, 255, 0.17),
-      rgba(80, 215, 232, 0.05)
-    ) !important;
-
-  border-color:
-    rgba(128, 108, 255, 0.28) !important;
-
-  box-shadow:
-    0 12px 30px
-    rgba(55, 45, 150, 0.12);
+.reality-nav-item.active {
+  background: #f0efff;
+  border-color: #ddd9ff;
 }
 
-
-/* Completed */
-
-.reality-section-button.completed {
-  border-color:
-    rgba(85, 223, 189, 0.08) !important;
-}
-
-
-/* Locked */
-
-.reality-section-button.locked {
-  opacity: 0.45;
-
+.reality-nav-item.locked {
   cursor: not-allowed;
-
-  background:
-    transparent !important;
+  opacity: 0.52;
 }
 
-
-/* =========================================================
-   10. SIDEBAR NUMBER
-========================================================= */
-
-.reality-section-number {
-  width: 36px;
-  height: 36px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 10px;
-
-  background:
-    rgba(255, 255, 255, 0.045);
-
-  color:
-    rgba(255, 255, 255, 0.45);
-
+.reality-nav-number {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #f0f1f6;
   font-size: 10px;
-
-  font-weight: 800;
-}
-
-.reality-section-button.active
-.reality-section-number {
-  background:
-    var(--reality-purple);
-
-  color: white;
-
-  box-shadow:
-    0 8px 20px
-    rgba(128, 108, 255, 0.25);
-}
-
-.reality-section-button.completed
-.reality-section-number {
-  background:
-    rgba(85, 223, 189, 0.12);
-
-  color:
-    var(--reality-green);
-}
-
-
-/* =========================================================
-   11. SIDEBAR TEXT
-========================================================= */
-
-.reality-section-text {
-  min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-}
-
-.reality-section-text strong {
-  overflow: hidden;
-
-  color:
-    #eef0fa;
-
-  font-size: 12px;
-
-  font-weight: 750;
-
-  line-height: 1.3;
-
-  white-space: nowrap;
-
-  text-overflow: ellipsis;
-}
-
-.reality-section-text small {
-  margin-top: 3px;
-
-  overflow: hidden;
-
-  color:
-    rgba(255, 255, 255, 0.35);
-
-  font-size: 9px;
-
-  line-height: 1.3;
-
-  white-space: nowrap;
-
-  text-overflow: ellipsis;
-}
-
-
-/* =========================================================
-   12. SIDEBAR STATUS
-========================================================= */
-
-.reality-section-status {
-  width: 22px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color:
-    var(--reality-green);
-
-  font-size: 13px;
-
-  font-weight: 800;
-
-  text-align: center;
-}
-
-
-/* =========================================================
-   13. CONTENT
-========================================================= */
-
-.reality-content {
-  min-width: 0;
-
-  width: 100%;
-}
-
-
-/* =========================================================
-   14. HERO
-========================================================= */
-
-.reality-hero {
-  width: 100%;
-
-  min-height: 390px;
-
-  padding:
-    62px
-    58px
-    58px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  border:
-    1px solid
-    rgba(128, 108, 255, 0.12);
-
-  border-radius: 28px;
-
-  background:
-    radial-gradient(
-      circle at 85% 15%,
-      rgba(128, 108, 255, 0.14),
-      transparent 34%
-    ),
-    radial-gradient(
-      circle at 20% 90%,
-      rgba(80, 215, 232, 0.045),
-      transparent 30%
-    ),
-    linear-gradient(
-      145deg,
-      rgba(14, 17, 35, 0.98),
-      rgba(10, 12, 26, 0.98)
-    );
-
-  box-shadow:
-    0 28px 80px
-    rgba(0, 0, 0, 0.22);
-}
-
-
-/* =========================================================
-   15. HERO KICKER
-========================================================= */
-
-.reality-kicker {
-  display: inline-flex;
-  align-items: center;
-
-  width: fit-content;
-
-  color:
-    var(--reality-purple-light);
-
-  font-size: 11px;
-
-  font-weight: 850;
-
-  letter-spacing: 0.15em;
-}
-
-
-/* =========================================================
-   16. HERO TITLE
-========================================================= */
-
-.reality-hero h1 {
-  max-width: 820px;
-
-  margin-top: 22px;
-
-  color:
-    var(--reality-white);
-
-  font-size:
-    clamp(54px, 6vw, 88px);
-
-  line-height: 0.91;
-
   font-weight: 900;
-
-  letter-spacing: -0.065em;
 }
 
-.reality-hero h1 em {
-  display: inline-block;
-
-  color:
-    var(--reality-purple-light);
-
-  font-style: italic;
+.reality-nav-item.active .reality-nav-number {
+  background: #5b51dd;
+  color: #fff;
 }
 
-
-/* =========================================================
-   17. HERO DESCRIPTION
-========================================================= */
-
-.reality-hero > p {
-  max-width: 900px;
-
-  margin-top: 28px;
-
-  color:
-    #aeb7ce;
-
-  font-size: 16px;
-
-  line-height: 1.8;
+.reality-nav-item.completed .reality-nav-number {
+  background: #e4f7ec;
+  color: #23824c;
 }
 
-
-/* =========================================================
-   18. HERO PRINCIPLE
-========================================================= */
-
-.reality-hero-principle {
-  max-width: 850px;
-
-  margin-top: 26px;
-
-  padding:
-    18px 20px;
-
-  display: grid;
-
-  grid-template-columns:
-    44px
-    minmax(0, 1fr);
-
-  gap: 15px;
-
-  align-items: center;
-
-  border:
-    1px solid
-    rgba(128, 108, 255, 0.17);
-
-  border-radius: 16px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(128, 108, 255, 0.08),
-      rgba(80, 215, 232, 0.03)
-    );
-}
-
-.reality-hero-principle > span {
-  width: 44px;
-  height: 44px;
-
+.reality-nav-copy {
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-
-  background:
-    rgba(255, 255, 255, 0.055);
-
-  font-size: 21px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.reality-hero-principle strong {
-  display: block;
-
-  color:
-    #f0f2fb;
-
-  font-size: 14px;
-
-  line-height: 1.4;
-}
-
-.reality-hero-principle p {
-  margin-top: 5px;
-
-  color:
-    var(--reality-muted);
-
+.reality-nav-copy strong {
   font-size: 12px;
-
-  line-height: 1.65;
 }
 
-
-/* =========================================================
-   19. STEP INDICATOR
-========================================================= */
-
-.reality-step-indicator {
-  margin-top: 28px;
-
-  padding:
-    16px 20px;
-
-  display: grid;
-
-  grid-template-columns:
-    auto
-    minmax(0, 1fr)
-    auto;
-
-  align-items: center;
-
-  gap: 18px;
-
-  border:
-    1px solid
-    var(--reality-border);
-
-  border-radius: 14px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.reality-step-indicator span {
-  color:
-    var(--reality-purple-light);
-
-  font-size: 10px;
-
-  font-weight: 850;
-
-  letter-spacing: 0.12em;
-}
-
-.reality-step-indicator strong {
+.reality-nav-copy small {
   overflow: hidden;
-
-  color:
-    var(--reality-text);
-
-  font-size: 13px;
-
-  font-weight: 700;
-
+  color: #8990a2;
+  font-size: 10px;
   white-space: nowrap;
-
   text-overflow: ellipsis;
 }
 
-.reality-step-indicator small {
-  color:
-    var(--reality-muted-2);
-
-  font-size: 10px;
-
-  white-space: nowrap;
+.reality-nav-item.active .reality-nav-copy strong {
+  color: #4d45c9;
 }
 
-
-/* =========================================================
-   20. LESSON CARD
-========================================================= */
-
-.reality-card {
-  width: 100%;
-
-  margin-top: 20px;
-
-  padding:
-    38px;
-
-  border:
-    1px solid
-    var(--reality-border);
-
-  border-radius: 22px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(17, 20, 38, 0.98),
-      rgba(13, 16, 31, 0.98)
-    );
-
-  box-shadow:
-    0 22px 60px
-    rgba(0, 0, 0, 0.17);
+.reality-nav-item.completed .reality-nav-status {
+  color: #278a51;
 }
 
-
-/* =========================================================
-   21. CARD LABEL
-========================================================= */
-
-.reality-card-label {
-  display: inline-block;
-
-  color:
-    var(--reality-purple-light);
-
-  font-size: 10px;
-
-  font-weight: 850;
-
-  letter-spacing: 0.15em;
-}
-
-
-/* =========================================================
-   22. CARD HEADING
-========================================================= */
-
-.reality-card h2 {
-  max-width: 850px;
-
-  margin-top: 14px;
-
-  color:
-    var(--reality-white);
-
-  font-size:
-    clamp(32px, 4vw, 52px);
-
-  line-height: 1.05;
-
-  font-weight: 850;
-
-  letter-spacing: -0.04em;
-}
-
-.reality-card h3 {
-  margin-top: 28px;
-
-  color:
-    #eef0fa;
-
-  font-size: 18px;
-
-  line-height: 1.35;
-
-  font-weight: 750;
-}
-
-
-/* =========================================================
-   23. CARD LEAD
-========================================================= */
-
-.reality-lead {
-  max-width: 800px;
-
-  margin-top: 16px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 15px;
-
-  line-height: 1.8;
-}
-
-.reality-lead strong {
-  color:
-    var(--reality-white);
-}
-
-
-/* =========================================================
-   24. EXPLANATION BLOCK
-========================================================= */
-
-.reality-explanation {
-  margin-top: 26px;
-
-  padding:
-    20px;
-
-  display: grid;
-
-  grid-template-columns:
-    46px
-    minmax(0, 1fr);
-
-  gap: 16px;
-
-  border:
-    1px solid
-    rgba(128, 108, 255, 0.12);
-
+.reality-sidebar-tip {
+  margin-top: 18px;
+  padding: 15px;
   border-radius: 16px;
-
-  background:
-    rgba(128, 108, 255, 0.045);
+  background: linear-gradient(135deg, #f3f2ff, #f7f9ff);
 }
 
-.reality-icon {
-  width: 46px;
-  height: 46px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 13px;
-
-  background:
-    rgba(128, 108, 255, 0.12);
-
-  font-size: 21px;
-}
-
-.reality-explanation h3 {
-  margin-top: 0;
-
-  color:
-    #f0f2fb;
-
-  font-size: 16px;
-}
-
-.reality-explanation p {
-  margin-top: 7px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 13px;
-
-  line-height: 1.75;
-}
-
-
-/* =========================================================
-   25. EXAMPLE GRID
-========================================================= */
-
-.reality-example-grid {
-  margin-top: 25px;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 12px;
-}
-
-.reality-example-grid > div {
-  min-height: 145px;
-
-  padding: 18px;
-
-  border:
-    1px solid
-    var(--reality-border-light);
-
-  border-radius: 15px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.reality-example-grid span {
-  display: block;
-
-  font-size: 20px;
-}
-
-.reality-example-grid strong {
-  display: block;
-
-  margin-top: 14px;
-
-  color:
-    #edf0fa;
-
-  font-size: 13px;
-}
-
-.reality-example-grid p {
-  margin-top: 5px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 11px;
-
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   26. CHOICE GRID
-========================================================= */
-
-.reality-choice-grid {
-  margin-top: 15px;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
-  gap: 12px;
-}
-
-.reality-choice-grid button {
-  min-height: 62px;
-
-  padding:
-    15px 17px;
-
-  display: flex;
-  align-items: center;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.08) !important;
-
-  border-radius: 13px;
-
-  background:
-    rgba(255, 255, 255, 0.035) !important;
-
-  color:
-    #e8ebf7 !important;
-
-  font-size: 13px;
-
-  font-weight: 650;
-
-  line-height: 1.45;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.reality-choice-grid button:hover {
-  transform:
-    translateY(-1px);
-
-  background:
-    rgba(128, 108, 255, 0.08) !important;
-
-  border-color:
-    rgba(128, 108, 255, 0.25) !important;
-}
-
-
-/* Selected */
-
-.reality-choice-grid button.selected {
-  background:
-    rgba(128, 108, 255, 0.13) !important;
-
-  border-color:
-    rgba(128, 108, 255, 0.38) !important;
-
-  color:
-    #ffffff !important;
-}
-
-
-/* Correct */
-
-.reality-choice-grid button.selected.correct {
-  background:
-    rgba(85, 223, 189, 0.10) !important;
-
-  border-color:
-    rgba(85, 223, 189, 0.32) !important;
-}
-
-
-/* =========================================================
-   27. SUCCESS / WARNING
-========================================================= */
-
-.reality-success,
-.reality-warning {
-  margin-top: 14px;
-
-  padding:
-    13px 16px;
-
-  border-radius: 12px;
-
-  font-size: 12px;
-
-  line-height: 1.6;
-}
-
-.reality-success {
-  border:
-    1px solid
-    rgba(85, 223, 189, 0.20);
-
-  background:
-    rgba(85, 223, 189, 0.07);
-
-  color:
-    #8ff0d6;
-}
-
-.reality-warning {
-  border:
-    1px solid
-    rgba(255, 113, 136, 0.18);
-
-  background:
-    rgba(255, 113, 136, 0.06);
-
-  color:
-    #ffabb9;
-}
-
-
-/* =========================================================
-   28. PRIMARY BUTTON
-========================================================= */
-
-.reality-primary-button {
-  min-height: 48px;
-
-  margin-top: 24px;
-
-  padding:
-    12px 20px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 10px;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.08) !important;
-
-  border-radius: 13px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #7663ff,
-      #597ef0 62%,
-      #4ed3df
-    ) !important;
-
-  color:
-    #ffffff !important;
-
-  font-size: 14px;
-
-  font-weight: 750;
-
-  line-height: 1.2;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 12px 30px
-    rgba(91, 78, 255, 0.20);
-
-  transition:
-    transform 0.2s ease,
-    filter 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.reality-primary-button:hover:not(:disabled) {
-  transform:
-    translateY(-2px);
-
-  filter:
-    brightness(1.06);
-
-  box-shadow:
-    0 16px 38px
-    rgba(91, 78, 255, 0.28);
-}
-
-.reality-primary-button:disabled {
-  opacity: 0.42;
-
-  cursor: not-allowed;
-
-  transform: none;
-
-  box-shadow: none;
-}
-
-
-/* =========================================================
-   29. SECONDARY BUTTON
-========================================================= */
-
-.reality-secondary-button {
-  min-height: 46px;
-
-  margin-top: 20px;
-
-  padding:
-    11px 18px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border:
-    1px solid
-    var(--reality-border) !important;
-
-  border-radius: 12px;
-
-  background:
-    rgba(255, 255, 255, 0.04) !important;
-
-  color:
-    #e7eaf5 !important;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.reality-secondary-button:hover {
-  background:
-    rgba(255, 255, 255, 0.08) !important;
-
-  border-color:
-    rgba(255, 255, 255, 0.15) !important;
-}
-
-
-/* =========================================================
-   30. CONTEXT COMPARISON
-========================================================= */
-
-.reality-context-comparison {
-  margin-top: 25px;
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    45px
-    minmax(0, 1fr);
-
-  align-items: stretch;
-
-  gap: 12px;
-}
-
-.context-box {
-  padding: 20px;
-
-  border:
-    1px solid
-    var(--reality-border);
-
-  border-radius: 15px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.context-box.strong {
-  border-color:
-    rgba(85, 223, 189, 0.18);
-
-  background:
-    rgba(85, 223, 189, 0.045);
-}
-
-.context-box > span {
-  color:
-    var(--reality-muted-2);
-
-  font-size: 9px;
-
-  font-weight: 850;
-
-  letter-spacing: 0.12em;
-}
-
-.context-box.strong > span {
-  color:
-    var(--reality-green);
-}
-
-.context-box strong {
-  display: block;
-
-  margin-top: 14px;
-
-  color:
-    #edf0fa;
-
-  font-size: 15px;
-}
-
-.context-box p {
-  margin-top: 7px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 12px;
-
-  line-height: 1.65;
-}
-
-.context-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color:
-    var(--reality-purple-light);
-
-  font-size: 24px;
-}
-
-
-/* =========================================================
-   31. EVIDENCE GRID
-========================================================= */
-
-.reality-evidence-grid {
-  margin-top: 25px;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 12px;
-}
-
-.reality-evidence-grid > div {
-  min-height: 160px;
-
-  padding: 20px;
-
-  border:
-    1px solid
-    var(--reality-border-light);
-
-  border-radius: 15px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.reality-evidence-grid span {
-  font-size: 21px;
-}
-
-.reality-evidence-grid strong {
-  display: block;
-
-  margin-top: 14px;
-
-  color:
-    #eef0fa;
-
-  font-size: 14px;
-}
-
-.reality-evidence-grid p {
-  margin-top: 6px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 11px;
-
-  line-height: 1.65;
-}
-
-
-/* =========================================================
-   32. HIGHLIGHT
-========================================================= */
-
-.reality-highlight {
-  margin-top: 20px;
-
-  padding:
-    18px 20px;
-
-  border:
-    1px solid
-    rgba(255, 209, 102, 0.16);
-
-  border-radius: 15px;
-
-  background:
-    rgba(255, 209, 102, 0.045);
-}
-
-.reality-highlight strong {
-  color:
-    #ffe39a;
-
-  font-size: 14px;
-}
-
-.reality-highlight p {
-  margin-top: 5px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 12px;
-
-  line-height: 1.7;
-}
-
-
-/* =========================================================
-   33. MANIPULATION LIST
-========================================================= */
-
-.reality-manipulation-list {
-  margin-top: 25px;
-
-  display: grid;
-
-  gap: 10px;
-}
-
-.reality-manipulation-list > div {
-  padding:
-    16px 18px;
-
-  display: grid;
-
-  grid-template-columns:
-    42px
-    minmax(0, 1fr);
-
-  gap: 14px;
-
-  align-items: center;
-
-  border:
-    1px solid
-    var(--reality-border-light);
-
-  border-radius: 14px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.reality-manipulation-list > div > span {
-  width: 42px;
-  height: 42px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 11px;
-
-  background:
-    rgba(128, 108, 255, 0.09);
-
-  font-size: 19px;
-}
-
-.reality-manipulation-list strong {
-  color:
-    #eef0fa;
-
-  font-size: 13px;
-}
-
-.reality-manipulation-list p {
-  margin-top: 4px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 11px;
-
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   34. AI CONTENT GRID
-========================================================= */
-
-.reality-ai-grid {
-  margin-top: 25px;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 10px;
-}
-
-.reality-ai-grid > div {
-  min-height: 145px;
-
-  padding: 17px;
-
-  border:
-    1px solid
-    var(--reality-border-light);
-
-  border-radius: 14px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.reality-ai-grid span {
-  font-size: 20px;
-}
-
-.reality-ai-grid strong {
-  display: block;
-
-  margin-top: 13px;
-
-  color:
-    #eef0fa;
-
-  font-size: 13px;
-}
-
-.reality-ai-grid p {
-  margin-top: 5px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 10px;
-
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   35. COMPARE FLOW
-========================================================= */
-
-.reality-compare-flow {
-  margin-top: 25px;
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    35px
-    minmax(0, 1fr)
-    35px
-    minmax(0, 1fr);
-
-  align-items: center;
-
-  gap: 10px;
-}
-
-.reality-compare-flow > div:not(.reality-flow-arrow) {
-  min-height: 150px;
-
-  padding: 18px;
-
-  border:
-    1px solid
-    var(--reality-border-light);
-
-  border-radius: 15px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.reality-compare-flow > div > span {
-  color:
-    var(--reality-purple-light);
-
-  font-size: 10px;
-
-  font-weight: 850;
-}
-
-.reality-compare-flow strong {
-  display: block;
-
-  margin-top: 14px;
-
-  color:
-    #eef0fa;
-
-  font-size: 13px;
-}
-
-.reality-compare-flow p {
-  margin-top: 5px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 11px;
-
-  line-height: 1.6;
-}
-
-.reality-flow-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color:
-    var(--reality-purple-light);
-
+.reality-sidebar-tip > span {
   font-size: 22px;
 }
 
-
-/* =========================================================
-   36. FINAL LOOP
-========================================================= */
-
-.reality-final-loop {
-  margin-top: 24px;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 10px;
-}
-
-.reality-final-loop > div {
-  min-height: 130px;
-
-  padding: 17px;
-
-  border:
-    1px solid
-    var(--reality-border-light);
-
-  border-radius: 14px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-.reality-final-loop span {
-  color:
-    var(--reality-purple-light);
-
-  font-size: 10px;
-
-  font-weight: 850;
-}
-
-.reality-final-loop strong {
+.reality-sidebar-tip strong {
   display: block;
-
-  margin-top: 15px;
-
-  color:
-    #eef0fa;
-
-  font-size: 11px;
-
-  letter-spacing: 0.07em;
+  margin-top: 8px;
+  font-size: 13px;
 }
 
-.reality-final-loop p {
-  margin-top: 5px;
+.reality-sidebar-tip p {
+  margin: 6px 0 0;
+  color: #737a8d;
+  font-size: 11px;
+  line-height: 1.6;
+}
 
-  color:
-    var(--reality-muted);
+.reality-main {
+  min-width: 0;
+}
 
+.reality-hero {
+  padding: clamp(26px, 5vw, 58px);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 80% 15%, rgba(120, 91, 255, 0.24), transparent 30%),
+    linear-gradient(135deg, #171d49, #30266f 62%, #4d3c91);
+  color: #fff;
+  box-shadow: 0 25px 70px rgba(34, 30, 88, 0.18);
+}
+
+.reality-kicker {
+  display: inline-flex;
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
   font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
 
+.reality-hero h1 {
+  margin: 22px 0 16px;
+  max-width: 700px;
+  font-size: clamp(42px, 6vw, 78px);
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+}
+
+.reality-hero h1 em {
+  color: #cfc8ff;
+  font-style: normal;
+}
+
+.reality-hero > p {
+  max-width: 760px;
+  color: #d5d7ec;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.reality-hero-principle {
+  max-width: 780px;
+  display: flex;
+  gap: 14px;
+  margin-top: 26px;
+  padding: 17px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 17px;
+  background: rgba(255,255,255,0.07);
+}
+
+.reality-hero-principle > span {
+  font-size: 25px;
+}
+
+.reality-hero-principle strong {
+  font-size: 13px;
+}
+
+.reality-hero-principle p {
+  margin: 5px 0 0;
+  color: #c8cbe2;
+  font-size: 12px;
   line-height: 1.55;
 }
 
-
-/* =========================================================
-   37. FINAL HEADING
-========================================================= */
-
-.reality-final-heading {
-  margin-top: 30px;
-
-  padding:
-    18px 20px;
-
-  border:
-    1px solid
-    rgba(128, 108, 255, 0.12);
-
-  border-radius: 15px;
-
-  background:
-    rgba(128, 108, 255, 0.04);
+.reality-step-bar {
+  margin: 18px 0;
+  padding: 15px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #e6e8f0;
+  border-radius: 16px;
+  background: #fff;
 }
 
-.reality-final-heading h3 {
-  margin-top: 0;
-
-  font-size: 18px;
+.reality-step-bar > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.reality-final-heading p {
-  margin-top: 6px;
+.reality-step-bar span {
+  color: #777f93;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
 
-  color:
-    var(--reality-muted);
+.reality-step-bar strong {
+  font-size: 13px;
+}
 
-  font-size: 12px;
+.reality-card {
+  padding: clamp(22px, 4vw, 48px);
+  border: 1px solid #e5e7ef;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgba(31, 39, 73, 0.06);
+}
 
+.reality-card-label {
+  display: inline-block;
+  color: #6559d9;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
+
+.reality-card h2 {
+  margin: 12px 0 12px;
+  max-width: 850px;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.reality-lead {
+  max-width: 800px;
+  color: #626a7e;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.reality-principle-box {
+  display: flex;
+  gap: 15px;
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #e1defd;
+  border-radius: 17px;
+  background: #f7f6ff;
+}
+
+.reality-principle-box > span {
+  font-size: 27px;
+}
+
+.reality-principle-box p {
+  margin: 0;
+  color: #555d72;
+  font-size: 13px;
   line-height: 1.65;
 }
 
-
-/* =========================================================
-   38. FINAL QUESTIONS
-========================================================= */
-
-.reality-final-questions {
-  margin-top: 20px;
-
+.reality-points {
   display: grid;
-
-  gap: 16px;
-}
-
-.reality-final-question {
-  padding:
-    20px;
-
-  border:
-    1px solid
-    var(--reality-border);
-
-  border-radius: 16px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
-}
-
-
-/* Question title */
-
-.reality-question-title {
-  display: grid;
-
-  grid-template-columns:
-    34px
-    minmax(0, 1fr);
-
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-
-  align-items: start;
+  margin: 24px 0 32px;
 }
 
-.reality-question-title > span {
+.reality-point {
+  padding: 17px;
+  border: 1px solid #e8e9ef;
+  border-radius: 17px;
+  background: #fafbfe;
+}
+
+.reality-point > span {
+  display: inline-grid;
   width: 34px;
   height: 34px;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: #eeecff;
+}
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.reality-point strong {
+  display: block;
+  font-size: 13px;
+}
 
-  border-radius: 9px;
-
-  background:
-    rgba(128, 108, 255, 0.12);
-
-  color:
-    var(--reality-purple-light);
-
+.reality-point p {
+  margin: 6px 0 0;
+  color: #747c8e;
   font-size: 11px;
-
-  font-weight: 800;
+  line-height: 1.6;
 }
 
-.reality-question-title h4 {
-  padding-top: 5px;
-
-  color:
-    #f0f2fa;
-
-  font-size: 14px;
-
-  line-height: 1.5;
-
-  font-weight: 700;
+.reality-question {
+  margin-top: 28px;
+  padding-top: 26px;
+  border-top: 1px solid #eceef4;
 }
 
+.reality-question-label,
+.reality-final-heading > span {
+  color: #7b8194;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+}
 
-/* =========================================================
-   39. FINAL OPTIONS
-========================================================= */
+.reality-question h3 {
+  margin: 8px 0 16px;
+  font-size: 19px;
+}
 
-.reality-final-options {
-  margin-top: 15px;
-
+.reality-choice-grid {
   display: grid;
-
-  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
-.reality-final-options button {
-  width: 100%;
-
-  min-height: 48px;
-
-  padding:
-    11px 13px;
-
-  display: grid;
-
-  grid-template-columns:
-    30px
-    minmax(0, 1fr);
-
-  align-items: center;
-
-  gap: 10px;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.07) !important;
-
-  border-radius: 11px;
-
-  background:
-    rgba(255, 255, 255, 0.025) !important;
-
-  color:
-    #e7eaf5 !important;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.reality-final-options button:hover {
-  background:
-    rgba(128, 108, 255, 0.07) !important;
-
-  border-color:
-    rgba(128, 108, 255, 0.22) !important;
-}
-
-.reality-final-options button.selected {
-  background:
-    rgba(128, 108, 255, 0.14) !important;
-
-  border-color:
-    rgba(128, 108, 255, 0.38) !important;
-}
-
-.reality-final-options button > span {
-  width: 30px;
-  height: 30px;
-
+.reality-choice {
+  min-height: 66px;
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  border-radius: 8px;
-
-  background:
-    rgba(255, 255, 255, 0.055);
-
-  color:
-    var(--reality-purple-light);
-
-  font-size: 10px;
-
-  font-weight: 850;
+  gap: 12px;
+  padding: 15px 17px;
+  border: 1px solid #e1e4ec;
+  border-radius: 15px;
+  background: #fff;
+  color: #343b4f;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
 }
 
-.reality-final-options button strong {
-  color:
-    inherit;
+.reality-choice:hover {
+  border-color: #aaa4ed;
+  background: #faf9ff;
+}
 
+.reality-choice.selected {
+  border-color: #756bea;
+  background: #f3f1ff;
+}
+
+.reality-choice.correct {
+  border-color: #54a873;
+  background: #eefaf2;
+}
+
+.reality-choice > span {
+  flex: 0 0 auto;
+  color: #777f93;
+}
+
+.reality-feedback {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border-radius: 13px;
+}
+
+.reality-feedback strong {
   font-size: 12px;
+}
 
-  font-weight: 650;
+.reality-feedback p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+}
 
+.reality-feedback.success {
+  background: #edf9f1;
+  color: #267544;
+}
+
+.reality-feedback.warning {
+  background: #fff7e9;
+  color: #98630f;
+}
+
+.reality-primary-button,
+.reality-secondary-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 13px;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.reality-primary-button {
+  margin-top: 24px;
+  border: 0;
+  background: linear-gradient(135deg, #5147d6, #7666ef);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(82, 70, 213, 0.2);
+}
+
+.reality-primary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.reality-secondary-button {
+  border: 1px solid #dfe2eb;
+  background: #fff;
+  color: #363c4e;
+}
+
+.reality-primary-button:disabled,
+.reality-secondary-button:disabled,
+.reality-choice:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.reality-loop {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 9px;
+  margin: 24px 0 34px;
+}
+
+.reality-loop > div {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f7f7fb;
+}
+
+.reality-loop span {
+  color: #6559d9;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.reality-loop strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 11px;
+}
+
+.reality-loop p {
+  margin: 5px 0 0;
+  color: #777e90;
+  font-size: 10px;
   line-height: 1.45;
 }
 
+.reality-final-heading {
+  padding: 20px;
+  margin: 24px 0;
+  border-radius: 16px;
+  background: #f7f6ff;
+}
 
-/* =========================================================
-   40. FINAL RESULT
-========================================================= */
+.reality-final-heading h3 {
+  margin: 6px 0;
+  font-size: 20px;
+}
 
-.reality-final-result {
+.reality-final-heading p {
+  margin: 0;
+  color: #72798b;
+  font-size: 12px;
+}
+
+.reality-final-questions {
+  display: grid;
+  gap: 17px;
+}
+
+.reality-final-question {
+  padding: 18px;
+  border: 1px solid #e6e8ef;
+  border-radius: 17px;
+  background: #fcfcfe;
+}
+
+.reality-final-question-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.reality-final-question-title > span {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #efedff;
+  color: #5c53d4;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.reality-final-question-title h4 {
+  margin: 5px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reality-final-options {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.reality-final-options button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 13px;
+  border: 1px solid #e3e5ed;
+  border-radius: 12px;
+  background: #fff;
+  color: #444b5e;
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.reality-final-options button:hover {
+  border-color: #aaa4ed;
+}
+
+.reality-final-options button.selected {
+  border-color: #6559d9;
+  background: #f2f0ff;
+}
+
+.reality-final-options button > span {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #f0f1f6;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.reality-result {
   margin-top: 25px;
-
-  padding:
-    28px;
-
+  padding: 25px;
+  border-radius: 19px;
+  background: #fafaff;
   text-align: center;
-
-  border:
-    1px solid
-    var(--reality-border);
-
-  border-radius: 18px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
 }
 
 .reality-result-icon {
   width: 58px;
   height: 58px;
-
-  margin:
-    0 auto;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  font-size: 24px;
-
-  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+  border-radius: 18px;
+  font-size: 26px;
+  font-weight: 900;
 }
 
 .reality-result-icon.success {
-  background:
-    rgba(85, 223, 189, 0.12);
-
-  border:
-    1px solid
-    rgba(85, 223, 189, 0.22);
-
-  color:
-    var(--reality-green);
+  background: #e4f7ec;
+  color: #25834c;
 }
 
 .reality-result-icon.fail {
-  background:
-    rgba(255, 209, 102, 0.10);
-
-  border:
-    1px solid
-    rgba(255, 209, 102, 0.20);
-
-  color:
-    var(--reality-yellow);
+  background: #fff1df;
+  color: #a46a14;
 }
 
-.reality-final-result h3 {
-  margin-top: 16px;
-
-  color:
-    #f5f6ff;
-
-  font-size: 22px;
+.reality-result-label {
+  color: #7c8395;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
 }
 
-.reality-final-result > p {
-  margin-top: 5px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 13px;
+.reality-result h3 {
+  margin: 7px 0 3px;
+  font-size: 25px;
 }
 
+.reality-result > p {
+  margin: 0;
+  color: #777e90;
+  font-size: 12px;
+}
 
-/* =========================================================
-   41. EXPLANATIONS
-========================================================= */
+.reality-score-track {
+  width: min(420px, 100%);
+  margin: 16px auto;
+}
 
 .reality-explanations {
-  margin-top: 22px;
-
   display: grid;
-
   gap: 8px;
-
+  margin-top: 22px;
   text-align: left;
 }
 
 .reality-explanations > div {
-  padding:
-    13px 15px;
-
-  border:
-    1px solid
-    var(--reality-border-light);
-
-  border-radius: 11px;
-
-  background:
-    rgba(255, 255, 255, 0.025);
+  padding: 11px 13px;
+  border-radius: 12px;
 }
 
 .reality-explanations > div.correct {
-  border-color:
-    rgba(85, 223, 189, 0.14);
+  background: #edf9f1;
 }
 
 .reality-explanations > div.wrong {
-  border-color:
-    rgba(255, 113, 136, 0.14);
+  background: #fff4f0;
 }
 
 .reality-explanations strong {
   font-size: 11px;
 }
 
-.reality-explanations .correct strong {
-  color:
-    var(--reality-green);
-}
-
-.reality-explanations .wrong strong {
-  color:
-    var(--reality-red);
-}
-
 .reality-explanations p {
-  margin-top: 4px;
-
-  color:
-    var(--reality-muted);
-
+  margin: 4px 0 0;
+  color: #656d80;
   font-size: 11px;
-
-  line-height: 1.65;
+  line-height: 1.5;
 }
-
-
-/* =========================================================
-   42. COMPLETION CARD
-========================================================= */
 
 .reality-completion-card {
-  margin-top: 22px;
-
-  padding:
-    20px;
-
-  display: grid;
-
-  grid-template-columns:
-    48px
-    minmax(0, 1fr);
-
-  gap: 15px;
-
-  align-items: center;
-
-  text-align: left;
-
-  border:
-    1px solid
-    rgba(85, 223, 189, 0.18);
-
-  border-radius: 15px;
-
-  background:
-    rgba(85, 223, 189, 0.055);
-}
-
-.reality-completion-card > div {
-  width: 48px;
-  height: 48px;
-
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 13px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #cfead8;
+  border-radius: 15px;
+  background: #f0faf3;
+  text-align: left;
+}
 
-  border-radius: 13px;
-
-  background:
-    rgba(85, 223, 189, 0.12);
-
-  color:
-    var(--reality-green);
-
-  font-size: 21px;
-
-  font-weight: 850;
+.reality-completion-card > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #d8f1e1;
+  color: #27814d;
+  font-weight: 900;
 }
 
 .reality-completion-card strong {
-  color:
-    #9df1dc;
-
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .reality-completion-card p {
-  margin-top: 5px;
-
-  color:
-    var(--reality-muted);
-
-  font-size: 12px;
-
-  line-height: 1.65;
+  margin: 4px 0 0;
+  color: #5c7464;
+  font-size: 11px;
+  line-height: 1.5;
 }
 
+.reality-bottom-navigation {
+  display: grid;
+  grid-template-columns: 150px 1fr 150px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
 
-/* =========================================================
-   43. LOADING
-========================================================= */
+.reality-position {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  align-items: center;
+}
+
+.reality-position strong {
+  font-size: 11px;
+}
+
+.reality-position span,
+.reality-save-status {
+  color: #7a8193;
+  font-size: 10px;
+}
+
+.reality-save-status {
+  text-align: right;
+}
 
 .reality-loading-page {
   min-height: 100vh;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  padding: 24px;
 }
 
-.reality-loading {
-  width: min(420px, calc(100% - 40px));
-
-  padding: 35px;
-
+.reality-loading-card {
+  width: min(460px, 100%);
+  padding: 42px;
+  border: 1px solid #e5e7ef;
+  border-radius: 24px;
+  background: #fff;
   text-align: center;
-
-  border:
-    1px solid
-    var(--reality-border);
-
-  border-radius: 20px;
-
-  background:
-    rgba(255, 255, 255, 0.035);
+  box-shadow: 0 20px 60px rgba(30, 37, 68, 0.08);
 }
 
-.reality-loading-spinner {
-  width: 38px;
-  height: 38px;
-
-  margin:
-    0 auto 18px;
-
-  border:
-    3px solid
-    rgba(255, 255, 255, 0.10);
-
-  border-top-color:
-    var(--reality-purple);
-
+.reality-spinner {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 18px;
+  border: 4px solid #e5e6f0;
+  border-top-color: #5b51dd;
   border-radius: 50%;
-
-  animation:
-    reality-spin 0.8s linear infinite;
+  animation: reality-spin 0.8s linear infinite;
 }
 
-.reality-loading h2 {
-  color:
-    #f3f5ff;
-
-  font-size: 18px;
+.reality-loading-card h1 {
+  margin: 0;
+  font-size: 21px;
 }
 
-.reality-loading p {
-  margin-top: 7px;
-
-  color:
-    var(--reality-muted);
-
+.reality-loading-card p {
+  color: #747b8e;
   font-size: 12px;
 }
 
 @keyframes reality-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
-
-
-/* =========================================================
-   44. LARGE TABLET
-========================================================= */
 
 @media (max-width: 1100px) {
-
-  .reality-layout {
-    grid-template-columns:
-      220px
-      minmax(0, 1fr);
-
-    gap: 30px;
-
-    padding-left: 24px;
-    padding-right: 24px;
+  .reality-shell {
+    grid-template-columns: 230px minmax(0, 1fr);
   }
 
-  .reality-header {
-    padding-left: 24px;
-    padding-right: 24px;
+  .reality-points {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .reality-header-progress {
-    width: 260px;
+  .reality-loop {
+    grid-template-columns: repeat(3, 1fr);
   }
-
-  .reality-hero {
-    padding: 48px 42px;
-  }
-
-  .reality-card {
-    padding: 30px;
-  }
-
-  .reality-ai-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
 }
 
-
-/* =========================================================
-   45. TABLET
-========================================================= */
-
-@media (max-width: 900px) {
-
+@media (max-width: 820px) {
   .reality-header {
-    min-height: 74px;
-
-    padding:
-      12px 18px;
+    position: relative;
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .reality-header-progress {
-    width: 220px;
-    max-width: 40vw;
+    width: 100%;
   }
 
-  .reality-layout {
-    grid-template-columns:
-      1fr;
-
-    padding:
-      28px 20px
-      65px;
-
-    gap: 25px;
+  .reality-shell {
+    grid-template-columns: 1fr;
   }
 
   .reality-sidebar {
-    position: relative;
-    top: auto;
-
-    width: 100%;
-
-    padding: 0;
-
-    overflow-x: auto;
+    position: static;
   }
 
-  .reality-section-list {
-    display: grid;
-
-    grid-template-columns:
-      repeat(4, minmax(150px, 1fr));
-
-    gap: 7px;
-
-    overflow-x: auto;
+  .reality-nav {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .reality-section-button {
-    min-width: 150px;
-  }
-
-  .reality-sidebar-heading {
-    margin-bottom: 10px;
-  }
-
-  .reality-hero {
-    min-height: auto;
-
-    padding:
-      45px 38px;
-  }
-
-  .reality-hero h1 {
-    font-size:
-      clamp(48px, 8vw, 72px);
-  }
-
-  .reality-example-grid,
-  .reality-evidence-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .reality-final-loop {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-}
-
-
-/* =========================================================
-   46. MOBILE
-========================================================= */
-
-@media (max-width: 640px) {
-
-  .reality-header {
-    min-height: 68px;
-
-    padding:
-      10px 14px;
-
-    gap: 12px;
-  }
-
-  .reality-back-button {
-    width: 38px;
-    height: 38px;
-
-    flex-basis: 38px;
-
-    font-size: 18px;
-  }
-
-  .reality-logo-mark {
-    width: 38px;
-    height: 38px;
-
-    flex-basis: 38px;
-
-    font-size: 18px;
-  }
-
-  .reality-brand {
-    gap: 9px;
-  }
-
-  .reality-brand > div:last-child strong {
-    font-size: 15px;
-  }
-
-  .reality-brand > div:last-child span {
-    font-size: 8px;
-  }
-
-  .reality-header-progress {
-    width: 120px;
-    max-width: 34vw;
-  }
-
-  .reality-progress-heading {
-    margin-bottom: 5px;
-  }
-
-  .reality-progress-heading span {
-    font-size: 7px;
-  }
-
-  .reality-progress-heading strong {
-    font-size: 11px;
-  }
-
-  .reality-progress-track {
-    height: 5px;
-  }
-
-  .reality-error-banner {
-    padding:
-      10px 14px;
-
-    flex-direction: column;
-
-    gap: 2px;
-
-    text-align: center;
-
-    font-size: 11px;
-  }
-
-  .reality-layout {
-    padding:
-      20px 14px
-      50px;
-  }
-
-  .reality-section-list {
-    grid-template-columns:
-      repeat(2, minmax(140px, 1fr));
-  }
-
-  .reality-section-button {
-    min-width: 0;
-    min-height: 58px;
-  }
-
-  .reality-section-number {
-    width: 32px;
-    height: 32px;
-  }
-
-  .reality-section-button {
-    grid-template-columns:
-      32px
-      minmax(0, 1fr)
-      18px;
-  }
-
-  .reality-section-text strong {
-    font-size: 11px;
-  }
-
-  .reality-section-text small {
-    font-size: 8px;
-  }
-
-  .reality-hero {
-    padding:
-      36px 24px;
-
-    border-radius: 20px;
-  }
-
-  .reality-kicker {
-    font-size: 9px;
-  }
-
-  .reality-hero h1 {
-    margin-top: 17px;
-
-    font-size:
-      clamp(44px, 13vw, 64px);
-
-    line-height: 0.94;
-  }
-
-  .reality-hero > p {
-    margin-top: 22px;
-
-    font-size: 13px;
-
-    line-height: 1.75;
-  }
-
-  .reality-hero-principle {
-    grid-template-columns:
-      38px
-      minmax(0, 1fr);
-
-    gap: 11px;
-
-    padding:
-      14px;
-  }
-
-  .reality-hero-principle > span {
-    width: 38px;
-    height: 38px;
-
-    font-size: 18px;
-  }
-
-  .reality-hero-principle strong {
-    font-size: 12px;
-  }
-
-  .reality-hero-principle p {
-    font-size: 10px;
-  }
-
-  .reality-step-indicator {
-    grid-template-columns:
-      auto
-      minmax(0, 1fr);
-
-    gap: 6px 12px;
-
-    padding:
-      14px 15px;
-  }
-
-  .reality-step-indicator small {
-    grid-column:
-      1 / -1;
-  }
-
-  .reality-card {
-    padding:
-      24px 18px;
-
-    border-radius: 18px;
-  }
-
-  .reality-card h2 {
-    font-size:
-      clamp(29px, 9vw, 40px);
-  }
-
-  .reality-lead {
-    font-size: 13px;
-  }
-
-  .reality-explanation {
-    grid-template-columns:
-      38px
-      minmax(0, 1fr);
-
-    padding:
-      15px;
-
-    gap: 11px;
-  }
-
-  .reality-icon {
-    width: 38px;
-    height: 38px;
-
-    font-size: 18px;
-  }
-
-  .reality-explanation h3 {
-    font-size: 14px;
-  }
-
-  .reality-explanation p {
-    font-size: 11px;
-  }
-
-  .reality-example-grid,
-  .reality-evidence-grid,
-  .reality-choice-grid,
-  .reality-ai-grid {
-    grid-template-columns:
-      1fr;
-  }
-
-  .reality-context-comparison {
-    grid-template-columns:
-      1fr;
-  }
-
-  .context-arrow {
-    height: 25px;
-
-    transform:
-      rotate(90deg);
-  }
-
-  .reality-compare-flow {
-    grid-template-columns:
-      1fr;
-  }
-
-  .reality-flow-arrow {
-    height: 25px;
-
-    transform:
-      rotate(90deg);
-  }
-
-  .reality-final-loop {
-    grid-template-columns:
-      1fr;
-  }
-
-  .reality-final-result {
-    padding:
-      22px 15px;
-  }
-
-  .reality-primary-button,
-  .reality-secondary-button {
-    width: 100%;
-  }
-
-}
-
-
-/* =========================================================
-   47. VERY SMALL MOBILE
-========================================================= */
-
-@media (max-width: 420px) {
-
-  .reality-header-progress {
+  .reality-sidebar-tip {
     display: none;
   }
 
+  .reality-choice-grid,
+  .reality-points {
+    grid-template-columns: 1fr;
+  }
+
+  .reality-loop {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .reality-bottom-navigation {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .reality-save-status {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .reality-shell {
+    width: min(100% - 18px, 1420px);
+    margin-top: 10px;
+  }
+
   .reality-header {
-    justify-content: flex-start;
+    padding: 12px 10px;
   }
 
-  .reality-layout {
-    padding:
-      15px 10px
-      45px;
+  .reality-brand span {
+    display: none;
   }
 
-  .reality-section-list {
-    grid-template-columns:
-      1fr;
-  }
-
-  .reality-section-button {
-    min-height: 55px;
+  .reality-nav {
+    grid-template-columns: 1fr;
   }
 
   .reality-hero {
-    padding:
-      30px 18px;
+    border-radius: 20px;
+    padding: 25px 20px;
   }
 
   .reality-hero h1 {
-    font-size: 43px;
+    font-size: 44px;
   }
 
   .reality-card {
-    padding:
-      20px 15px;
+    border-radius: 20px;
+    padding: 22px 17px;
   }
 
-}
-
-
-/* =========================================================
-   48. REDUCED MOTION
-========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .reality-page *,
-  .reality-page *::before,
-  .reality-page *::after {
-    animation: none !important;
-
-    transition: none !important;
-
-    scroll-behavior: auto !important;
+  .reality-step-bar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
+  .reality-loop {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .reality-bottom-navigation {
+    grid-template-columns: 1fr;
+  }
+
+  .reality-position {
+    order: -1;
+  }
 }

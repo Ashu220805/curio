@@ -2,9 +2,10 @@
 
 import { supabase } from "./supabase";
 
-/* =========================================
-   REALITY CHECK PROGRESS TYPE
-========================================= */
+/* =========================================================
+   REALITY CHECK PROGRESS
+   CURIO
+========================================================= */
 
 export interface RealityCheckProgress {
   userId: string;
@@ -22,76 +23,96 @@ export interface RealityCheckProgress {
   completedAt?: string | null;
 }
 
-/* =========================================
-   CURRENT USER
-========================================= */
+/* =========================================================
+   DATABASE ROW TYPE
+========================================================= */
+
+interface RealityCheckProgressRow {
+  user_id: string;
+  reality_check_id: number | null;
+
+  current_question: number | null;
+  completed_questions: number | null;
+  total_questions: number | null;
+
+  total_score: number | null;
+
+  completed: boolean | null;
+
+  last_accessed_at: string | null;
+  completed_at: string | null;
+}
+
+/* =========================================================
+   GET CURRENT USER
+========================================================= */
 
 async function getCurrentUserId(): Promise<string | null> {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data,
+      error,
+    } = await supabase.auth.getUser();
 
-  if (error) {
+    if (error) {
+      console.error(
+        "CURIO REALITY CHECK AUTH ERROR:",
+        error.message
+      );
+
+      return null;
+    }
+
+    return data.user?.id ?? null;
+  } catch (error) {
     console.error(
-      "CURIO REALITY CHECK AUTH ERROR:",
+      "CURIO REALITY CHECK AUTH EXCEPTION:",
       error
     );
 
     return null;
   }
-
-  return user?.id ?? null;
 }
 
-/* =========================================
+/* =========================================================
    DATABASE ROW → APP OBJECT
-========================================= */
+========================================================= */
 
 function mapProgress(
-  row: Record<string, unknown>
+  row: RealityCheckProgressRow
 ): RealityCheckProgress {
   return {
-    userId: String(row.user_id ?? ""),
+    userId: row.user_id,
 
-    realityCheckId: Number(
-      row.reality_check_id ?? 0
-    ),
+    realityCheckId:
+      Number(row.reality_check_id ?? 0),
 
-    currentQuestion: Number(
-      row.current_question ?? 0
-    ),
+    currentQuestion:
+      Number(row.current_question ?? 0),
 
-    completedQuestions: Number(
-      row.completed_questions ?? 0
-    ),
+    completedQuestions:
+      Number(row.completed_questions ?? 0),
 
-    totalQuestions: Number(
-      row.total_questions ?? 0
-    ),
+    totalQuestions:
+      Number(row.total_questions ?? 0),
 
-    totalScore: Number(
-      row.total_score ?? 0
-    ),
+    totalScore:
+      Number(row.total_score ?? 0),
 
     completed:
       Boolean(row.completed),
 
     lastAccessedAt:
-      typeof row.last_accessed_at === "string"
-        ? row.last_accessed_at
-        : null,
+      row.last_accessed_at ?? null,
 
     completedAt:
-      typeof row.completed_at === "string"
-        ? row.completed_at
-        : null,
+      row.completed_at ?? null,
   };
 }
 
-/* =========================================
-   GET SINGLE REALITY CHECK PROGRESS
-========================================= */
+/* =========================================================
+   GET ONE REALITY CHECK
+========================================================= */
 
 export async function getRealityCheckProgress(
   realityCheckId: number
@@ -103,38 +124,64 @@ export async function getRealityCheckProgress(
     return null;
   }
 
-  const {
-    data,
-    error,
-  } = await supabase
-    .from("reality_check_progress")
-    .select("*")
-    .eq("user_id", userId)
-    .eq(
-      "reality_check_id",
-      realityCheckId
-    )
-    .maybeSingle();
+  try {
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("reality_check_progress")
+      .select(
+        `
+        user_id,
+        reality_check_id,
+        current_question,
+        completed_questions,
+        total_questions,
+        total_score,
+        completed,
+        last_accessed_at,
+        completed_at
+        `
+      )
+      .eq(
+        "user_id",
+        userId
+      )
+      .eq(
+        "reality_check_id",
+        realityCheckId
+      )
+      .maybeSingle();
 
-  if (error) {
+    if (error) {
+      console.error(
+        "CURIO: Failed to load Reality Check progress:",
+        error.message
+      );
+
+      return null;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return mapProgress(
+      data as RealityCheckProgressRow
+    );
+  } catch (error) {
     console.error(
-      "CURIO: Failed to load Reality Check progress:",
+      "CURIO: Reality Check load exception:",
       error
     );
 
     return null;
   }
-
-  if (!data) {
-    return null;
-  }
-
-  return mapProgress(data);
 }
 
-/* =========================================
+/* =========================================================
    GET ALL REALITY CHECK PROGRESS
-========================================= */
+========================================================= */
 
 export async function getAllRealityCheckProgress(): Promise<
   RealityCheckProgress[]
@@ -146,21 +193,51 @@ export async function getAllRealityCheckProgress(): Promise<
     return [];
   }
 
-  const {
-    data,
-    error,
-  } = await supabase
-    .from("reality_check_progress")
-    .select("*")
-    .eq("user_id", userId)
-    .order(
-      "reality_check_id",
-      {
-        ascending: true,
-      }
-    );
+  try {
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("reality_check_progress")
+      .select(
+        `
+        user_id,
+        reality_check_id,
+        current_question,
+        completed_questions,
+        total_questions,
+        total_score,
+        completed,
+        last_accessed_at,
+        completed_at
+        `
+      )
+      .eq(
+        "user_id",
+        userId
+      )
+      .order(
+        "reality_check_id",
+        {
+          ascending: true,
+        }
+      );
 
-  if (error) {
+    if (error) {
+      console.error(
+        "CURIO: Failed to load all Reality Check progress:",
+        error.message
+      );
+
+      return [];
+    }
+
+    return (
+      (data ?? []) as RealityCheckProgressRow[]
+    ).map(
+      mapProgress
+    );
+  } catch (error) {
     console.error(
       "CURIO: Failed to load all Reality Check progress:",
       error
@@ -168,15 +245,11 @@ export async function getAllRealityCheckProgress(): Promise<
 
     return [];
   }
-
-  return (data ?? []).map(
-    (row) => mapProgress(row)
-  );
 }
 
-/* =========================================
+/* =========================================================
    SAVE REALITY CHECK PROGRESS
-========================================= */
+========================================================= */
 
 export async function saveRealityCheckProgress(
   realityCheckId: number,
@@ -196,17 +269,33 @@ export async function saveRealityCheckProgress(
     return false;
   }
 
+  /* -----------------------------------------
+     SANITIZE VALUES
+  ----------------------------------------- */
+
+  const safeRealityCheckId =
+    Math.max(
+      0,
+      Math.floor(
+        realityCheckId
+      )
+    );
+
   const safeTotalQuestions =
     Math.max(
       0,
-      totalQuestions
+      Math.floor(
+        totalQuestions
+      )
     );
 
   const safeCurrentQuestion =
     Math.max(
       0,
       Math.min(
-        currentQuestion,
+        Math.floor(
+          currentQuestion
+        ),
         safeTotalQuestions
       )
     );
@@ -215,7 +304,9 @@ export async function saveRealityCheckProgress(
     Math.max(
       0,
       Math.min(
-        completedQuestions,
+        Math.floor(
+          completedQuestions
+        ),
         safeTotalQuestions
       )
     );
@@ -223,72 +314,92 @@ export async function saveRealityCheckProgress(
   const safeScore =
     Math.max(
       0,
-      totalScore
+      Math.floor(
+        totalScore
+      )
     );
 
-  const now =
-    new Date().toISOString();
+  /* -----------------------------------------
+     COMPLETION
+  ----------------------------------------- */
 
   const completed =
     safeTotalQuestions > 0 &&
     safeCompletedQuestions >=
       safeTotalQuestions;
 
-  const {
-    error,
-  } = await supabase
-    .from("reality_check_progress")
-    .upsert(
-      {
-        user_id:
-          userId,
+  const now =
+    new Date().toISOString();
 
-        reality_check_id:
-          realityCheckId,
+  /* -----------------------------------------
+     DATABASE PAYLOAD
+  ----------------------------------------- */
 
-        current_question:
-          safeCurrentQuestion,
+  const payload = {
+    user_id: userId,
 
-        completed_questions:
-          safeCompletedQuestions,
+    reality_check_id:
+      safeRealityCheckId,
 
-        total_questions:
-          safeTotalQuestions,
+    current_question:
+      safeCurrentQuestion,
 
-        total_score:
-          safeScore,
+    completed_questions:
+      safeCompletedQuestions,
 
-        completed,
+    total_questions:
+      safeTotalQuestions,
 
-        last_accessed_at:
-          now,
+    total_score:
+      safeScore,
 
-        completed_at:
-          completed
-            ? now
-            : null,
-      },
-      {
-        onConflict:
-          "user_id,reality_check_id",
-      }
-    );
+    completed,
 
-  if (error) {
+    last_accessed_at:
+      now,
+
+    completed_at:
+      completed
+        ? now
+        : null,
+  };
+
+  try {
+    const {
+      error,
+    } = await supabase
+      .from("reality_check_progress")
+      .upsert(
+        payload,
+        {
+          onConflict:
+            "user_id,reality_check_id",
+        }
+      );
+
+    if (error) {
+      console.error(
+        "CURIO: Failed to save Reality Check progress:",
+        error.message
+      );
+
+      return false;
+    }
+
+    return true;
+  } catch (error) {
     console.error(
-      "CURIO: Failed to save Reality Check progress:",
+      "CURIO: Reality Check save exception:",
       error
     );
 
     return false;
   }
-
-  return true;
 }
 
-/* =========================================
+/* =========================================================
    COMPLETE REALITY CHECK
-========================================= */
+========================================================= */
 
 export async function completeRealityCheck(
   realityCheckId: number,
@@ -304,9 +415,9 @@ export async function completeRealityCheck(
   );
 }
 
-/* =========================================
+/* =========================================================
    RESET REALITY CHECK
-========================================= */
+========================================================= */
 
 export async function resetRealityCheck(
   realityCheckId: number
@@ -322,35 +433,44 @@ export async function resetRealityCheck(
     return false;
   }
 
-  const {
-    error,
-  } = await supabase
-    .from("reality_check_progress")
-    .delete()
-    .eq(
-      "user_id",
-      userId
-    )
-    .eq(
-      "reality_check_id",
-      realityCheckId
-    );
+  try {
+    const {
+      error,
+    } = await supabase
+      .from("reality_check_progress")
+      .delete()
+      .eq(
+        "user_id",
+        userId
+      )
+      .eq(
+        "reality_check_id",
+        realityCheckId
+      );
 
-  if (error) {
+    if (error) {
+      console.error(
+        "CURIO: Failed to reset Reality Check:",
+        error.message
+      );
+
+      return false;
+    }
+
+    return true;
+  } catch (error) {
     console.error(
-      "CURIO: Failed to reset Reality Check:",
+      "CURIO: Reality Check reset exception:",
       error
     );
 
     return false;
   }
-
-  return true;
 }
 
-/* =========================================
+/* =========================================================
    CHECK COMPLETION
-========================================= */
+========================================================= */
 
 export async function isRealityCheckCompleted(
   realityCheckId: number

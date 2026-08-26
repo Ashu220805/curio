@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { usePracticeProgress } from "../../hooks/usePracticeProgress.ts";
 import "./Practice.css";
 
 type Difficulty = "Basic" | "Moderate" | "Hard";
@@ -1212,6 +1213,34 @@ const Practice: React.FC = () => {
       (session) => session.id === selectedSessionId
     ) || PRACTICE_SESSIONS[0];
 
+  const TOTAL_QUESTIONS = selectedSession.questions.length;
+  const {
+    progress: savedProgress,
+    loading: progressLoading,
+    saving: progressSaving,
+    error: progressError,
+    updateProgress,
+    markComplete,
+    reset: resetSavedProgress,
+  } = usePracticeProgress(selectedSessionId, TOTAL_QUESTIONS);
+
+  useEffect(() => {
+    if (progressLoading) return;
+    const total = selectedSession.questions.length;
+    const restoredAnswers = Array.from({ length: total }, (_, index) => {
+      const value = savedProgress?.answers?.[index];
+      return typeof value === "number" ? value : null;
+    });
+    const restoredQuestion = Math.max(
+      0,
+      Math.min(savedProgress?.currentQuestion ?? 0, Math.max(total - 1, 0))
+    );
+    setAnswers(restoredAnswers);
+    setCurrentQuestion(restoredQuestion);
+    setSelectedAnswer(restoredAnswers[restoredQuestion] ?? null);
+    setShowResult(Boolean(savedProgress?.completed));
+  }, [savedProgress, progressLoading, selectedSession.questions.length]);
+
   const filteredSessions = useMemo(() => {
     const search = searchTerm.toLowerCase().trim();
 
@@ -1243,7 +1272,7 @@ const Practice: React.FC = () => {
     });
   }, [searchTerm, difficultyFilter]);
 
-  const question = selectedSession.questions[currentQuestion];
+  const question = selectedSession.questions[currentQuestion] ?? selectedSession.questions[0];
 
   const correctCount = answers.reduce((total: number, answer, index) => {
     if (
@@ -1260,74 +1289,86 @@ const Practice: React.FC = () => {
     (answer) => answer !== null
   ).length;
 
-  const percentage = Math.round((correctCount / 8) * 100);
+  const percentage = TOTAL_QUESTIONS > 0 ? Math.round((correctCount / TOTAL_QUESTIONS) * 100) : 0;
 
   const handleSessionChange = (sessionId: number) => {
     setSelectedSessionId(sessionId);
     setCurrentQuestion(0);
     setSelectedAnswer(null);
-    setAnswers(Array(8).fill(null));
+    setAnswers(Array(PRACTICE_SESSIONS.find((session) => session.id === sessionId)?.questions.length ?? 0).fill(null));
     setShowResult(false);
   };
 
   const handleAnswer = (answerIndex: number) => {
-    if (selectedAnswer !== null) return;
-
+    if (selectedAnswer !== null || progressSaving) return;
     const updatedAnswers = [...answers];
     updatedAnswers[currentQuestion] = answerIndex;
-
     setAnswers(updatedAnswers);
     setSelectedAnswer(answerIndex);
+    void updateProgress(currentQuestion, updatedAnswers);
   };
 
-  const handleNext = () => {
-    if (selectedAnswer === null) return;
-
-    /*
-      IMPORTANT:
-      currentQuestion can only move from 0 → 7.
-      Therefore the test can never become Question 9.
-    */
-    if (currentQuestion < 7) {
-      setCurrentQuestion((previous) => previous + 1);
-      setSelectedAnswer(answers[currentQuestion + 1]);
+  const handleNext = async () => {
+    if (selectedAnswer === null || progressSaving) return;
+    if (currentQuestion < TOTAL_QUESTIONS - 1) {
+      const nextQuestion = currentQuestion + 1;
+      const saved = await updateProgress(nextQuestion, answers);
+      if (!saved) return;
+      setCurrentQuestion(nextQuestion);
+      setSelectedAnswer(answers[nextQuestion]);
       return;
     }
+    const score = answers.reduce<number>((total, answer, index) => {
+      if (answer !== null && answer === selectedSession.questions[index].answer) {
+        return total + 1;
+      }
+      return total;
+    }, 0);
 
-    /*
-      Exactly 8 questions.
-      The result is shown after Question 8.
-    */
-    setShowResult(true);
+    const completed = await markComplete(answers, score);
+    if (completed) {
+      setShowResult(true);
+    }
   };
 
   const handlePrevious = () => {
-    if (currentQuestion > 0) {
+    if (currentQuestion > 0 && !progressSaving) {
       const previousQuestion = currentQuestion - 1;
-
       setCurrentQuestion(previousQuestion);
       setSelectedAnswer(answers[previousQuestion]);
+      void updateProgress(previousQuestion, answers);
     }
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
+    if (progressSaving) return;
+    const reset = await resetSavedProgress();
+    if (!reset) return;
     setCurrentQuestion(0);
     setSelectedAnswer(null);
-    setAnswers(Array(8).fill(null));
+    setAnswers(Array(TOTAL_QUESTIONS).fill(null));
     setShowResult(false);
   };
 
   const nextSession = () => {
-    const nextId =
-      selectedSessionId >= PRACTICE_SESSIONS.length
-        ? 1
-        : selectedSessionId + 1;
-
+    const nextId = selectedSessionId >= PRACTICE_SESSIONS.length ? 1 : selectedSessionId + 1;
     handleSessionChange(nextId);
   };
 
   return (
     <div className="practice-page">
+
+      {progressError && (
+        <div className="practice-progress-error" role="alert">
+          {progressError}
+        </div>
+      )}
+
+      {progressLoading && (
+        <div className="practice-progress-loading" role="status">
+          Loading your saved practice progress…
+        </div>
+      )}
 
       {/* ================================
           HEADER
@@ -1363,7 +1404,7 @@ const Practice: React.FC = () => {
           />
 
           {searchTerm && (
-            <button
+            <button type="button"
               className="practice-search-clear"
               onClick={() => setSearchTerm("")}
               aria-label="Clear search"
@@ -1461,7 +1502,7 @@ const Practice: React.FC = () => {
           <div className="difficulty-buttons">
 
             {DIFFICULTIES.map((difficulty) => (
-              <button
+              <button type="button"
                 key={difficulty}
                 className={
                   difficultyFilter === difficulty
@@ -1492,7 +1533,7 @@ const Practice: React.FC = () => {
               <div className="session-sidebar-heading">
                 <div>
                   <h3>Practice Series</h3>
-                  <p>8 independent challenges</p>
+                  <p>{PRACTICE_SESSIONS.length} independent challenges</p>
                 </div>
 
                 <span className="series-count">
@@ -1503,7 +1544,7 @@ const Practice: React.FC = () => {
               <div className="session-list">
 
                 {filteredSessions.map((session) => (
-                  <button
+                  <button type="button"
                     key={session.id}
                     className={
                       selectedSessionId === session.id
@@ -1578,7 +1619,7 @@ const Practice: React.FC = () => {
                   <strong>
                     {currentQuestion + 1}
                   </strong>
-                  <span>/ 8</span>
+                  <span>/ {TOTAL_QUESTIONS}</span>
                 </div>
 
               </div>
@@ -1588,7 +1629,7 @@ const Practice: React.FC = () => {
                 <div
                   className="question-progress-fill"
                   style={{
-                    width: `${((currentQuestion + 1) / 8) * 100}%`
+                    width: `${((currentQuestion + 1) / TOTAL_QUESTIONS) * 100}%`
                   }}
                 />
 
@@ -1663,7 +1704,7 @@ const Practice: React.FC = () => {
                       }
 
                       return (
-                        <button
+                        <button type="button"
                           key={option}
                           className={className}
                           onClick={() =>
@@ -1723,7 +1764,7 @@ const Practice: React.FC = () => {
 
               <div className="question-actions">
 
-                <button
+                <button type="button"
                   className="previous-button"
                   onClick={handlePrevious}
                   disabled={currentQuestion === 0}
@@ -1732,15 +1773,15 @@ const Practice: React.FC = () => {
                 </button>
 
                 <div className="answered-indicator">
-                  {answeredCount}/8 answered
+                  {answeredCount}/{TOTAL_QUESTIONS} answered
                 </div>
 
-                <button
+                <button type="button"
                   className="next-button"
                   onClick={handleNext}
                   disabled={selectedAnswer === null}
                 >
-                  {currentQuestion === 7
+                  {currentQuestion === TOTAL_QUESTIONS - 1
                     ? "View Result"
                     : "Next Question →"}
                 </button>
@@ -1809,14 +1850,14 @@ const Practice: React.FC = () => {
                 <div className="score-row">
                   <span>Correct answers</span>
                   <strong>
-                    {correctCount}/8
+                    {correctCount}/{TOTAL_QUESTIONS}
                   </strong>
                 </div>
 
                 <div className="score-row">
                   <span>Incorrect answers</span>
                   <strong>
-                    {8 - correctCount}/8
+                    {TOTAL_QUESTIONS - correctCount}/{TOTAL_QUESTIONS}
                   </strong>
                 </div>
 

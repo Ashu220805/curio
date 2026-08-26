@@ -1,18 +1,11 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useLessonProgress } from "../../hooks/useLessonProgress.ts";
+import {
+  useRealityCheckProgress,
+} from "../../hooks/useRealityCheckProgress.ts";
 import "./Reality.css";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
-type RealitySection =
+type SectionId =
   | "pause"
   | "verify"
   | "context"
@@ -23,372 +16,408 @@ type RealitySection =
   | "decide";
 
 type Section = {
-  id: RealitySection;
+  id: SectionId;
   number: string;
   title: string;
   shortTitle: string;
+  icon: string;
 };
 
-/* =========================================================
-   SECTIONS
-========================================================= */
+type Choice = {
+  value: string;
+  label: string;
+};
+
+type FinalQuestion = {
+  question: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+};
+
+const REALITY_CHECK_ID = 2;
+const TOTAL_SECTIONS = 8;
 
 const SECTIONS: Section[] = [
+  { id: "pause", number: "01", title: "Pause before reacting", shortTitle: "Pause", icon: "⏸️" },
+  { id: "verify", number: "02", title: "Verify the source", shortTitle: "Verify", icon: "🔎" },
+  { id: "context", number: "03", title: "Check the context", shortTitle: "Context", icon: "🧩" },
+  { id: "evidence", number: "04", title: "Find the evidence", shortTitle: "Evidence", icon: "📌" },
+  { id: "manipulation", number: "05", title: "Spot manipulation", shortTitle: "Manipulation", icon: "✂️" },
+  { id: "ai-content", number: "06", title: "AI-generated content", shortTitle: "AI Content", icon: "🤖" },
+  { id: "compare", number: "07", title: "Compare information", shortTitle: "Compare", icon: "⚖️" },
+  { id: "decide", number: "08", title: "Decide using evidence", shortTitle: "Decide", icon: "🧠" },
+];
+
+const PAGE_CHOICES: Record<Exclude<SectionId, "decide">, Choice[]> = {
+  pause: [
+    { value: "share", label: "Share it immediately" },
+    { value: "pause", label: "Pause and look carefully" },
+  ],
+  verify: [
+    { value: "anonymous", label: "Trust an anonymous post with no evidence" },
+    { value: "verify", label: "Check a source with information you can verify" },
+  ],
+  context: [
+    { value: "headline", label: "Judge only from the headline" },
+    { value: "context", label: "Look for the surrounding context" },
+  ],
+  evidence: [
+    { value: "confidence", label: "Trust whoever sounds most confident" },
+    { value: "evidence", label: "Look for supporting evidence" },
+  ],
+  manipulation: [
+    { value: "appearance", label: "Only check whether it looks real" },
+    { value: "manipulation", label: "Check source, context and presentation" },
+  ],
+  "ai-content": [
+    { value: "trust", label: "Trust it because it looks convincing" },
+    { value: "careful", label: "Check the source and supporting evidence" },
+  ],
+  compare: [
+    { value: "first", label: "Trust the first result" },
+    { value: "compare", label: "Compare reliable sources" },
+  ],
+};
+
+const CORRECT_PAGE_ANSWERS: Record<Exclude<SectionId, "decide">, string> = {
+  pause: "pause",
+  verify: "verify",
+  context: "context",
+  evidence: "evidence",
+  manipulation: "manipulation",
+  "ai-content": "careful",
+  compare: "compare",
+};
+
+const PAGE_CONTENT: Record<
+  Exclude<SectionId, "decide">,
   {
-    id: "pause",
-    number: "01",
-    title: "Pause before reacting",
-    shortTitle: "Pause",
+    label: string;
+    title: string;
+    lead: string;
+    icon: string;
+    principle: string;
+    points: { icon: string; title: string; text: string }[];
+    question: string;
+    correctMessage: string;
+    wrongMessage: string;
+    next: string;
+  }
+> = {
+  pause: {
+    label: "01 · PAUSE",
+    title: "Don't react yet.",
+    lead: "The first skill of digital reality literacy is surprisingly simple: pause.",
+    icon: "⏸️",
+    principle: "A dramatic headline, shocking image or emotional message can make you react immediately. Give yourself a moment before you like, share, comment or believe it.",
+    points: [
+      { icon: "⚡", title: "Notice the reaction", text: "Strong emotion can make quick decisions feel urgent." },
+      { icon: "⏸️", title: "Create space", text: "Pause before accepting the claim or passing it on." },
+      { icon: "🔎", title: "Start checking", text: "Ask what you actually know and what still needs evidence." },
+    ],
+    question: "What should you do first?",
+    correctMessage: "Correct. Pausing gives you space to think before reacting.",
+    wrongMessage: "Not quite. A strong emotional reaction should not replace checking.",
+    next: "Continue → Verify",
+  },
+  verify: {
+    label: "02 · VERIFY",
+    title: "Find out where the information came from.",
+    lead: "Before trusting a claim, examine its source.",
+    icon: "🔎",
+    principle: "Ask: “Who is saying this?” Identify the person, organisation or publication behind the information and check whether the claim can actually be verified.",
+    points: [
+      { icon: "01", title: "Identify the source", text: "Who created or published it?" },
+      { icon: "02", title: "Check the date", text: "Is the information current and relevant?" },
+      { icon: "03", title: "Look for evidence", text: "Does the source support its claim?" },
+    ],
+    question: "Which source gives you stronger evidence?",
+    correctMessage: "Correct. A source with verifiable information gives you a stronger basis for judgment.",
+    wrongMessage: "Look again. An unsupported anonymous claim gives you less evidence to work with.",
+    next: "Continue → Context",
+  },
+  context: {
+    label: "03 · CONTEXT",
+    title: "Ask what might be missing.",
+    lead: "Information can be technically real and still be misleading when its context is removed.",
+    icon: "🧩",
+    principle: "A cropped image, shortened quote, old video or isolated statistic can create a very different impression from the complete information.",
+    points: [
+      { icon: "✂️", title: "Look beyond the crop", text: "Check what happened before and after the visible part." },
+      { icon: "🕰️", title: "Check when", text: "Old information can be presented as if it were new." },
+      { icon: "🧩", title: "Complete the picture", text: "Find the surrounding facts before judging." },
+    ],
+    question: "Which approach is better?",
+    correctMessage: "Correct. Context helps you understand what the information actually represents.",
+    wrongMessage: "A headline or isolated quote is only one part of the information. Look deeper.",
+    next: "Continue → Evidence",
+  },
+  evidence: {
+    label: "04 · EVIDENCE",
+    title: "Don't just ask “Is it true?” Ask “What supports it?”",
+    lead: "Good reality checking is based on evidence rather than confidence.",
+    icon: "📌",
+    principle: "Confidence is not evidence. A person can sound completely certain and still be wrong.",
+    points: [
+      { icon: "💬", title: "Claim", text: "Someone says something happened." },
+      { icon: "🔎", title: "Evidence", text: "Look for information that supports or challenges the claim." },
+      { icon: "🧠", title: "Reasoning", text: "Decide what the evidence actually tells you." },
+    ],
+    question: "Which approach is strongest?",
+    correctMessage: "Correct. Evidence gives you something you can examine instead of simply trusting confidence.",
+    wrongMessage: "Confidence does not guarantee accuracy. Look for evidence.",
+    next: "Continue → Manipulation",
+  },
+  manipulation: {
+    label: "05 · MANIPULATION",
+    title: "Real does not always mean reliable.",
+    lead: "A genuine photo or video can still be edited, cropped, rearranged or presented in a misleading way.",
+    icon: "✂️",
+    principle: "Don't only ask “Is this real?” Also ask “Is this being presented accurately?”",
+    points: [
+      { icon: "✂️", title: "Cropping", text: "Removing surrounding information can change what a scene appears to mean." },
+      { icon: "🎞️", title: "Editing", text: "Parts of a recording can be removed or rearranged." },
+      { icon: "🕰️", title: "Old content", text: "Genuine content can be presented as though it happened recently." },
+    ],
+    question: "What should you check?",
+    correctMessage: "Correct. Authenticity and context both matter.",
+    wrongMessage: "Something can look genuine and still be misleading.",
+    next: "Continue → AI Content",
+  },
+  "ai-content": {
+    label: "06 · AI CONTENT",
+    title: "AI-generated content can look convincing.",
+    lead: "Images, videos, voices and text can now be generated or modified using AI.",
+    icon: "🤖",
+    principle: "The fact that something looks, sounds or reads convincingly does not automatically prove that it is accurate.",
+    points: [
+      { icon: "🖼️", title: "Images", text: "Synthetic or edited images can appear realistic." },
+      { icon: "🎙️", title: "Voices", text: "Audio can be generated or altered." },
+      { icon: "🎥", title: "Video", text: "Video can be manipulated or generated." },
+      { icon: "✍️", title: "Text", text: "AI can produce convincing written content." },
+    ],
+    question: "What is the safest approach?",
+    correctMessage: "Correct. Convincing appearance is not enough evidence.",
+    wrongMessage: "Something can be convincing without being accurate.",
+    next: "Continue → Compare",
+  },
+  compare: {
+    label: "07 · COMPARE",
+    title: "One source is rarely the whole picture.",
+    lead: "When something matters, compare information instead of stopping at the first answer.",
+    icon: "⚖️",
+    principle: "Compare, don't just collect. Examine what different sources say and where their evidence comes from.",
+    points: [
+      { icon: "01", title: "Find the claim", text: "What exactly is being said?" },
+      { icon: "02", title: "Find other sources", text: "What do independent reliable sources say?" },
+      { icon: "03", title: "Compare evidence", text: "Where does the evidence agree or disagree?" },
+    ],
+    question: "What is the strongest habit?",
+    correctMessage: "Correct. Comparing information helps you make a better-supported judgment.",
+    wrongMessage: "The first result is not automatically the best or most accurate source.",
+    next: "Continue → Final Challenge",
+  },
+};
+
+const FINAL_QUESTIONS: FinalQuestion[] = [
+  {
+    question: "You see a surprising post online. What should you do first?",
+    options: ["Share it immediately", "Believe it because many people liked it", "Pause and look at the information carefully", "Assume it is false"],
+    answer: 2,
+    explanation: "A strong reality-check habit begins with a pause. Don't react before understanding what you are seeing.",
   },
   {
-    id: "verify",
-    number: "02",
-    title: "Verify the source",
-    shortTitle: "Verify",
+    question: "Which source gives you stronger evidence?",
+    options: ["An anonymous post with no evidence", "A source that provides verifiable information", "A message forwarded by a friend", "A dramatic headline"],
+    answer: 1,
+    explanation: "A source that provides information you can verify gives you a stronger basis for making a decision.",
   },
   {
-    id: "context",
-    number: "03",
-    title: "Check the context",
-    shortTitle: "Context",
+    question: "Why does context matter?",
+    options: ["It makes every claim true", "It helps you understand what happened and what information may be missing", "It guarantees that a post is genuine", "It means you never need another source"],
+    answer: 1,
+    explanation: "Context can change how information should be understood. A cropped image or sentence may not tell the complete story.",
   },
   {
-    id: "evidence",
-    number: "04",
-    title: "Find the evidence",
-    shortTitle: "Evidence",
+    question: "Which is the strongest approach when checking an important claim?",
+    options: ["Trust the first result you see", "Check multiple reliable sources and compare the evidence", "Trust the most emotional explanation", "Choose the explanation you already agree with"],
+    answer: 1,
+    explanation: "Comparing reliable sources reduces the chance of making a decision based on incomplete or misleading information.",
   },
   {
-    id: "manipulation",
-    number: "05",
-    title: "Spot manipulation",
-    shortTitle: "Manipulation",
-  },
-  {
-    id: "ai-content",
-    number: "06",
-    title: "AI-generated content",
-    shortTitle: "AI Content",
-  },
-  {
-    id: "compare",
-    number: "07",
-    title: "Compare information",
-    shortTitle: "Compare",
-  },
-  {
-    id: "decide",
-    number: "08",
-    title: "Decide using evidence",
-    shortTitle: "Decide",
+    question: "What is the best response when you cannot verify a claim?",
+    options: ["Share it anyway", "Treat it as definitely true", "Treat it cautiously and avoid presenting it as established fact", "Add more dramatic details"],
+    answer: 2,
+    explanation: "When evidence is insufficient, uncertainty is the responsible position.",
   },
 ];
 
-/* =========================================================
-   FINAL QUESTIONS
-========================================================= */
-
-const FINAL_QUESTIONS = [
-  {
-    question:
-      "You see a surprising post online. What should you do first?",
-    options: [
-      "Share it immediately",
-      "Believe it because many people liked it",
-      "Pause and look at the information carefully",
-      "Assume it is false",
-    ],
-    answer: 2,
-    explanation:
-      "A strong reality-check habit begins with a pause. Don't react before understanding what you are seeing.",
-  },
-  {
-    question:
-      "Which source gives you stronger evidence?",
-    options: [
-      "An anonymous post with no evidence",
-      "A source that provides verifiable information",
-      "A message forwarded by a friend",
-      "A dramatic headline",
-    ],
-    answer: 1,
-    explanation:
-      "A source that provides information you can verify gives you a stronger basis for making a decision.",
-  },
-  {
-    question:
-      "Why does context matter?",
-    options: [
-      "It makes every claim true",
-      "It helps you understand what happened and what information may be missing",
-      "It guarantees that a post is genuine",
-      "It means you never need another source",
-    ],
-    answer: 1,
-    explanation:
-      "Context can change how information should be understood. A cropped image or sentence may not tell the complete story.",
-  },
-  {
-    question:
-      "Which is the strongest approach when checking an important claim?",
-    options: [
-      "Trust the first result you see",
-      "Check multiple reliable sources and compare the evidence",
-      "Trust the most emotional explanation",
-      "Choose the explanation you already agree with",
-    ],
-    answer: 1,
-    explanation:
-      "Comparing reliable sources reduces the chance of making a decision based on incomplete or misleading information.",
-  },
-  {
-    question:
-      "What is the best response when you cannot verify a claim?",
-    options: [
-      "Share it anyway",
-      "Treat it as definitely true",
-      "Treat it cautiously and avoid presenting it as established fact",
-      "Add more dramatic details",
-    ],
-    answer: 2,
-    explanation:
-      "When evidence is insufficient, uncertainty is the responsible position. You don't need to decide that something is true or false immediately.",
-  },
-];
-
-/* =========================================================
-   MAIN COMPONENT
-========================================================= */
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
 
 function RealityCheck() {
   const navigate = useNavigate();
 
-  /*
-    IMPORTANT:
-    Reality Check uses LESSON ID 2.
-
-    Total sections = 8.
-  */
-
   const {
     progress,
-    loading: progressLoading,
+    loading,
     saving,
-    error: progressError,
+    error,
     updateProgress,
     markComplete,
-  } = useLessonProgress(2, SECTIONS.length);
-
-  /* =======================================================
-     CURRENT PAGE
-  ======================================================= */
+    reload,
+  } = useRealityCheckProgress(REALITY_CHECK_ID, TOTAL_SECTIONS);
 
   const [currentPage, setCurrentPage] = useState(1);
-
-  /*
-    Local interaction state.
-    These are temporary answers for the current visit.
-  */
-
-  const [pauseAnswer, setPauseAnswer] = useState("");
-  const [sourceAnswer, setSourceAnswer] = useState("");
-  const [contextAnswer, setContextAnswer] = useState("");
-  const [evidenceAnswer, setEvidenceAnswer] = useState("");
-  const [manipulationAnswer, setManipulationAnswer] = useState("");
-  const [aiContentAnswer, setAiContentAnswer] = useState("");
-  const [compareAnswer, setCompareAnswer] = useState("");
-
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [finalAnswers, setFinalAnswers] = useState<number[]>(
-    Array(FINAL_QUESTIONS.length).fill(-1)
+    () => Array(FINAL_QUESTIONS.length).fill(-1),
   );
-
   const [finalSubmitted, setFinalSubmitted] = useState(false);
   const [finalPassed, setFinalPassed] = useState(false);
-  const [completed, setCompleted] = useState(false);
+  const [localCompleted, setLocalCompleted] = useState(false);
 
-  /* =======================================================
-     RESTORE DATABASE PROGRESS
-  ======================================================= */
-
-  useEffect(() => {
-    if (progressLoading) return;
-
-    if (!progress) {
-      setCurrentPage(1);
-      setCompleted(false);
-      return;
-    }
-
-    const savedCompleted = Math.min(
-      Math.max(Number(progress.completedSections) || 0, 0),
-      SECTIONS.length
-    );
-
-    /*
-      Reality Check supports both progress formats that may exist in
-      older Supabase rows:
-
-      1. current_section = NEXT page to open
-      2. current_section = LAST completed page
-
-      When current_section <= completed_sections, the row is using
-      the second format, so resume from the next page. Otherwise the
-      row is already storing the next page.
-    */
-    const rawCurrent = Number(progress.currentSection) || 0;
-
-    let resumePage = 1;
-
-    if (savedCompleted >= SECTIONS.length || progress.completed) {
-      resumePage = SECTIONS.length;
-    } else if (rawCurrent <= savedCompleted) {
-      resumePage = savedCompleted + 1;
-    } else {
-      resumePage = rawCurrent;
-    }
-
-    resumePage = Math.min(
-      Math.max(resumePage, 1),
-      SECTIONS.length
-    );
-
-    setCurrentPage(resumePage);
-    setCompleted(Boolean(progress.completed));
-
-    if (progress.completed) {
-      setFinalPassed(true);
-      setFinalSubmitted(true);
-    }
-  }, [progress, progressLoading]);
-
-  /* =======================================================
-     CALCULATED PROGRESS
-  ======================================================= */
-
-  const completedSections =
-    progress?.completedSections ?? 0;
-
-  const progressPercentage = Math.min(
-    100,
-    Math.round(
-      (completedSections / SECTIONS.length) * 100
-    )
+  const completedSections = clamp(
+    Number(progress?.completedQuestions ?? 0),
+    0,
+    TOTAL_SECTIONS,
   );
 
-  const currentSectionIndex = currentPage - 1;
+  const completed = localCompleted || progress?.completed === true;
 
-  const currentSection =
-    SECTIONS[currentSectionIndex];
+  const furthestUnlockedPage = completed
+    ? TOTAL_SECTIONS
+    : clamp(completedSections + 1, 1, TOTAL_SECTIONS);
 
-  /*
-    A page is unlocked if:
-    - it is already completed
-    - OR it is the next page after completed progress
-  */
+  const currentSection = SECTIONS[currentPage - 1] ?? SECTIONS[0];
 
-  const furthestUnlockedPage = Math.min(
-    completedSections + 1,
-    SECTIONS.length
+  const progressPercent = Math.round(
+    (completedSections / TOTAL_SECTIONS) * 100,
   );
 
-  /* =======================================================
-     FINAL SCORE
-  ======================================================= */
-
-  const finalScore = useMemo(() => {
-    return FINAL_QUESTIONS.reduce(
-      (score, question, index) => {
-        return (
-          score +
-          (finalAnswers[index] === question.answer
-            ? 1
-            : 0)
-        );
-      },
-      0
-    );
-  }, [finalAnswers]);
+  const finalScore = useMemo(
+    () =>
+      FINAL_QUESTIONS.reduce(
+        (score, question, index) =>
+          score + (finalAnswers[index] === question.answer ? 1 : 0),
+        0,
+      ),
+    [finalAnswers],
+  );
 
   const finalPercentage = Math.round(
-    (finalScore / FINAL_QUESTIONS.length) * 100
+    (finalScore / FINAL_QUESTIONS.length) * 100,
   );
 
-  /* =======================================================
-     SCROLL TO TOP
-  ======================================================= */
+  const scrollTop = useCallback(() => {
+    globalThis.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
-  const scrollTop = () => {
-    globalThis.scrollTo?.({
-      top: 0,
-      behavior: "smooth",
-    });
+  /*
+   * The database is the source of truth.
+   * We store:
+   *   currentQuestion = page to resume
+   *   completedQuestions = number of completed pages
+   *   completed = final Reality Check completion
+   */
+  useEffect(() => {
+    if (loading || !progress) return;
+
+    const safeCompleted = clamp(
+      Number(progress.completedQuestions ?? 0),
+      0,
+      TOTAL_SECTIONS,
+    );
+
+    const safeCurrent = clamp(
+      Number(progress.currentQuestion ?? 1),
+      1,
+      TOTAL_SECTIONS,
+    );
+
+    let resume = safeCurrent;
+
+    if (progress.completed || safeCompleted >= TOTAL_SECTIONS) {
+      resume = TOTAL_SECTIONS;
+      setLocalCompleted(true);
+      setFinalPassed(true);
+      setFinalSubmitted(true);
+    } else if (safeCurrent <= safeCompleted) {
+      /*
+       * Compatibility with older rows where currentQuestion
+       * represented the last completed page.
+       */
+      resume = clamp(safeCompleted + 1, 1, TOTAL_SECTIONS);
+    }
+
+    setCurrentPage(resume);
+  }, [loading, progress]);
+
+  /*
+   * Refreshing/re-entering the browser tab always reloads the
+   * authoritative Supabase progress. This prevents stale local
+   * state from overwriting the saved record.
+   */
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void reload();
+      }
+    };
+
+    const handleFocus = () => {
+      void reload();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    globalThis.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      globalThis.removeEventListener("focus", handleFocus);
+    };
+  }, [reload]);
+
+  const currentAnswer = answers[currentSection.id] ?? "";
+
+  const currentPageReady =
+    currentSection.id === "decide"
+      ? finalPassed
+      : currentAnswer === CORRECT_PAGE_ANSWERS[currentSection.id];
+
+  const selectAnswer = (value: string) => {
+    if (currentSection.id === "decide") return;
+
+    setAnswers((previous) => ({
+      ...previous,
+      [currentSection.id]: value,
+    }));
   };
 
-  /* =======================================================
-     CHECK PAGE ACCESS
-  ======================================================= */
+  const openPage = (page: number) => {
+    if (page < 1 || page > TOTAL_SECTIONS) return;
+    if (page > furthestUnlockedPage) return;
 
-  const canOpenPage = (pageNumber: number) => {
-    if (completed) return true;
-
-    return pageNumber <= furthestUnlockedPage;
-  };
-
-  /* =======================================================
-     OPEN PAGE
-  ======================================================= */
-
-  const openPage = (pageNumber: number) => {
-    if (!canOpenPage(pageNumber)) return;
-
-    setCurrentPage(pageNumber);
+    setCurrentPage(page);
     scrollTop();
   };
 
-  /* =======================================================
-     SAVE PROGRESS
-  ======================================================= */
+  const savePageAndMove = async () => {
+    if (saving || !currentPageReady) return;
 
-  const saveCurrentProgress = async (
-    nextPage: number,
-    completedCount: number
-  ) => {
-    const result = await Promise.resolve(
-      updateProgress(nextPage, completedCount)
-    );
-
-    return Boolean(result);
-  };
-
-  /* =======================================================
-     NEXT PAGE
-  ======================================================= */
-
-  const goNext = async () => {
-    if (currentPage >= SECTIONS.length || saving) {
-      return;
-    }
-
-    const nextPage = Math.min(
-      currentPage + 1,
-      SECTIONS.length
-    );
-
-    const newCompletedCount = Math.min(
+    const nextPage = clamp(currentPage + 1, 1, TOTAL_SECTIONS);
+    const nextCompleted = clamp(
       Math.max(completedSections, currentPage),
-      SECTIONS.length
+      0,
+      TOTAL_SECTIONS,
     );
 
-    /*
-      Save the NEXT page, not the page being left.
-      This makes the database row unambiguous:
-
-      current_section = page to resume
-      completed_sections = number of finished pages
-    */
-    const success = await saveCurrentProgress(
+    const success = await updateProgress(
       nextPage,
-      newCompletedCount
+      nextCompleted,
+      progress?.totalScore ?? 0,
     );
 
     if (!success) return;
@@ -397,138 +426,58 @@ function RealityCheck() {
     scrollTop();
   };
 
-  /* =======================================================
-     PREVIOUS PAGE
-  ======================================================= */
-
   const goPrevious = () => {
-    if (currentPage <= 1 || saving) {
-      return;
-    }
-
-    setCurrentPage((page) => Math.max(page - 1, 1));
+    if (saving || currentPage <= 1) return;
+    setCurrentPage((page) => clamp(page - 1, 1, TOTAL_SECTIONS));
     scrollTop();
   };
-
-  /* =======================================================
-     COMPLETE FINAL LESSON
-  ======================================================= */
-
-  const completeRealityCheck = async () => {
-    if (!finalPassed || saving) return;
-
-    const success = await markComplete();
-
-    if (!success) return;
-
-    setCompleted(true);
-    setCurrentPage(SECTIONS.length);
-    scrollTop();
-  };
-
-  /* =======================================================
-     FINAL QUIZ
-  ======================================================= */
 
   const submitFinalChallenge = () => {
-    if (
-      finalAnswers.some(
-        (answer) => answer === -1
-      )
-    ) {
-      return;
-    }
+    if (saving) return;
+
+    const unanswered = finalAnswers.some((answer) => answer === -1);
+    if (unanswered) return;
 
     setFinalSubmitted(true);
-
-    if (finalScore >= 4) {
-      setFinalPassed(true);
-    } else {
-      setFinalPassed(false);
-    }
+    setFinalPassed(finalScore >= 4);
   };
 
-  /* =======================================================
-     RETRY FINAL QUIZ
-  ======================================================= */
-
   const retryFinalChallenge = () => {
-    setFinalAnswers(
-      Array(FINAL_QUESTIONS.length).fill(-1)
-    );
-
+    setFinalAnswers(Array(FINAL_QUESTIONS.length).fill(-1));
     setFinalSubmitted(false);
     setFinalPassed(false);
   };
 
-  /* =======================================================
-     PAGE ANSWER VALIDATION
-  ======================================================= */
+  const finishRealityCheck = async () => {
+    if (saving || !finalPassed || completed) return;
 
-  const pageReady = () => {
-    switch (currentSection?.id) {
-      case "pause":
-        return pauseAnswer === "pause";
+    const success = await markComplete(finalScore);
 
-      case "verify":
-        return sourceAnswer === "verify";
+    if (!success) return;
 
-      case "context":
-        return contextAnswer === "context";
-
-      case "evidence":
-        return evidenceAnswer === "evidence";
-
-      case "manipulation":
-        return manipulationAnswer === "manipulation";
-
-      case "ai-content":
-        return aiContentAnswer === "careful";
-
-      case "compare":
-        return compareAnswer === "compare";
-
-      case "decide":
-        return finalPassed;
-
-      default:
-        return false;
-    }
+    setLocalCompleted(true);
+    setFinalPassed(true);
+    setFinalSubmitted(true);
+    setCurrentPage(TOTAL_SECTIONS);
+    scrollTop();
   };
 
-  /* =======================================================
-     LOADING SCREEN
-  ======================================================= */
-
-  if (progressLoading) {
+  if (loading) {
     return (
       <main className="reality-page reality-loading-page">
-        <div className="reality-loading">
-          <div className="reality-loading-spinner" />
-          <h2>Loading your Reality Check...</h2>
-          <p>
-            Restoring your saved learning progress.
-          </p>
+        <div className="reality-loading-card">
+          <div className="reality-spinner" />
+          <h1>Restoring your Reality Check</h1>
+          <p>Your saved progress is being loaded from CURIO.</p>
         </div>
       </main>
     );
   }
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
-
   return (
     <main className="reality-page">
-
-      {/* ===================================================
-          HEADER
-      =================================================== */}
-
       <header className="reality-header">
-
         <div className="reality-brand">
-
           <button
             type="button"
             className="reality-back-button"
@@ -538,1572 +487,441 @@ function RealityCheck() {
             ←
           </button>
 
-          <div className="reality-logo-mark">
-            🧠
-          </div>
+          <div className="reality-logo">🧠</div>
 
           <div>
             <strong>CURIO</strong>
-            <span>
-              Reality Check · Digital Reality Literacy
-            </span>
+            <span>Reality Check · Digital Reality Literacy</span>
           </div>
-
         </div>
 
         <div className="reality-header-progress">
-
-          <div className="reality-progress-heading">
+          <div className="reality-progress-meta">
             <span>AI THINKING SKILL</span>
-            <strong>
-              {progressPercentage}%
-            </strong>
+            <strong>{progressPercent}%</strong>
           </div>
 
           <div className="reality-progress-track">
             <div
               className="reality-progress-fill"
-              style={{
-                width: `${progressPercentage}%`,
-              }}
+              style={{ width: `${progressPercent}%` }}
             />
           </div>
-
         </div>
-
       </header>
 
-      {/* ===================================================
-          SAVE ERROR
-      =================================================== */}
-
-      {progressError && (
-        <div className="reality-error-banner">
-          <strong>Unable to save your progress.</strong>
-          <span>
-            Please check your connection and try again.
-          </span>
+      {error && (
+        <div className="reality-error">
+          <strong>Progress could not be saved.</strong>
+          <span>Check your connection and try the action again.</span>
         </div>
       )}
 
-      {/* ===================================================
-          MAIN LAYOUT
-      =================================================== */}
-
-      <div className="reality-layout">
-
-        {/* =================================================
-            SIDEBAR
-        ================================================= */}
-
+      <div className="reality-shell">
         <aside className="reality-sidebar">
+          <div className="reality-sidebar-title">YOUR JOURNEY</div>
 
-          <div className="reality-sidebar-heading">
-            YOUR JOURNEY
+          <div className="reality-nav">
+            {SECTIONS.map((section, index) => {
+              const page = index + 1;
+              const unlocked = page <= furthestUnlockedPage;
+              const done = completed || page <= completedSections;
+              const active = page === currentPage;
+
+              return (
+                <button
+                  type="button"
+                  key={section.id}
+                  disabled={!unlocked}
+                  onClick={() => openPage(page)}
+                  className={[
+                    "reality-nav-item",
+                    active ? "active" : "",
+                    done ? "completed" : "",
+                    !unlocked ? "locked" : "",
+                  ].join(" ")}
+                >
+                  <span className="reality-nav-number">
+                    {done ? "✓" : !unlocked ? "🔒" : section.number}
+                  </span>
+
+                  <span className="reality-nav-copy">
+                    <strong>{section.shortTitle}</strong>
+                    <small>{section.title}</small>
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="reality-section-list">
-
-            {SECTIONS.map(
-              (item, index) => {
-                const pageNumber = index + 1;
-
-                const unlocked =
-                  canOpenPage(pageNumber);
-
-                const isCompleted =
-                  completedSections >= pageNumber;
-
-                const isActive =
-                  currentPage === pageNumber;
-
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    disabled={!unlocked}
-                    onClick={() =>
-                      openPage(pageNumber)
-                    }
-                    className={[
-                      "reality-section-button",
-                      isActive
-                        ? "active"
-                        : "",
-                      isCompleted
-                        ? "completed"
-                        : "",
-                      !unlocked
-                        ? "locked"
-                        : "",
-                    ].join(" ")}
-                  >
-
-                    <span className="reality-section-number">
-                      {item.number}
-                    </span>
-
-                    <span className="reality-section-text">
-                      <strong>
-                        {item.shortTitle}
-                      </strong>
-                      <small>
-                        {item.title}
-                      </small>
-                    </span>
-
-                    <span className="reality-section-status">
-                      {isCompleted
-                        ? "✓"
-                        : !unlocked
-                        ? "🔒"
-                        : ""}
-                    </span>
-
-                  </button>
-                );
-              }
-            )}
-
+          <div className="reality-sidebar-tip">
+            <span>🛡️</span>
+            <strong>Think before you share.</strong>
+            <p>
+              The safest reality-check habit is to pause when something
+              matters, then verify before acting.
+            </p>
           </div>
-
         </aside>
 
-        {/* =================================================
-            CONTENT
-        ================================================= */}
-
-        <section className="reality-content">
-
-          {/* =================================================
-              HERO
-          ================================================= */}
-
-          <div className="reality-hero">
-
-            <span className="reality-kicker">
-              🛡 DIGITAL REALITY LITERACY
-            </span>
+        <section className="reality-main">
+          <section className="reality-hero">
+            <span className="reality-kicker">🛡 DIGITAL REALITY LITERACY</span>
 
             <h1>
               Seeing is no
               <br />
-              longer
-              <br />
-              <em>enough.</em>
+              longer <em>enough.</em>
             </h1>
 
             <p>
-              AI can now generate images, videos,
-              voices and text that look convincing.
-              At the same time, human-created content
-              can be edited, cropped, manipulated or
-              presented without its original context.
+              AI can generate convincing images, videos, voices and text.
+              Human-created content can also be edited, cropped or shown
+              without its original context.
             </p>
 
             <div className="reality-hero-principle">
-
               <span>🧠</span>
-
               <div>
-                <strong>
-                  Reality Check is not about
-                  distrusting everything.
-                </strong>
-
+                <strong>Reality Check is not about distrusting everything.</strong>
                 <p>
-                  It is about learning how to pause,
-                  verify, find evidence and make
-                  better decisions.
+                  It is about learning how to pause, verify, find evidence
+                  and make better decisions.
                 </p>
               </div>
-
             </div>
+          </section>
 
+          <div className="reality-step-bar">
+            <div>
+              <span>STEP {currentSection.number}</span>
+              <strong>{currentSection.title}</strong>
+            </div>
+            <span>{completedSections} / {TOTAL_SECTIONS} completed</span>
           </div>
 
-          {/* =================================================
-              STEP INDICATOR
-          ================================================= */}
+          {currentSection.id !== "decide" ? (
+            <RealityLearningPage
+              section={currentSection}
+              content={PAGE_CONTENT[currentSection.id]}
+              choices={PAGE_CHOICES[currentSection.id]}
+              answer={currentAnswer}
+              onAnswer={selectAnswer}
+              onContinue={savePageAndMove}
+              saving={saving}
+            />
+          ) : (
+            <FinalChallenge
+              answers={finalAnswers}
+              submitted={finalSubmitted}
+              passed={finalPassed}
+              score={finalScore}
+              percentage={finalPercentage}
+              saving={saving}
+              completed={completed}
+              onAnswer={(questionIndex, optionIndex) => {
+                if (finalSubmitted) return;
 
-          <div className="reality-step-indicator">
-
-            <span>
-              STEP {currentSection.number}
-            </span>
-
-            <strong>
-              {currentSection.title}
-            </strong>
-
-            <small>
-              {completedSections} /{" "}
-              {SECTIONS.length} completed
-            </small>
-
-          </div>
-
-          {/* =================================================
-              PAGE 1
-          ================================================= */}
-
-          {currentSection.id === "pause" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                01 · PAUSE
-              </span>
-
-              <h2>
-                Don't react yet.
-              </h2>
-
-              <p className="reality-lead">
-                The first skill of digital reality
-                literacy is surprisingly simple:
-                <strong> pause.</strong>
-              </p>
-
-              <div className="reality-explanation">
-
-                <div className="reality-icon">
-                  ⏸
-                </div>
-
-                <div>
-                  <h3>
-                    Your first reaction is not
-                    always your best decision.
-                  </h3>
-
-                  <p>
-                    A dramatic headline, shocking
-                    image or emotional message can
-                    make you want to react immediately.
-                    Before you like, share, comment or
-                    believe it, give yourself a moment
-                    to think.
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="reality-example-grid">
-
-                <div>
-                  <span>⚡</span>
-                  <strong>
-                    Something shocking
-                  </strong>
-                  <p>
-                    "You won't believe what happened!"
-                  </p>
-                </div>
-
-                <div>
-                  <span>⏸</span>
-                  <strong>
-                    Pause
-                  </strong>
-                  <p>
-                    Ask yourself what you actually know.
-                  </p>
-                </div>
-
-                <div>
-                  <span>🔎</span>
-                  <strong>
-                    Check
-                  </strong>
-                  <p>
-                    Look for evidence before reacting.
-                  </p>
-                </div>
-
-              </div>
-
-              <h3>
-                What should you do first?
-              </h3>
-
-              <div className="reality-choice-grid">
-
-                <button
-                  type="button"
-                  className={
-                    pauseAnswer === "share"
-                      ? "selected"
-                      : ""
-                  }
-                  onClick={() =>
-                    setPauseAnswer("share")
-                  }
-                >
-                  Share it immediately
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    pauseAnswer === "pause"
-                      ? "selected correct"
-                      : ""
-                  }
-                  onClick={() =>
-                    setPauseAnswer("pause")
-                  }
-                >
-                  Pause and look carefully
-                </button>
-
-              </div>
-
-              {pauseAnswer === "pause" && (
-                <div className="reality-success">
-                  ✓ Correct. Pausing gives you
-                  space to think before reacting.
-                </div>
-              )}
-
-              {pauseAnswer === "share" && (
-                <div className="reality-warning">
-                  Not quite. Don't let a strong
-                  emotional reaction replace checking.
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="reality-primary-button"
-                disabled={!pageReady() || saving}
-                onClick={goNext}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Continue → Verify"}
-              </button>
-
-            </article>
+                setFinalAnswers((previous) => {
+                  const next = [...previous];
+                  next[questionIndex] = optionIndex;
+                  return next;
+                });
+              }}
+              onSubmit={submitFinalChallenge}
+              onRetry={retryFinalChallenge}
+              onComplete={finishRealityCheck}
+              onLearn={() => navigate("/learn")}
+            />
           )}
 
-          {/* =================================================
-              PAGE 2
-          ================================================= */}
-
-          {currentSection.id === "verify" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                02 · VERIFY
-              </span>
-
-              <h2>
-                Find out where the information
-                came from.
-              </h2>
-
-              <p className="reality-lead">
-                Before trusting a claim, examine
-                its source.
-              </p>
-
-              <div className="reality-explanation">
-
-                <div className="reality-icon">
-                  🔎
-                </div>
-
-                <div>
-                  <h3>
-                    Ask: "Who is saying this?"
-                  </h3>
-
-                  <p>
-                    A source gives you important
-                    information about where a claim
-                    originated. Check whether you
-                    can identify the person,
-                    organisation or publication
-                    behind the information.
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="reality-checklist">
-
-                <div>
-                  <span>01</span>
-                  <strong>
-                    Identify the source
-                  </strong>
-                  <p>
-                    Who created or published it?
-                  </p>
-                </div>
-
-                <div>
-                  <span>02</span>
-                  <strong>
-                    Check the date
-                  </strong>
-                  <p>
-                    Is the information current?
-                  </p>
-                </div>
-
-                <div>
-                  <span>03</span>
-                  <strong>
-                    Look for evidence
-                  </strong>
-                  <p>
-                    Does the source support its claim?
-                  </p>
-                </div>
-
-              </div>
-
-              <h3>
-                Which is stronger?
-              </h3>
-
-              <div className="reality-choice-grid">
-
-                <button
-                  type="button"
-                  className={
-                    sourceAnswer === "anonymous"
-                      ? "selected"
-                      : ""
-                  }
-                  onClick={() =>
-                    setSourceAnswer("anonymous")
-                  }
-                >
-                  Anonymous post with no evidence
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    sourceAnswer === "verify"
-                      ? "selected correct"
-                      : ""
-                  }
-                  onClick={() =>
-                    setSourceAnswer("verify")
-                  }
-                >
-                  Source with information you can verify
-                </button>
-
-              </div>
-
-              {sourceAnswer === "verify" && (
-                <div className="reality-success">
-                  ✓ Correct. A claim is stronger
-                  when its source and evidence
-                  can be checked.
-                </div>
-              )}
-
-              {sourceAnswer === "anonymous" && (
-                <div className="reality-warning">
-                  Look again. An unsupported
-                  anonymous claim gives you less
-                  evidence to work with.
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="reality-primary-button"
-                disabled={!pageReady() || saving}
-                onClick={goNext}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Continue → Context"}
-              </button>
-
-            </article>
-          )}
-
-          {/* =================================================
-              PAGE 3
-          ================================================= */}
-
-          {currentSection.id === "context" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                03 · CONTEXT
-              </span>
-
-              <h2>
-                Ask what might be missing.
-              </h2>
-
-              <p className="reality-lead">
-                Information can be technically real
-                and still be misleading when its
-                context is removed.
-              </p>
-
-              <div className="reality-context-comparison">
-
-                <div className="context-box">
-                  <span>
-                    WITHOUT CONTEXT
-                  </span>
-
-                  <strong>
-                    "This person said this!"
-                  </strong>
-
-                  <p>
-                    But when? Why? What happened
-                    before and after?
-                  </p>
-                </div>
-
-                <div className="context-arrow">
-                  →
-                </div>
-
-                <div className="context-box strong">
-                  <span>
-                    WITH CONTEXT
-                  </span>
-
-                  <strong>
-                    Full statement + situation
-                  </strong>
-
-                  <p>
-                    You can understand what the
-                    information actually means.
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="reality-explanation">
-
-                <div className="reality-icon">
-                  🧩
-                </div>
-
-                <div>
-                  <h3>
-                    Context completes the picture.
-                  </h3>
-
-                  <p>
-                    A cropped image, shortened quote,
-                    old video or isolated statistic
-                    can create a very different
-                    impression from the complete
-                    information.
-                  </p>
-                </div>
-
-              </div>
-
-              <h3>
-                Which approach is better?
-              </h3>
-
-              <div className="reality-choice-grid">
-
-                <button
-                  type="button"
-                  className={
-                    contextAnswer === "headline"
-                      ? "selected"
-                      : ""
-                  }
-                  onClick={() =>
-                    setContextAnswer("headline")
-                  }
-                >
-                  Judge only from the headline
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    contextAnswer === "context"
-                      ? "selected correct"
-                      : ""
-                  }
-                  onClick={() =>
-                    setContextAnswer("context")
-                  }
-                >
-                  Look for the surrounding context
-                </button>
-
-              </div>
-
-              {contextAnswer === "context" && (
-                <div className="reality-success">
-                  ✓ Correct. Context helps you
-                  understand what the information
-                  actually represents.
-                </div>
-              )}
-
-              {contextAnswer === "headline" && (
-                <div className="reality-warning">
-                  A headline is only one part of
-                  the information. Look deeper.
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="reality-primary-button"
-                disabled={!pageReady() || saving}
-                onClick={goNext}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Continue → Evidence"}
-              </button>
-
-            </article>
-          )}
-
-          {/* =================================================
-              PAGE 4
-          ================================================= */}
-
-          {currentSection.id === "evidence" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                04 · EVIDENCE
-              </span>
-
-              <h2>
-                Don't just ask "Is it true?"
-                Ask "What supports it?"
-              </h2>
-
-              <p className="reality-lead">
-                Good reality checking is based on
-                evidence rather than confidence.
-              </p>
-
-              <div className="reality-evidence-grid">
-
-                <div>
-                  <span>💬</span>
-                  <strong>
-                    Claim
-                  </strong>
-                  <p>
-                    Someone says something happened.
-                  </p>
-                </div>
-
-                <div>
-                  <span>🔎</span>
-                  <strong>
-                    Evidence
-                  </strong>
-                  <p>
-                    Look for information that supports
-                    or challenges the claim.
-                  </p>
-                </div>
-
-                <div>
-                  <span>🧠</span>
-                  <strong>
-                    Reasoning
-                  </strong>
-                  <p>
-                    Decide what the evidence actually
-                    tells you.
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="reality-highlight">
-                <strong>
-                  Confidence is not evidence.
-                </strong>
-
-                <p>
-                  A person can sound completely certain
-                  and still be wrong.
-                </p>
-              </div>
-
-              <h3>
-                Which approach is strongest?
-              </h3>
-
-              <div className="reality-choice-grid">
-
-                <button
-                  type="button"
-                  className={
-                    evidenceAnswer === "confidence"
-                      ? "selected"
-                      : ""
-                  }
-                  onClick={() =>
-                    setEvidenceAnswer("confidence")
-                  }
-                >
-                  Trust whoever sounds most confident
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    evidenceAnswer === "evidence"
-                      ? "selected correct"
-                      : ""
-                  }
-                  onClick={() =>
-                    setEvidenceAnswer("evidence")
-                  }
-                >
-                  Look for supporting evidence
-                </button>
-
-              </div>
-
-              {evidenceAnswer === "evidence" && (
-                <div className="reality-success">
-                  ✓ Correct. Evidence gives you
-                  something you can examine rather
-                  than simply trusting confidence.
-                </div>
-              )}
-
-              {evidenceAnswer === "confidence" && (
-                <div className="reality-warning">
-                  Confidence does not guarantee
-                  accuracy. Look for evidence.
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="reality-primary-button"
-                disabled={!pageReady() || saving}
-                onClick={goNext}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Continue → Manipulation"}
-              </button>
-
-            </article>
-          )}
-
-          {/* =================================================
-              PAGE 5
-          ================================================= */}
-
-          {currentSection.id === "manipulation" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                05 · MANIPULATION
-              </span>
-
-              <h2>
-                Real does not always mean
-                reliable.
-              </h2>
-
-              <p className="reality-lead">
-                A genuine photo or video can still
-                be edited, cropped, rearranged or
-                presented in a misleading way.
-              </p>
-
-              <div className="reality-manipulation-list">
-
-                <div>
-                  <span>✂️</span>
-                  <div>
-                    <strong>
-                      Cropping
-                    </strong>
-                    <p>
-                      Removing surrounding information
-                      can change what a scene appears to
-                      mean.
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <span>🎞️</span>
-                  <div>
-                    <strong>
-                      Editing
-                    </strong>
-                    <p>
-                      Parts of a recording can be removed
-                      or rearranged.
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <span>🕰️</span>
-                  <div>
-                    <strong>
-                      Old content
-                    </strong>
-                    <p>
-                      Genuine content can be presented
-                      as though it happened recently.
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-
-              <div className="reality-highlight">
-                <strong>
-                  Don't only ask "Is this real?"
-                </strong>
-
-                <p>
-                  Also ask "Is this being presented
-                  accurately?"
-                </p>
-              </div>
-
-              <h3>
-                What should you check?
-              </h3>
-
-              <div className="reality-choice-grid">
-
-                <button
-                  type="button"
-                  className={
-                    manipulationAnswer === "appearance"
-                      ? "selected"
-                      : ""
-                  }
-                  onClick={() =>
-                    setManipulationAnswer("appearance")
-                  }
-                >
-                  Only whether it looks real
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    manipulationAnswer === "manipulation"
-                      ? "selected correct"
-                      : ""
-                  }
-                  onClick={() =>
-                    setManipulationAnswer(
-                      "manipulation"
-                    )
-                  }
-                >
-                  Source, context and how it is presented
-                </button>
-
-              </div>
-
-              {manipulationAnswer ===
-                "manipulation" && (
-                <div className="reality-success">
-                  ✓ Correct. Authenticity and context
-                  both matter.
-                </div>
-              )}
-
-              {manipulationAnswer === "appearance" && (
-                <div className="reality-warning">
-                  Something can look genuine and
-                  still be misleading.
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="reality-primary-button"
-                disabled={!pageReady() || saving}
-                onClick={goNext}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Continue → AI Content"}
-              </button>
-
-            </article>
-          )}
-
-          {/* =================================================
-              PAGE 6
-          ================================================= */}
-
-          {currentSection.id === "ai-content" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                06 · AI CONTENT
-              </span>
-
-              <h2>
-                AI-generated content can look
-                convincing.
-              </h2>
-
-              <p className="reality-lead">
-                Images, videos, voices and text can
-                now be generated or modified using AI.
-              </p>
-
-              <div className="reality-ai-grid">
-
-                <div>
-                  <span>🖼️</span>
-                  <strong>
-                    Images
-                  </strong>
-                  <p>
-                    Synthetic or edited images can
-                    appear realistic.
-                  </p>
-                </div>
-
-                <div>
-                  <span>🎙️</span>
-                  <strong>
-                    Voices
-                  </strong>
-                  <p>
-                    Audio can be generated or altered.
-                  </p>
-                </div>
-
-                <div>
-                  <span>🎥</span>
-                  <strong>
-                    Video
-                  </strong>
-                  <p>
-                    Video can be manipulated or generated.
-                  </p>
-                </div>
-
-                <div>
-                  <span>✍️</span>
-                  <strong>
-                    Text
-                  </strong>
-                  <p>
-                    AI can produce convincing written
-                    content.
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="reality-explanation">
-
-                <div className="reality-icon">
-                  🤔
-                </div>
-
-                <div>
-                  <h3>
-                    Don't rely on appearance alone.
-                  </h3>
-
-                  <p>
-                    The fact that something looks,
-                    sounds or reads convincingly does
-                    not automatically prove that it is
-                    accurate.
-                  </p>
-                </div>
-
-              </div>
-
-              <h3>
-                What is the safest approach?
-              </h3>
-
-              <div className="reality-choice-grid">
-
-                <button
-                  type="button"
-                  className={
-                    aiContentAnswer === "trust"
-                      ? "selected"
-                      : ""
-                  }
-                  onClick={() =>
-                    setAiContentAnswer("trust")
-                  }
-                >
-                  Trust it because it looks convincing
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    aiContentAnswer === "careful"
-                      ? "selected correct"
-                      : ""
-                  }
-                  onClick={() =>
-                    setAiContentAnswer("careful")
-                  }
-                >
-                  Check the source and supporting evidence
-                </button>
-
-              </div>
-
-              {aiContentAnswer === "careful" && (
-                <div className="reality-success">
-                  ✓ Correct. Convincing appearance
-                  is not enough evidence.
-                </div>
-              )}
-
-              {aiContentAnswer === "trust" && (
-                <div className="reality-warning">
-                  Something can be convincing without
-                  being accurate.
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="reality-primary-button"
-                disabled={!pageReady() || saving}
-                onClick={goNext}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Continue → Compare"}
-              </button>
-
-            </article>
-          )}
-
-          {/* =================================================
-              PAGE 7
-          ================================================= */}
-
-          {currentSection.id === "compare" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                07 · COMPARE
-              </span>
-
-              <h2>
-                One source is rarely the whole
-                picture.
-              </h2>
-
-              <p className="reality-lead">
-                When something matters, compare
-                information instead of stopping at
-                the first answer.
-              </p>
-
-              <div className="reality-compare-flow">
-
-                <div>
-                  <span>01</span>
-                  <strong>
-                    Find the claim
-                  </strong>
-                  <p>
-                    What exactly is being said?
-                  </p>
-                </div>
-
-                <div className="reality-flow-arrow">
-                  →
-                </div>
-
-                <div>
-                  <span>02</span>
-                  <strong>
-                    Find other sources
-                  </strong>
-                  <p>
-                    What do independent sources say?
-                  </p>
-                </div>
-
-                <div className="reality-flow-arrow">
-                  →
-                </div>
-
-                <div>
-                  <span>03</span>
-                  <strong>
-                    Compare evidence
-                  </strong>
-                  <p>
-                    Where does the evidence agree
-                    or disagree?
-                  </p>
-                </div>
-
-              </div>
-
-              <div className="reality-highlight">
-                <strong>
-                  Compare, don't just collect.
-                </strong>
-
-                <p>
-                  Seeing many sources is useful only
-                  when you actually examine what they
-                  are saying and where their information
-                  comes from.
-                </p>
-              </div>
-
-              <h3>
-                What is the strongest habit?
-              </h3>
-
-              <div className="reality-choice-grid">
-
-                <button
-                  type="button"
-                  className={
-                    compareAnswer === "first"
-                      ? "selected"
-                      : ""
-                  }
-                  onClick={() =>
-                    setCompareAnswer("first")
-                  }
-                >
-                  Trust the first result
-                </button>
-
-                <button
-                  type="button"
-                  className={
-                    compareAnswer === "compare"
-                      ? "selected correct"
-                      : ""
-                  }
-                  onClick={() =>
-                    setCompareAnswer("compare")
-                  }
-                >
-                  Compare reliable sources
-                </button>
-
-              </div>
-
-              {compareAnswer === "compare" && (
-                <div className="reality-success">
-                  ✓ Correct. Comparing information
-                  helps you make a better-supported
-                  judgment.
-                </div>
-              )}
-
-              {compareAnswer === "first" && (
-                <div className="reality-warning">
-                  The first result is not automatically
-                  the best or most accurate source.
-                </div>
-              )}
-
-              <button
-                type="button"
-                className="reality-primary-button"
-                disabled={!pageReady() || saving}
-                onClick={goNext}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Continue → Final Challenge"}
-              </button>
-
-            </article>
-          )}
-
-          {/* =================================================
-              PAGE 8
-          ================================================= */}
-
-          {currentSection.id === "decide" && (
-            <article className="reality-card">
-
-              <span className="reality-card-label">
-                08 · DECIDE
-              </span>
-
-              <h2>
-                Act on evidence.
-              </h2>
-
-              <p className="reality-lead">
-                You have learned the Reality Check
-                loop:
-              </p>
-
-              <div className="reality-final-loop">
-
-                <div>
-                  <span>01</span>
-                  <strong>
-                    PAUSE
-                  </strong>
-                  <p>
-                    Don't react immediately.
-                  </p>
-                </div>
-
-                <div>
-                  <span>02</span>
-                  <strong>
-                    VERIFY
-                  </strong>
-                  <p>
-                    Check where information came from.
-                  </p>
-                </div>
-
-                <div>
-                  <span>03</span>
-                  <strong>
-                    FIND EVIDENCE
-                  </strong>
-                  <p>
-                    Look for support for the claim.
-                  </p>
-                </div>
-
-                <div>
-                  <span>04</span>
-                  <strong>
-                    CHECK CONTEXT
-                  </strong>
-                  <p>
-                    Look for what may be missing.
-                  </p>
-                </div>
-
-                <div>
-                  <span>05</span>
-                  <strong>
-                    COMPARE
-                  </strong>
-                  <p>
-                    Check other reliable information.
-                  </p>
-                </div>
-
-                <div>
-                  <span>06</span>
-                  <strong>
-                    DECIDE
-                  </strong>
-                  <p>
-                    Act according to the evidence.
-                  </p>
-                </div>
-
-              </div>
-
-              {!finalSubmitted && (
-                <>
-                  <div className="reality-final-heading">
-                    <h3>
-                      Final Reality Check
-                    </h3>
-
-                    <p>
-                      Answer all five questions.
-                      You need at least 4/5 to
-                      complete this area.
-                    </p>
-                  </div>
-
-                  <div className="reality-final-questions">
-
-                    {FINAL_QUESTIONS.map(
-                      (question, index) => {
-
-                        const selected =
-                          finalAnswers[index];
-
-                        return (
-                          <div
-                            key={question.question}
-                            className="reality-final-question"
-                          >
-
-                            <div className="reality-question-title">
-                              <span>
-                                {index + 1}
-                              </span>
-
-                              <h4>
-                                {question.question}
-                              </h4>
-                            </div>
-
-                            <div className="reality-final-options">
-
-                              {question.options.map(
-                                (
-                                  option,
-                                  optionIndex
-                                ) => (
-                                  <button
-                                    type="button"
-                                    key={option}
-                                    className={
-                                      selected ===
-                                      optionIndex
-                                        ? "selected"
-                                        : ""
-                                    }
-                                    onClick={() =>
-                                      setFinalAnswers(
-                                        (previous) => {
-                                          const next =
-                                            [...previous];
-
-                                          next[index] =
-                                            optionIndex;
-
-                                          return next;
-                                        }
-                                      )
-                                    }
-                                  >
-                                    <span>
-                                      {String.fromCharCode(
-                                        65 +
-                                          optionIndex
-                                      )}
-                                    </span>
-
-                                    <strong>
-                                      {option}
-                                    </strong>
-                                  </button>
-                                )
-                              )}
-
-                            </div>
-
-                          </div>
-                        );
-                      }
-                    )}
-
-                  </div>
-
-                  <button
-                    type="button"
-                    className="reality-primary-button"
-                    disabled={
-                      finalAnswers.some(
-                        (answer) => answer === -1
-                      )
-                    }
-                    onClick={
-                      submitFinalChallenge
-                    }
-                  >
-                    Check My Answers →
-                  </button>
-                </>
-              )}
-
-              {finalSubmitted && (
-                <div className="reality-final-result">
-
-                  <div
-                    className={
-                      finalPassed
-                        ? "reality-result-icon success"
-                        : "reality-result-icon fail"
-                    }
-                  >
-                    {finalPassed
-                      ? "✓"
-                      : "↻"}
-                  </div>
-
-                  <h3>
-                    {finalPassed
-                      ? `Excellent! ${finalScore}/5`
-                      : `Not quite yet — ${finalScore}/5`}
-                  </h3>
-
-                  <p>
-                    You scored{" "}
-                    {finalPercentage}%.
-                  </p>
-
-                  <div className="reality-explanations">
-
-                    {FINAL_QUESTIONS.map(
-                      (question, index) => {
-
-                        const correct =
-                          finalAnswers[index] ===
-                          question.answer;
-
-                        return (
-                          <div
-                            key={question.question}
-                            className={
-                              correct
-                                ? "correct"
-                                : "wrong"
-                            }
-                          >
-                            <strong>
-                              {correct
-                                ? "✓ Correct"
-                                : "✕ Review"}
-                            </strong>
-
-                            <p>
-                              {question.explanation}
-                            </p>
-                          </div>
-                        );
-                      }
-                    )}
-
-                  </div>
-
-                  {!finalPassed ? (
-                    <button
-                      type="button"
-                      className="reality-secondary-button"
-                      onClick={
-                        retryFinalChallenge
-                      }
-                    >
-                      Try Again ↻
-                    </button>
-                  ) : (
-                    <>
-                      <div className="reality-completion-card">
-
-                        <div>
-                          ✓
-                        </div>
-
-                        <section>
-                          <strong>
-                            Reality Check complete!
-                          </strong>
-
-                          <p>
-                            You now have a practical
-                            framework for pausing,
-                            verifying, checking context,
-                            finding evidence and making
-                            informed decisions.
-                          </p>
-                        </section>
-
-                      </div>
-
-                      {!completed && (
-                        <button
-                          type="button"
-                          className="reality-primary-button"
-                          disabled={saving}
-                          onClick={
-                            completeRealityCheck
-                          }
-                        >
-                          {saving
-                            ? "Saving completion..."
-                            : "Complete Reality Check ✓"}
-                        </button>
-                      )}
-
-                      {completed && (
-                        <button
-                          type="button"
-                          className="reality-secondary-button"
-                          onClick={() =>
-                            navigate("/learn")
-                          }
-                        >
-                          Return to Learning Path →
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                </div>
-              )}
-
-            </article>
-          )}
-
-          {/* =================================================
-              GLOBAL PREVIOUS NAVIGATION
-          ================================================= */}
-
-          <div className="reality-page-navigation">
+          <div className="reality-bottom-navigation">
             <button
               type="button"
               className="reality-secondary-button"
+              disabled={currentPage === 1 || saving}
               onClick={goPrevious}
-              disabled={currentPage <= 1 || saving}
             >
               ← Previous
             </button>
 
-            <div className="reality-page-position">
+            <div className="reality-position">
+              <strong>Page {currentPage} of {TOTAL_SECTIONS}</strong>
               <span>
-                Page {currentPage} of {SECTIONS.length}
+                {currentSection.icon} {currentSection.shortTitle}
               </span>
-              <small>
-                {completedSections} of {SECTIONS.length} completed
-              </small>
             </div>
 
-            <div className="reality-page-position reality-page-position-right">
-              <span>
-                {currentSection.shortTitle}
-              </span>
+            <div className="reality-save-status">
+              {saving ? "Saving progress…" : "Progress synced"}
             </div>
           </div>
-
         </section>
+      </div>
+    </main>
+  );
+}
 
+function RealityLearningPage({
+  section,
+  content,
+  choices,
+  answer,
+  onAnswer,
+  onContinue,
+  saving,
+}: {
+  section: Section;
+  content: (typeof PAGE_CONTENT)[Exclude<SectionId, "decide">];
+  choices: Choice[];
+  answer: string;
+  onAnswer: (value: string) => void;
+  onContinue: () => void;
+  saving: boolean;
+}) {
+  const correctAnswer =
+    section.id === "decide"
+      ? undefined
+      : CORRECT_PAGE_ANSWERS[section.id];
+
+  const correct = answer === correctAnswer;
+
+  return (
+    <article className="reality-card">
+      <span className="reality-card-label">{content.label}</span>
+
+      <h2>{content.title}</h2>
+      <p className="reality-lead">{content.lead}</p>
+
+      <div className="reality-principle-box">
+        <span>{content.icon}</span>
+        <p>{content.principle}</p>
       </div>
 
-    </main>
+      <div className="reality-points">
+        {content.points.map((point) => (
+          <div key={`${point.title}-${point.icon}`} className="reality-point">
+            <span>{point.icon}</span>
+            <div>
+              <strong>{point.title}</strong>
+              <p>{point.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="reality-question">
+        <span className="reality-question-label">CHECK YOUR THINKING</span>
+        <h3>{content.question}</h3>
+
+        <div className="reality-choice-grid">
+          {choices.map((choice) => {
+            const selected = answer === choice.value;
+            const isCorrect =
+              Boolean(selected) && choice.value === correctAnswer;
+
+            return (
+              <button
+                type="button"
+                key={choice.value}
+                className={[
+                  "reality-choice",
+                  selected ? "selected" : "",
+                  isCorrect ? "correct" : "",
+                ].join(" ")}
+                onClick={() => onAnswer(choice.value)}
+              >
+                <span>{selected ? "✓" : "○"}</span>
+                {choice.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {answer && (
+          <div className={correct ? "reality-feedback success" : "reality-feedback warning"}>
+            <strong>{correct ? "✓ Correct" : "Not quite yet"}</strong>
+            <p>{correct ? content.correctMessage : content.wrongMessage}</p>
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        className="reality-primary-button"
+        disabled={!correct || saving}
+        onClick={onContinue}
+      >
+        {saving ? "Saving…" : content.next}
+      </button>
+    </article>
+  );
+}
+
+function FinalChallenge({
+  answers,
+  submitted,
+  passed,
+  score,
+  percentage,
+  saving,
+  completed,
+  onAnswer,
+  onSubmit,
+  onRetry,
+  onComplete,
+  onLearn,
+}: {
+  answers: number[];
+  submitted: boolean;
+  passed: boolean;
+  score: number;
+  percentage: number;
+  saving: boolean;
+  completed: boolean;
+  onAnswer: (questionIndex: number, optionIndex: number) => void;
+  onSubmit: () => void;
+  onRetry: () => void;
+  onComplete: () => void;
+  onLearn: () => void;
+}) {
+  return (
+    <article className="reality-card">
+      <span className="reality-card-label">08 · FINAL CHALLENGE</span>
+
+      <h2>Act on evidence.</h2>
+
+      <p className="reality-lead">
+        Use the complete Reality Check loop: pause, verify, find evidence,
+        check context, compare information, then decide.
+      </p>
+
+      <div className="reality-loop">
+        {[
+          ["01", "PAUSE", "Don't react immediately."],
+          ["02", "VERIFY", "Check where information came from."],
+          ["03", "EVIDENCE", "Look for support for the claim."],
+          ["04", "CONTEXT", "Look for what may be missing."],
+          ["05", "COMPARE", "Check other reliable information."],
+          ["06", "DECIDE", "Act according to the evidence."],
+        ].map(([number, title, text]) => (
+          <div key={number}>
+            <span>{number}</span>
+            <strong>{title}</strong>
+            <p>{text}</p>
+          </div>
+        ))}
+      </div>
+
+      {!submitted ? (
+        <>
+          <div className="reality-final-heading">
+            <span>FINAL REALITY CHECK</span>
+            <h3>Answer all five questions.</h3>
+            <p>You need at least 4 / 5 to complete this Reality Check.</p>
+          </div>
+
+          <div className="reality-final-questions">
+            {FINAL_QUESTIONS.map((question, index) => (
+              <div className="reality-final-question" key={question.question}>
+                <div className="reality-final-question-title">
+                  <span>{index + 1}</span>
+                  <h4>{question.question}</h4>
+                </div>
+
+                <div className="reality-final-options">
+                  {question.options.map((option, optionIndex) => (
+                    <button
+                      type="button"
+                      key={option}
+                      className={answers[index] === optionIndex ? "selected" : ""}
+                      onClick={() => onAnswer(index, optionIndex)}
+                    >
+                      <span>{String.fromCharCode(65 + optionIndex)}</span>
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="reality-primary-button"
+            disabled={answers.some((answer) => answer === -1)}
+            onClick={onSubmit}
+          >
+            Check My Answers →
+          </button>
+        </>
+      ) : (
+        <div className="reality-result">
+          <div className={`reality-result-icon ${passed ? "success" : "fail"}`}>
+            {passed ? "✓" : "↻"}
+          </div>
+
+          <span className="reality-result-label">YOUR RESULT</span>
+          <h3>{passed ? `Excellent! ${score}/5` : `Not quite yet — ${score}/5`}</h3>
+          <p>You scored {percentage}%.</p>
+
+          <div className="reality-score-track">
+            <div style={{ width: `${percentage}%` }} />
+          </div>
+
+          <div className="reality-explanations">
+            {FINAL_QUESTIONS.map((question, index) => {
+              const correct = answers[index] === question.answer;
+
+              return (
+                <div key={question.question} className={correct ? "correct" : "wrong"}>
+                  <strong>{correct ? "✓ Correct" : "✕ Review"}</strong>
+                  <p>{question.explanation}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {!passed ? (
+            <button type="button" className="reality-secondary-button" onClick={onRetry}>
+              Try Again ↻
+            </button>
+          ) : (
+            <>
+              <div className="reality-completion-card">
+                <span>✓</span>
+                <div>
+                  <strong>Reality Check passed!</strong>
+                  <p>
+                    You now have a practical framework for evaluating digital
+                    information before acting on it.
+                  </p>
+                </div>
+              </div>
+
+              {!completed ? (
+                <button
+                  type="button"
+                  className="reality-primary-button"
+                  disabled={saving}
+                  onClick={onComplete}
+                >
+                  {saving ? "Saving completion…" : "Complete Reality Check ✓"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="reality-primary-button"
+                  onClick={onLearn}
+                >
+                  Return to Learning Path →
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </article>
   );
 }
 

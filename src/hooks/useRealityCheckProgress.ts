@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -21,51 +22,117 @@ export function useRealityCheckProgress(
   realityCheckId: number,
   totalQuestions: number
 ) {
-  const [progress, setProgress] =
+  const [
+    progress,
+    setProgress,
+  ] =
     useState<RealityCheckProgress | null>(
       null
     );
 
-  const [loading, setLoading] =
+  const [
+    loading,
+    setLoading,
+  ] =
     useState(true);
 
-  const [saving, setSaving] =
+  const [
+    saving,
+    setSaving,
+  ] =
     useState(false);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [
+    error,
+    setError,
+  ] =
+    useState<string | null>(
+      null
+    );
+
+  /*
+   * Prevent an old asynchronous request
+   * from overwriting newer progress.
+   */
+  const requestIdRef =
+    useRef(0);
+
+  /* =========================================
+     SAFE TOTAL QUESTIONS
+  ========================================== */
+
+  const safeTotalQuestions =
+    Math.max(
+      0,
+      Math.floor(
+        Number.isFinite(
+          totalQuestions
+        )
+          ? totalQuestions
+          : 0
+      )
+    );
 
   /* =========================================
      LOAD PROGRESS
   ========================================== */
 
   const loadProgress =
-    useCallback(async () => {
-      setLoading(true);
-      setError(null);
+    useCallback(
+      async () => {
+        const requestId =
+          ++requestIdRef.current;
 
-      try {
-        const savedProgress =
-          await getRealityCheckProgress(
-            realityCheckId
+        setLoading(true);
+        setError(null);
+
+        try {
+          const savedProgress =
+            await getRealityCheckProgress(
+              realityCheckId
+            );
+
+          /*
+           * Do not allow an old request
+           * to overwrite a newer request.
+           */
+          if (
+            requestId !==
+            requestIdRef.current
+          ) {
+            return;
+          }
+
+          setProgress(
+            savedProgress
+          );
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to load Reality Check progress:",
+            err
           );
 
-        setProgress(
-          savedProgress
-        );
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to load Reality Check progress:",
-          err
-        );
-
-        setError(
-          "Unable to load your Reality Check progress."
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [realityCheckId]);
+          if (
+            requestId ===
+            requestIdRef.current
+          ) {
+            setError(
+              "Unable to load your Reality Check progress."
+            );
+          }
+        } finally {
+          if (
+            requestId ===
+            requestIdRef.current
+          ) {
+            setLoading(false);
+          }
+        }
+      },
+      [
+        realityCheckId,
+      ]
+    );
 
   /* =========================================
      INITIAL LOAD
@@ -108,12 +175,14 @@ export function useRealityCheckProgress(
         }
       };
 
-    load();
+    void load();
 
     return () => {
       active = false;
     };
-  }, [realityCheckId]);
+  }, [
+    realityCheckId,
+  ]);
 
   /* =========================================
      SAVE PROGRESS
@@ -125,28 +194,82 @@ export function useRealityCheckProgress(
         currentQuestion: number,
         completedQuestions: number,
         totalScore = 0
-      ) => {
+      ): Promise<boolean> => {
+        if (saving) {
+          return false;
+        }
+
         setSaving(true);
         setError(null);
+
+        /*
+         * Keep local state immediately aligned
+         * with the intended saved state.
+         */
+        const safeCurrentQuestion =
+          Math.max(
+            0,
+            Math.min(
+              Math.floor(
+                Number.isFinite(
+                  currentQuestion
+                )
+                  ? currentQuestion
+                  : 0
+              ),
+              safeTotalQuestions
+            )
+          );
+
+        const safeCompletedQuestions =
+          Math.max(
+            0,
+            Math.min(
+              Math.floor(
+                Number.isFinite(
+                  completedQuestions
+                )
+                  ? completedQuestions
+                  : 0
+              ),
+              safeTotalQuestions
+            )
+          );
+
+        const safeScore =
+          Math.max(
+            0,
+            Math.floor(
+              Number.isFinite(
+                totalScore
+              )
+                ? totalScore
+                : 0
+            )
+          );
 
         try {
           const success =
             await saveRealityCheckProgress(
               realityCheckId,
-              currentQuestion,
-              completedQuestions,
-              totalQuestions,
-              totalScore
+              safeCurrentQuestion,
+              safeCompletedQuestions,
+              safeTotalQuestions,
+              safeScore
             );
 
           if (!success) {
             setError(
-              "Unable to save your Reality Check progress."
+              "Progress could not be saved. Check your Supabase connection, authentication, and database permissions."
             );
 
             return false;
           }
 
+          /*
+           * Reload from Supabase after saving.
+           * Supabase remains the source of truth.
+           */
           const savedProgress =
             await getRealityCheckProgress(
               realityCheckId
@@ -164,7 +287,7 @@ export function useRealityCheckProgress(
           );
 
           setError(
-            "Unable to save your Reality Check progress."
+            "Progress could not be saved. Please try the action again."
           );
 
           return false;
@@ -174,7 +297,8 @@ export function useRealityCheckProgress(
       },
       [
         realityCheckId,
-        totalQuestions,
+        safeTotalQuestions,
+        saving,
       ]
     );
 
@@ -186,26 +310,45 @@ export function useRealityCheckProgress(
     useCallback(
       async (
         totalScore: number
-      ) => {
+      ): Promise<boolean> => {
+        if (saving) {
+          return false;
+        }
+
         setSaving(true);
         setError(null);
 
         try {
+          const safeScore =
+            Math.max(
+              0,
+              Math.floor(
+                Number.isFinite(
+                  totalScore
+                )
+                  ? totalScore
+                  : 0
+              )
+            );
+
           const success =
             await completeRealityCheck(
               realityCheckId,
-              totalQuestions,
-              totalScore
+              safeTotalQuestions,
+              safeScore
             );
 
           if (!success) {
             setError(
-              "Unable to mark Reality Check as complete."
+              "Reality Check could not be completed. Please try again."
             );
 
             return false;
           }
 
+          /*
+           * Always reload after completion.
+           */
           const savedProgress =
             await getRealityCheckProgress(
               realityCheckId
@@ -223,7 +366,7 @@ export function useRealityCheckProgress(
           );
 
           setError(
-            "Unable to complete Reality Check."
+            "Reality Check could not be completed. Please try again."
           );
 
           return false;
@@ -233,9 +376,9 @@ export function useRealityCheckProgress(
       },
       [
         realityCheckId,
-        totalQuestions,
-      ]
-    );
+        safeTotalQuestions,
+        saving,
+      ]);
 
   /* =========================================
      RESET REALITY CHECK
@@ -243,7 +386,11 @@ export function useRealityCheckProgress(
 
   const reset =
     useCallback(
-      async () => {
+      async (): Promise<boolean> => {
+        if (saving) {
+          return false;
+        }
+
         setSaving(true);
         setError(null);
 
@@ -255,13 +402,19 @@ export function useRealityCheckProgress(
 
           if (!success) {
             setError(
-              "Unable to reset Reality Check."
+              "Reality Check could not be reset. Please try again."
             );
 
             return false;
           }
 
-          setProgress(null);
+          /*
+           * Reset local state only after
+           * Supabase confirms deletion.
+           */
+          setProgress(
+            null
+          );
 
           return true;
         } catch (err) {
@@ -271,7 +424,7 @@ export function useRealityCheckProgress(
           );
 
           setError(
-            "Unable to reset Reality Check."
+            "Reality Check could not be reset. Please try again."
           );
 
           return false;
@@ -279,7 +432,10 @@ export function useRealityCheckProgress(
           setSaving(false);
         }
       },
-      [realityCheckId]
+      [
+        realityCheckId,
+        saving,
+      ]
     );
 
   /* =========================================
@@ -287,36 +443,36 @@ export function useRealityCheckProgress(
   ========================================== */
 
   const currentQuestion =
-    progress?.currentQuestion ?? 0;
+    progress?.currentQuestion ??
+    0;
 
   const completedQuestions =
-    progress?.completedQuestions ?? 0;
+    progress?.completedQuestions ??
+    0;
 
   const totalScore =
-    progress?.totalScore ?? 0;
+    progress?.totalScore ??
+    0;
 
   /*
-   * Alias kept for compatibility with
-   * components that use "score".
+   * Compatibility alias.
    */
   const score =
     totalScore;
 
   const completed =
-    progress?.completed ?? false;
-
-  const safeTotalQuestions =
-    Math.max(
-      0,
-      totalQuestions
-    );
+    progress?.completed ??
+    false;
 
   const progressPercentage =
     safeTotalQuestions > 0
-      ? Math.round(
-          (completedQuestions /
-            safeTotalQuestions) *
-            100
+      ? Math.min(
+          100,
+          Math.round(
+            (completedQuestions /
+              safeTotalQuestions) *
+              100
+          )
         )
       : 0;
 
@@ -333,6 +489,7 @@ export function useRealityCheckProgress(
 
     currentQuestion,
     completedQuestions,
+
     totalQuestions:
       safeTotalQuestions,
 
@@ -357,54 +514,70 @@ export function useRealityCheckProgress(
 ========================================= */
 
 export function useAllRealityCheckProgress() {
-  const [progress, setProgress] =
-    useState<RealityCheckProgress[]>(
-      []
-    );
+  const [
+    progress,
+    setProgress,
+  ] =
+    useState<
+      RealityCheckProgress[]
+    >([]);
 
-  const [loading, setLoading] =
+  const [
+    loading,
+    setLoading,
+  ] =
     useState(true);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [
+    error,
+    setError,
+  ] =
+    useState<string | null>(
+      null
+    );
 
   /* =========================================
      LOAD ALL PROGRESS
   ========================================== */
 
   const loadAllProgress =
-    useCallback(async () => {
-      setLoading(true);
-      setError(null);
+    useCallback(
+      async () => {
+        setLoading(true);
+        setError(null);
 
-      try {
-        const savedProgress =
-          await getAllRealityCheckProgress();
+        try {
+          const savedProgress =
+            await getAllRealityCheckProgress();
 
-        setProgress(
-          savedProgress
-        );
-      } catch (err) {
-        console.error(
-          "CURIO: Failed to load all Reality Check progress:",
-          err
-        );
+          setProgress(
+            savedProgress
+          );
+        } catch (err) {
+          console.error(
+            "CURIO: Failed to load all Reality Check progress:",
+            err
+          );
 
-        setError(
-          "Unable to load Reality Check progress."
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, []);
+          setError(
+            "Unable to load Reality Check progress."
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      []
+    );
 
   /* =========================================
      INITIAL LOAD
   ========================================== */
 
   useEffect(() => {
-    loadAllProgress();
-  }, [loadAllProgress]);
+    void loadAllProgress();
+  }, [
+    loadAllProgress,
+  ]);
 
   /* =========================================
      CALCULATIONS
