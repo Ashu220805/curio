@@ -1,8 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { useState } from "react";
+import { supabase } from "../lib/supabase.ts";
 
 function Guest() {
   const navigate = useNavigate();
+
+  /*
+    =========================================
+    GUEST MODE STATE
+  =========================================
+  */
+
+  const [isStarting, setIsStarting] = useState(false);
 
   /*
     =========================================
@@ -11,34 +20,101 @@ function Guest() {
   */
 
   const handleStartExploring = async () => {
+    /*
+      Prevent multiple clicks from creating
+      multiple navigation/session operations.
+    */
+    if (isStarting) {
+      return;
+    }
+
+    setIsStarting(true);
+
     try {
       /*
         Make sure an old authenticated Supabase
         session is not carried into Guest mode.
       */
-      await supabase.auth.signOut();
+      const { error } =
+        await supabase.auth.signOut();
+
+      if (error) {
+        console.warn(
+          "CURIO guest mode sign-out warning:",
+          error.message,
+        );
+      }
 
       /*
         Tell CURIO that this browser session
         is currently using Guest Mode.
       */
-      sessionStorage.setItem("curio_guest", "true");
+      sessionStorage.setItem(
+        "curio_guest",
+        "true",
+      );
 
       /*
         Go directly to the dashboard.
       */
-      navigate("/dashboard", { replace: true });
+      navigate("/dashboard", {
+        replace: true,
+      });
     } catch (error) {
-      console.error("CURIO guest mode error:", error);
+      console.error(
+        "CURIO guest mode error:",
+        error,
+      );
 
       /*
         Even if Supabase sign-out has an issue,
         allow the user to enter Guest Mode.
-      */
-      sessionStorage.setItem("curio_guest", "true");
 
-      navigate("/dashboard", { replace: true });
+        IMPORTANT:
+        This only marks the browser as Guest Mode.
+        Protected database operations must still
+        require authentication through Supabase RLS
+        and authenticated Edge Functions.
+      */
+      sessionStorage.setItem(
+        "curio_guest",
+        "true",
+      );
+
+      navigate("/dashboard", {
+        replace: true,
+      });
+    } finally {
+      setIsStarting(false);
     }
+  };
+
+  /*
+    =========================================
+    GO TO SIGN IN
+  =========================================
+    Remove Guest Mode before entering
+    the authentication flow.
+  */
+
+  const handleSignIn = () => {
+    sessionStorage.removeItem(
+      "curio_guest",
+    );
+  };
+
+  /*
+    =========================================
+    GO TO SIGN UP
+  =========================================
+    Remove Guest Mode before entering
+    the account creation flow.
+  */
+
+  const handleSignUp = () => {
+    sessionStorage.removeItem(
+      "curio_guest",
+    );
   };
 
   return (
@@ -106,21 +182,26 @@ function Guest() {
               type="button"
               className="guest-primary-button"
               onClick={handleStartExploring}
+              disabled={isStarting}
+              aria-busy={isStarting}
             >
-              Start exploring
+              {isStarting
+                ? "Starting..."
+                : "Start exploring"}
 
-              <span>
-                →
-              </span>
+              {!isStarting && (
+                <span>
+                  →
+                </span>
+              )}
+
             </button>
 
 
             <Link
               to="/login"
               className="guest-login-button"
-              onClick={() => {
-                sessionStorage.removeItem("curio_guest");
-              }}
+              onClick={handleSignIn}
             >
               Sign in
             </Link>
@@ -211,7 +292,10 @@ function Guest() {
             Want to save your progress?
           </span>
 
-          <Link to="/signup">
+          <Link
+            to="/signup"
+            onClick={handleSignUp}
+          >
             Create an account
           </Link>
 
