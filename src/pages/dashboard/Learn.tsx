@@ -103,40 +103,39 @@ const LESSONS: LessonInfo[] = [
 ];
 
 /* =========================================
+   TYPES
+========================================= */
+
+type LessonStatus =
+  | "completed"
+  | "in-progress"
+  | "available"
+  | "locked";
+
+/* =========================================
    COMPONENT
 ========================================= */
 
 function Learn() {
   const navigate = useNavigate();
 
-  /*
-    =========================================
-    GUEST MODE DETECTION
-    =========================================
+  const {
+    progress,
+    loading,
+  } = useAllLessonProgress();
 
-    Guest mode is established by Guest.tsx
-    using:
+  /* =========================================
+     GUEST MODE DETECTION
 
-      sessionStorage.setItem(
-        "curio_guest",
-        "true"
-      );
+     Guest mode is stored only in the current
+     browser session.
 
-    Therefore, we use the same flag here.
+     IMPORTANT:
 
-    IMPORTANT:
-
-    This is UI-level protection only.
-
-    The actual lesson route must also be
-    protected separately so a guest cannot
-    manually open:
-
-      /learn/lesson/2
-      /learn/lesson/3
-      etc.
-  =========================================
-  */
+     We do NOT use localStorage here because
+     guest access should disappear when the
+     browser session ends.
+  ========================================== */
 
   const isGuest = useMemo(() => {
     return (
@@ -146,65 +145,83 @@ function Learn() {
     );
   }, []);
 
-  /*
-    =========================================
-    AVAILABLE LESSONS
-    =========================================
+  /* =========================================
+     AUTHENTICATED USER PROGRESS
 
-    AUTHENTICATED USER:
+     The progress hook should return progress
+     belonging to the currently authenticated
+     Supabase user.
 
-      Lesson 1 - 8
+     For Guest Mode we intentionally ignore
+     all database progress.
 
-    GUEST:
+     This is important because a guest must
+     NEVER see another user's progress.
+  ========================================== */
 
-      Lesson 1 ONLY
-
-    We are NOT deleting or modifying the
-    original LESSONS constant.
-
-    We simply control what is displayed.
-  =========================================
-  */
-
-  const visibleLessons = useMemo(() => {
+  const visibleProgress = useMemo(() => {
     if (isGuest) {
-      return LESSONS.filter(
-        (lesson) => lesson.id === 1
-      );
+      return [];
     }
 
-    return LESSONS;
-  }, [isGuest]);
-
-  const {
-    progress,
-    loading,
-  } = useAllLessonProgress();
+    return progress;
+  }, [isGuest, progress]);
 
   /* =========================================
      PROGRESS LOOKUP
+
+     Guest:
+       Empty map.
+
+     Authenticated:
+       Current user's progress returned by
+       useAllLessonProgress().
   ========================================== */
 
   const progressMap = useMemo(() => {
     const map = new Map<
       number,
-      (typeof progress)[number]
+      (typeof visibleProgress)[number]
     >();
 
-    progress.forEach((item) => {
+    visibleProgress.forEach((item) => {
       map.set(item.lessonId, item);
     });
 
     return map;
-  }, [progress]);
+  }, [visibleProgress]);
 
   /* =========================================
-     SAFE PROGRESS HELPERS
+     GET COMPLETED SECTIONS
+
+     Guest Mode:
+
+       We deliberately return 0.
+
+     This prevents any persisted progress
+     from another user from appearing.
+
+     Authenticated Mode:
+
+       Read only the progress returned for
+       the authenticated user.
   ========================================== */
 
   const getCompletedSections = (
     lesson: LessonInfo
-  ) => {
+  ): number => {
+    /* ---------------------------------------
+       GUEST MODE
+    --------------------------------------- */
+
+    if (isGuest) {
+      return 0;
+    }
+
+    /* ---------------------------------------
+       AUTHENTICATED USER
+    --------------------------------------- */
+
     const lessonProgress =
       progressMap.get(lesson.id);
 
@@ -223,7 +240,7 @@ function Learn() {
 
   const isLessonCompleted = (
     lesson: LessonInfo
-  ) => {
+  ): boolean => {
     const completedSections =
       getCompletedSections(lesson);
 
@@ -233,27 +250,19 @@ function Learn() {
   };
 
   /* =========================================
-     CALCULATE COMPLETED LESSONS
+     GUEST ACCESS RULE
+
+     Guest users can access ONLY Lesson 1.
+
+     Lessons 2–8 can NEVER be opened by a
+     guest, regardless of database progress.
   ========================================== */
 
-  const completedLessons = useMemo(() => {
-    return visibleLessons.filter((lesson) =>
-      isLessonCompleted(lesson)
-    ).length;
-  }, [progressMap, visibleLessons]);
-
-  /* =========================================
-     COURSE PROGRESS
-  ========================================== */
-
-  const courseProgress =
-    visibleLessons.length > 0
-      ? Math.round(
-          (completedLessons /
-            visibleLessons.length) *
-            100
-        )
-      : 0;
+  const canGuestOpenLesson = (
+    lessonId: number
+  ): boolean => {
+    return lessonId === 1;
+  };
 
   /* =========================================
      CHECK LESSON ACCESS
@@ -261,25 +270,22 @@ function Learn() {
 
   const canOpenLesson = (
     lessonId: number
-  ) => {
-
-    /*
-      =======================================
-      GUEST SECURITY RULE
-
-      Guests can ONLY open Lesson 1.
-
-      Even if some unexpected lesson ID
-      reaches this function, it will fail.
-      =======================================
-    */
+  ): boolean => {
+    /* ---------------------------------------
+       GUEST MODE
+    --------------------------------------- */
 
     if (isGuest) {
-      return lessonId === 1;
+      return canGuestOpenLesson(
+        lessonId
+      );
     }
 
     /* ---------------------------------------
-       LESSON 1 IS ALWAYS AVAILABLE
+       LESSON 1
+
+       Always available for authenticated
+       users.
     --------------------------------------- */
 
     if (lessonId === 1) {
@@ -301,7 +307,7 @@ function Learn() {
     }
 
     /* ---------------------------------------
-       PREVIOUS LESSON MUST BE FULLY COMPLETE
+       PREVIOUS LESSON MUST BE COMPLETE
     --------------------------------------- */
 
     return isLessonCompleted(
@@ -315,23 +321,26 @@ function Learn() {
 
   const getLessonStatus = (
     lesson: LessonInfo
-  ) => {
+  ): LessonStatus => {
+    /* ---------------------------------------
+       GUEST MODE
 
-    /*
-      =======================================
-      GUEST STATUS
+       ONLY LESSON 1 IS AVAILABLE.
 
-      For guests, Lesson 1 is the only lesson
-      that exists in the visible learning path.
-      =======================================
-    */
+       Lessons 2–8 are ALWAYS locked.
+    --------------------------------------- */
 
-    if (
-      isGuest &&
-      lesson.id !== 1
-    ) {
+    if (isGuest) {
+      if (lesson.id === 1) {
+        return "available";
+      }
+
       return "locked";
     }
+
+    /* ---------------------------------------
+       AUTHENTICATED MODE
+    --------------------------------------- */
 
     const completedSections =
       getCompletedSections(lesson);
@@ -371,40 +380,132 @@ function Learn() {
   };
 
   /* =========================================
+     COMPLETED LESSONS
+
+     Guest:
+
+       Always 0.
+
+     Authenticated:
+
+       Calculated from actual section
+       completion.
+  ========================================== */
+
+  const completedLessons = useMemo(() => {
+    if (isGuest) {
+      return 0;
+    }
+
+    return LESSONS.filter(
+      (lesson) =>
+        isLessonCompleted(lesson)
+    ).length;
+  }, [isGuest, progressMap]);
+
+  /* =========================================
+     COURSE PROGRESS
+
+     Guest:
+
+       We only consider Lesson 1.
+
+       The guest has not completed any
+       sections initially.
+
+     Authenticated:
+
+       Full 8-lesson course.
+  ========================================== */
+
+  const courseProgress = useMemo(() => {
+    if (isGuest) {
+      return 0;
+    }
+
+    return LESSONS.length > 0
+      ? Math.round(
+          (completedLessons /
+            LESSONS.length) *
+            100
+        )
+      : 0;
+  }, [isGuest, completedLessons]);
+
+  /* =========================================
+     CURRENT LESSON
+
+     Guest:
+
+       Always Lesson 1.
+
+     Authenticated:
+
+       First in-progress lesson,
+       otherwise first available lesson.
+  ========================================== */
+
+  const currentLesson = useMemo(() => {
+    /* ---------------------------------------
+       GUEST
+    --------------------------------------- */
+
+    if (isGuest) {
+      return LESSONS.find(
+        (lesson) => lesson.id === 1
+      );
+    }
+
+    /* ---------------------------------------
+       AUTHENTICATED
+    --------------------------------------- */
+
+    const inProgressLesson =
+      LESSONS.find(
+        (lesson) =>
+          getLessonStatus(lesson) ===
+          "in-progress"
+      );
+
+    if (inProgressLesson) {
+      return inProgressLesson;
+    }
+
+    return LESSONS.find(
+      (lesson) =>
+        getLessonStatus(lesson) ===
+        "available"
+    );
+  }, [isGuest, progressMap]);
+
+  /* =========================================
      OPEN LESSON
   ========================================== */
 
   const openLesson = (
     lesson: LessonInfo
   ) => {
+    /* ---------------------------------------
+       SECURITY CHECK
 
-    const status =
-      getLessonStatus(lesson);
+       Never trust the visual status alone.
+
+       Check actual access again before
+       navigating.
+    --------------------------------------- */
+
+    if (!canOpenLesson(lesson.id)) {
+      return;
+    }
 
     /* ---------------------------------------
-       GUEST HARD BLOCK
+       EXTRA GUEST PROTECTION
     --------------------------------------- */
 
     if (
       isGuest &&
       lesson.id !== 1
     ) {
-      return;
-    }
-
-    /* ---------------------------------------
-       LOCKED LESSON
-    --------------------------------------- */
-
-    if (status === "locked") {
-      return;
-    }
-
-    /* ---------------------------------------
-       FINAL ACCESS CHECK
-    --------------------------------------- */
-
-    if (!canOpenLesson(lesson.id)) {
       return;
     }
 
@@ -418,37 +519,13 @@ function Learn() {
   };
 
   /* =========================================
-     CURRENT LESSON
-  ========================================== */
-
-  const currentLesson = useMemo(() => {
-
-    const inProgressLesson =
-      visibleLessons.find(
-        (lesson) =>
-          getLessonStatus(lesson) ===
-          "in-progress"
-      );
-
-    if (inProgressLesson) {
-      return inProgressLesson;
-    }
-
-    return visibleLessons.find(
-      (lesson) =>
-        getLessonStatus(lesson) ===
-        "available"
-    );
-
-  }, [progressMap, visibleLessons]);
-
-  /* =========================================
      LOADING STATE
   ========================================== */
 
-  if (loading) {
+  if (loading && !isGuest) {
     return (
       <div className="learn-page">
+
         <div className="learn-loading">
 
           <div className="learn-loading-spinner" />
@@ -462,6 +539,7 @@ function Learn() {
           </p>
 
         </div>
+
       </div>
     );
   }
@@ -492,9 +570,9 @@ function Learn() {
             </h1>
 
             <p>
-              Build your AI skills step by step.
-              Learn, practice, verify, and apply
-              what you discover.
+              {isGuest
+                ? "Start with the first lesson and explore the CURIO learning experience."
+                : "Build your AI skills step by step. Learn, practice, verify, and apply what you discover."}
             </p>
 
           </div>
@@ -502,12 +580,14 @@ function Learn() {
           <div className="learn-header-stat">
 
             <strong>
+
               {completedLessons}
 
               <span>
                 {" "}
-                / {visibleLessons.length}
+                / {isGuest ? 1 : LESSONS.length}
               </span>
+
             </strong>
 
             <small>
@@ -542,11 +622,15 @@ function Learn() {
           </div>
 
           <div className="course-progress-count">
-            {completedLessons} of{" "}
-            {visibleLessons.length} lessons
+
+            {isGuest
+              ? "Lesson 1 of 1 available"
+              : `${completedLessons} of ${LESSONS.length} lessons`}
+
           </div>
 
         </div>
+
 
         <div className="course-progress-track">
 
@@ -559,16 +643,23 @@ function Learn() {
 
         </div>
 
+
         <p className="course-progress-message">
 
-          {courseProgress === 0 &&
+          {isGuest &&
+            "Guest access includes Lesson 1 only. Create an account to unlock the complete learning path."}
+
+          {!isGuest &&
+            courseProgress === 0 &&
             "Start with Lesson 1 and build your AI foundation."}
 
-          {courseProgress > 0 &&
+          {!isGuest &&
+            courseProgress > 0 &&
             courseProgress < 100 &&
             "Keep going. Your AI skills are growing with every lesson."}
 
-          {courseProgress === 100 &&
+          {!isGuest &&
+            courseProgress === 100 &&
             "Excellent! You completed the CURIO learning path."}
 
         </p>
@@ -581,27 +672,33 @@ function Learn() {
       ===================================== */}
 
       {currentLesson && (
+
         <section className="continue-learning-card">
 
           <div className="continue-learning-content">
 
             <span className="continue-label">
 
-              {getLessonStatus(
-                currentLesson
-              ) === "in-progress"
+              {isGuest
+                ? "START LEARNING"
+                : getLessonStatus(
+                    currentLesson
+                  ) === "in-progress"
                 ? "CONTINUE LEARNING"
                 : "START LEARNING"}
 
             </span>
 
+
             <h2>
               {currentLesson.title}
             </h2>
 
+
             <p>
               {currentLesson.description}
             </p>
+
 
             <button
               type="button"
@@ -613,9 +710,11 @@ function Learn() {
               className="continue-button"
             >
 
-              {getLessonStatus(
-                currentLesson
-              ) === "in-progress"
+              {isGuest
+                ? "Start Lesson 1"
+                : getLessonStatus(
+                    currentLesson
+                  ) === "in-progress"
                 ? "Continue lesson"
                 : "Start lesson"}
 
@@ -626,6 +725,7 @@ function Learn() {
             </button>
 
           </div>
+
 
           <div className="continue-learning-number">
 
@@ -640,6 +740,7 @@ function Learn() {
           </div>
 
         </section>
+
       )}
 
 
@@ -666,9 +767,11 @@ function Learn() {
           </div>
 
           <p>
+
             {isGuest
-              ? "Create a CURIO account to unlock the complete learning path."
+              ? "Guest accounts can explore Lesson 1. Create an account to unlock the remaining lessons."
               : "Complete each lesson to unlock the next stage."}
+
           </p>
 
         </div>
@@ -680,11 +783,11 @@ function Learn() {
 
         <div className="lesson-path">
 
-          {visibleLessons.map(
+          {LESSONS.map(
             (lesson, index) => {
 
               /* --------------------------------
-                 GET CURRENT STATUS
+                 GET STATUS
               -------------------------------- */
 
               const status =
@@ -715,6 +818,7 @@ function Learn() {
                   : 0;
 
               return (
+
                 <div
                   key={lesson.id}
                   className={`lesson-card lesson-${status}`}
@@ -725,6 +829,7 @@ function Learn() {
                   ========================== */}
 
                   {index > 0 && (
+
                     <div
                       className={`lesson-connector ${
                         status === "locked"
@@ -732,6 +837,7 @@ function Learn() {
                           : ""
                       }`}
                     />
+
                   )}
 
 
@@ -743,26 +849,32 @@ function Learn() {
 
                     {status ===
                       "completed" && (
+
                       <span>
                         ✓
                       </span>
+
                     )}
 
                     {status ===
                       "locked" && (
+
                       <span>
                         🔒
                       </span>
+
                     )}
 
                     {status !==
                       "completed" &&
                       status !==
                         "locked" && (
-                        <span>
-                          {lesson.id}
-                        </span>
-                      )}
+
+                      <span>
+                        {lesson.id}
+                      </span>
+
+                    )}
 
                   </div>
 
@@ -778,7 +890,9 @@ function Learn() {
                       <div>
 
                         <span className="lesson-stage">
+
                           LESSON {lesson.id}
+
                         </span>
 
                         <h3>
@@ -786,6 +900,7 @@ function Learn() {
                         </h3>
 
                       </div>
+
 
                       <span
                         className={`lesson-status status-${status}`}
@@ -817,7 +932,9 @@ function Learn() {
                     ========================== */}
 
                     <p className="lesson-description">
+
                       {lesson.description}
+
                     </p>
 
 
@@ -851,10 +968,12 @@ function Learn() {
                       <div className="lesson-progress-label">
 
                         <span>
+
                           {completedSections}
                           {" / "}
                           {lesson.sections}
                           {" sections"}
+
                         </span>
 
                         <strong>
@@ -862,6 +981,7 @@ function Learn() {
                         </strong>
 
                       </div>
+
 
                       <div className="lesson-progress-track">
 
@@ -891,9 +1011,13 @@ function Learn() {
                           className="lesson-button locked-button"
                           disabled
                         >
-                          Complete Lesson{" "}
-                          {lesson.id - 1}{" "}
-                          to unlock
+
+                          {isGuest
+                            ? "Create an account to unlock"
+                            : `Complete Lesson ${
+                                lesson.id - 1
+                              } to unlock`}
+
                         </button>
 
                       ) : (
@@ -933,7 +1057,9 @@ function Learn() {
                   </div>
 
                 </div>
+
               );
+
             }
           )}
 
@@ -948,33 +1074,35 @@ function Learn() {
 
       {!isGuest &&
         courseProgress === 100 && (
-          <section className="learn-completion-card">
 
-            <div className="completion-icon">
-              ✓
-            </div>
+        <section className="learn-completion-card">
 
-            <div>
+          <div className="completion-icon">
+            ✓
+          </div>
 
-              <span>
-                COURSE COMPLETE
-              </span>
+          <div>
 
-              <h2>
-                You completed the CURIO learning path.
-              </h2>
+            <span>
+              COURSE COMPLETE
+            </span>
 
-              <p>
-                You have completed all eight core
-                lessons. Your next step can be
-                practice, verification, or applying
-                your AI skills to real-world problems.
-              </p>
+            <h2>
+              You completed the CURIO learning path.
+            </h2>
 
-            </div>
+            <p>
+              You have completed all eight core
+              lessons. Your next step can be
+              practice, verification, or applying
+              your AI skills to real-world problems.
+            </p>
 
-          </section>
-        )}
+          </div>
+
+        </section>
+
+      )}
 
     </div>
   );
