@@ -109,6 +109,73 @@ const LESSONS: LessonInfo[] = [
 function Learn() {
   const navigate = useNavigate();
 
+  /*
+    =========================================
+    GUEST MODE DETECTION
+    =========================================
+
+    Guest mode is established by Guest.tsx
+    using:
+
+      sessionStorage.setItem(
+        "curio_guest",
+        "true"
+      );
+
+    Therefore, we use the same flag here.
+
+    IMPORTANT:
+
+    This is UI-level protection only.
+
+    The actual lesson route must also be
+    protected separately so a guest cannot
+    manually open:
+
+      /learn/lesson/2
+      /learn/lesson/3
+      etc.
+  =========================================
+  */
+
+  const isGuest = useMemo(() => {
+    return (
+      sessionStorage.getItem(
+        "curio_guest"
+      ) === "true"
+    );
+  }, []);
+
+  /*
+    =========================================
+    AVAILABLE LESSONS
+    =========================================
+
+    AUTHENTICATED USER:
+
+      Lesson 1 - 8
+
+    GUEST:
+
+      Lesson 1 ONLY
+
+    We are NOT deleting or modifying the
+    original LESSONS constant.
+
+    We simply control what is displayed.
+  =========================================
+  */
+
+  const visibleLessons = useMemo(() => {
+    if (isGuest) {
+      return LESSONS.filter(
+        (lesson) => lesson.id === 1
+      );
+    }
+
+    return LESSONS;
+  }, [isGuest]);
+
   const {
     progress,
     loading,
@@ -116,14 +183,6 @@ function Learn() {
 
   /* =========================================
      PROGRESS LOOKUP
-
-     Converts the array returned from Supabase
-     into a Map:
-
-       lessonId -> lesson progress
-
-     This makes progress lookup reliable and
-     prevents unnecessary searching.
   ========================================== */
 
   const progressMap = useMemo(() => {
@@ -141,25 +200,6 @@ function Learn() {
 
   /* =========================================
      SAFE PROGRESS HELPERS
-
-     IMPORTANT:
-
-     We calculate completion from the number
-     of completed sections.
-
-     We do NOT blindly trust the database
-     `completed` boolean.
-
-     Example:
-
-       1 / 8  -> 12%
-       4 / 8  -> 50%
-       7 / 8  -> 88%
-       8 / 8  -> 100%
-
-     A lesson is completed only when:
-
-       completedSections >= lesson.sections
   ========================================== */
 
   const getCompletedSections = (
@@ -194,58 +234,50 @@ function Learn() {
 
   /* =========================================
      CALCULATE COMPLETED LESSONS
-
-     Only lessons whose sections are actually
-     complete are counted.
-
-     This prevents:
-
-       Lesson 2 = 1/8
-
-     from being displayed as:
-
-       Lesson 2 = Completed
   ========================================== */
 
   const completedLessons = useMemo(() => {
-    return LESSONS.filter((lesson) =>
+    return visibleLessons.filter((lesson) =>
       isLessonCompleted(lesson)
     ).length;
-  }, [progressMap]);
+  }, [progressMap, visibleLessons]);
 
   /* =========================================
      COURSE PROGRESS
   ========================================== */
 
   const courseProgress =
-    LESSONS.length > 0
+    visibleLessons.length > 0
       ? Math.round(
           (completedLessons /
-            LESSONS.length) *
+            visibleLessons.length) *
             100
         )
       : 0;
 
   /* =========================================
      CHECK LESSON ACCESS
-
-     Lesson 1:
-       Always available.
-
-     Lesson 2:
-       Available only after Lesson 1 is
-       actually completed.
-
-     Lesson 3:
-       Available only after Lesson 2 is
-       actually completed.
-
-     And so on.
   ========================================== */
 
   const canOpenLesson = (
     lessonId: number
   ) => {
+
+    /*
+      =======================================
+      GUEST SECURITY RULE
+
+      Guests can ONLY open Lesson 1.
+
+      Even if some unexpected lesson ID
+      reaches this function, it will fail.
+      =======================================
+    */
+
+    if (isGuest) {
+      return lessonId === 1;
+    }
+
     /* ---------------------------------------
        LESSON 1 IS ALWAYS AVAILABLE
     --------------------------------------- */
@@ -279,40 +311,33 @@ function Learn() {
 
   /* =========================================
      LESSON STATUS
-
-     Possible statuses:
-
-       completed
-       in-progress
-       available
-       locked
-
-     IMPORTANT:
-
-     Status is based on ACTUAL SECTION
-     PROGRESS.
-
-     We do not use:
-
-       lesson.totalSections
-       lessons
-       completed boolean alone
   ========================================== */
 
   const getLessonStatus = (
     lesson: LessonInfo
   ) => {
-    /* ---------------------------------------
-       GET SAVED PROGRESS
-    --------------------------------------- */
+
+    /*
+      =======================================
+      GUEST STATUS
+
+      For guests, Lesson 1 is the only lesson
+      that exists in the visible learning path.
+      =======================================
+    */
+
+    if (
+      isGuest &&
+      lesson.id !== 1
+    ) {
+      return "locked";
+    }
 
     const completedSections =
       getCompletedSections(lesson);
 
     /* ---------------------------------------
-       1. COMPLETED
-
-       Only when all sections are finished.
+       COMPLETED
     --------------------------------------- */
 
     if (
@@ -323,10 +348,7 @@ function Learn() {
     }
 
     /* ---------------------------------------
-       2. IN PROGRESS
-
-       If the user has completed at least
-       one section.
+       IN PROGRESS
     --------------------------------------- */
 
     if (completedSections > 0) {
@@ -334,10 +356,7 @@ function Learn() {
     }
 
     /* ---------------------------------------
-       3. AVAILABLE
-
-       Lesson can be opened but has no
-       progress yet.
+       AVAILABLE
     --------------------------------------- */
 
     if (canOpenLesson(lesson.id)) {
@@ -345,9 +364,7 @@ function Learn() {
     }
 
     /* ---------------------------------------
-       4. LOCKED
-
-       Previous lesson is not complete.
+       LOCKED
     --------------------------------------- */
 
     return "locked";
@@ -360,11 +377,23 @@ function Learn() {
   const openLesson = (
     lesson: LessonInfo
   ) => {
+
     const status =
       getLessonStatus(lesson);
 
     /* ---------------------------------------
-       DO NOTHING IF LOCKED
+       GUEST HARD BLOCK
+    --------------------------------------- */
+
+    if (
+      isGuest &&
+      lesson.id !== 1
+    ) {
+      return;
+    }
+
+    /* ---------------------------------------
+       LOCKED LESSON
     --------------------------------------- */
 
     if (status === "locked") {
@@ -372,7 +401,15 @@ function Learn() {
     }
 
     /* ---------------------------------------
-       OPEN CORRECT LESSON ROUTE
+       FINAL ACCESS CHECK
+    --------------------------------------- */
+
+    if (!canOpenLesson(lesson.id)) {
+      return;
+    }
+
+    /* ---------------------------------------
+       OPEN LESSON
     --------------------------------------- */
 
     navigate(
@@ -382,19 +419,12 @@ function Learn() {
 
   /* =========================================
      CURRENT LESSON
-
-     Priority:
-
-       1. First in-progress lesson
-       2. First available lesson
-
-     Completed lessons are never selected
-     as the current lesson.
   ========================================== */
 
   const currentLesson = useMemo(() => {
+
     const inProgressLesson =
-      LESSONS.find(
+      visibleLessons.find(
         (lesson) =>
           getLessonStatus(lesson) ===
           "in-progress"
@@ -404,12 +434,13 @@ function Learn() {
       return inProgressLesson;
     }
 
-    return LESSONS.find(
+    return visibleLessons.find(
       (lesson) =>
         getLessonStatus(lesson) ===
         "available"
     );
-  }, [progressMap]);
+
+  }, [progressMap, visibleLessons]);
 
   /* =========================================
      LOADING STATE
@@ -419,6 +450,7 @@ function Learn() {
     return (
       <div className="learn-page">
         <div className="learn-loading">
+
           <div className="learn-loading-spinner" />
 
           <h2>
@@ -428,6 +460,7 @@ function Learn() {
           <p>
             CURIO is checking your progress.
           </p>
+
         </div>
       </div>
     );
@@ -445,9 +478,11 @@ function Learn() {
       ===================================== */}
 
       <header className="learn-header">
+
         <div className="learn-header-content">
 
           <div>
+
             <span className="learn-eyebrow">
               CURIO LEARNING PATH
             </span>
@@ -461,24 +496,28 @@ function Learn() {
               Learn, practice, verify, and apply
               what you discover.
             </p>
+
           </div>
 
           <div className="learn-header-stat">
+
             <strong>
               {completedLessons}
 
               <span>
                 {" "}
-                / {LESSONS.length}
+                / {visibleLessons.length}
               </span>
             </strong>
 
             <small>
               Lessons completed
             </small>
+
           </div>
 
         </div>
+
       </header>
 
 
@@ -491,6 +530,7 @@ function Learn() {
         <div className="course-progress-top">
 
           <div>
+
             <span>
               YOUR COURSE PROGRESS
             </span>
@@ -498,11 +538,12 @@ function Learn() {
             <h2>
               {courseProgress}% complete
             </h2>
+
           </div>
 
           <div className="course-progress-count">
             {completedLessons} of{" "}
-            {LESSONS.length} lessons
+            {visibleLessons.length} lessons
           </div>
 
         </div>
@@ -617,14 +658,17 @@ function Learn() {
             </span>
 
             <h2>
-              Progress through CURIO
+              {isGuest
+                ? "Start with Lesson 1"
+                : "Progress through CURIO"}
             </h2>
 
           </div>
 
           <p>
-            Complete each lesson to unlock
-            the next stage.
+            {isGuest
+              ? "Create a CURIO account to unlock the complete learning path."
+              : "Complete each lesson to unlock the next stage."}
           </p>
 
         </div>
@@ -636,7 +680,7 @@ function Learn() {
 
         <div className="lesson-path">
 
-          {LESSONS.map(
+          {visibleLessons.map(
             (lesson, index) => {
 
               /* --------------------------------
@@ -902,34 +946,35 @@ function Learn() {
           COMPLETION MESSAGE
       ===================================== */}
 
-      {courseProgress === 100 && (
-        <section className="learn-completion-card">
+      {!isGuest &&
+        courseProgress === 100 && (
+          <section className="learn-completion-card">
 
-          <div className="completion-icon">
-            ✓
-          </div>
+            <div className="completion-icon">
+              ✓
+            </div>
 
-          <div>
+            <div>
 
-            <span>
-              COURSE COMPLETE
-            </span>
+              <span>
+                COURSE COMPLETE
+              </span>
 
-            <h2>
-              You completed the CURIO learning path.
-            </h2>
+              <h2>
+                You completed the CURIO learning path.
+              </h2>
 
-            <p>
-              You have completed all eight core
-              lessons. Your next step can be
-              practice, verification, or applying
-              your AI skills to real-world problems.
-            </p>
+              <p>
+                You have completed all eight core
+                lessons. Your next step can be
+                practice, verification, or applying
+                your AI skills to real-world problems.
+              </p>
 
-          </div>
+            </div>
 
-        </section>
-      )}
+          </section>
+        )}
 
     </div>
   );
