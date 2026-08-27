@@ -215,7 +215,7 @@ function checkRateLimit(
     now - previous.windowStart;
 
   /*
-    Start a new globalThis.
+    Start a new window.
   */
   if (
     elapsed >=

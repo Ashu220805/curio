@@ -14,63 +14,131 @@ import {
 } from "../lib/lessonProgress.ts";
 
 /* =========================================
-   SINGLE LESSON PROGRESS HOOK
+   GUEST MODE CHECK
+========================================= */
+
+function isGuestMode(): boolean {
+  try {
+    return (
+      sessionStorage.getItem(
+        "curio_guest"
+      ) === "true"
+    );
+  } catch {
+    return false;
+  }
+}
+
+/* =========================================
+   SINGLE LESSON PROGRESS
 ========================================= */
 
 export function useLessonProgress(
   lessonId: number,
   totalSections: number
 ) {
-  const [progress, setProgress] =
-    useState<LessonProgress | null>(
-      null
-    );
+  const [
+    progress,
+    setProgress,
+  ] = useState<LessonProgress | null>(
+    null
+  );
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [saving, setSaving] =
-    useState(false);
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
 
-  const [error, setError] =
-    useState<string | null>(
-      null
-    );
+  const [
+    error,
+    setError,
+  ] = useState<string | null>(null);
+
+  const [
+    accessible,
+    setAccessible,
+  ] = useState(true);
 
   /* =========================================
-     LOAD PROGRESS
+     RELOAD
   ========================================== */
 
-  const loadProgress =
-    useCallback(
-      async () => {
-        setLoading(true);
-        setError(null);
+  const reload =
+    useCallback(async () => {
+      setLoading(true);
+      setError(null);
 
-        try {
+      try {
+
+        /*
+          Explicit Guest protection.
+
+          Guest Lesson 1 is allowed.
+          Guest Lessons 2–8 are blocked.
+        */
+
+        if (isGuestMode()) {
+
+          if (lessonId !== 1) {
+            setProgress(null);
+            setAccessible(false);
+            return;
+          }
+
           const saved =
             await getLessonProgress(
               lessonId
             );
 
-          setProgress(
-            saved
-          );
-        } catch (err) {
-          console.error(
-            "CURIO: Failed to load lesson progress:",
-            err
+          setProgress(saved);
+          setAccessible(true);
+
+          return;
+        }
+
+        /*
+          Authenticated user.
+        */
+
+        const access =
+          await canAccessLesson(
+            lessonId
           );
 
-          setError(
-            "Unable to load your lesson progress."
-          );
-        } finally {
-          setLoading(false);
+        setAccessible(access);
+
+        if (!access) {
+          setProgress(null);
+          return;
         }
-      },
-      [lessonId]
-    );
+
+        const saved =
+          await getLessonProgress(
+            lessonId
+          );
+
+        setProgress(saved);
+
+      } catch (err) {
+
+        console.error(
+          "CURIO: Failed to load Lesson progress:",
+          err
+        );
+
+        setError(
+          "Unable to load lesson progress."
+        );
+
+      } finally {
+        setLoading(false);
+      }
+    }, [lessonId]);
 
   /* =========================================
      INITIAL LOAD
@@ -81,39 +149,90 @@ export function useLessonProgress(
 
     const load =
       async () => {
+
         setLoading(true);
         setError(null);
 
         try {
+
+          /*
+            Guest protection.
+          */
+
+          if (isGuestMode()) {
+
+            if (lessonId !== 1) {
+
+              if (active) {
+                setProgress(null);
+                setAccessible(false);
+              }
+
+              return;
+            }
+
+            const saved =
+              await getLessonProgress(
+                lessonId
+              );
+
+            if (!active) {
+              return;
+            }
+
+            setProgress(saved);
+            setAccessible(true);
+
+            return;
+          }
+
+          /*
+            Authenticated user.
+          */
+
+          const access =
+            await canAccessLesson(
+              lessonId
+            );
+
+          if (!active) {
+            return;
+          }
+
+          setAccessible(access);
+
+          if (!access) {
+            setProgress(null);
+            return;
+          }
+
           const saved =
             await getLessonProgress(
               lessonId
             );
 
-          if (
-            active
-          ) {
-            setProgress(
-              saved
-            );
+          if (!active) {
+            return;
           }
+
+          setProgress(saved);
+
         } catch (err) {
+
           console.error(
-            "CURIO: Failed to load lesson progress:",
+            "CURIO: Failed to load Lesson progress:",
             err
           );
 
-          if (
-            active
-          ) {
+          if (active) {
             setError(
-              "Unable to load your lesson progress."
+              "Unable to load lesson progress."
             );
           }
+
         } finally {
-          if (
-            active
-          ) {
+
+          if (active) {
             setLoading(false);
           }
         }
@@ -124,53 +243,11 @@ export function useLessonProgress(
     return () => {
       active = false;
     };
+
   }, [lessonId]);
 
   /* =========================================
-     REFRESH WHEN PAGE BECOMES ACTIVE
-  ========================================== */
-
-  useEffect(() => {
-    const handleRefresh =
-      () => {
-        void loadProgress();
-      };
-
-    globalThis.addEventListener(
-      "focus",
-      handleRefresh
-    );
-
-    globalThis.addEventListener(
-      "pageshow",
-      handleRefresh
-    );
-
-    globalThis.addEventListener(
-      "curio:lesson-progress-updated",
-      handleRefresh
-    );
-
-    return () => {
-      globalThis.removeEventListener(
-        "focus",
-        handleRefresh
-      );
-
-      globalThis.removeEventListener(
-        "pageshow",
-        handleRefresh
-      );
-
-      globalThis.removeEventListener(
-        "curio:lesson-progress-updated",
-        handleRefresh
-      );
-    };
-  }, [loadProgress]);
-
-  /* =========================================
-     SAVE PROGRESS
+     UPDATE PROGRESS
   ========================================== */
 
   const updateProgress =
@@ -179,7 +256,32 @@ export function useLessonProgress(
         currentSection: number,
         completedSections: number
       ) => {
-        if (saving) {
+
+        /*
+          Guest can only update Lesson 1.
+        */
+
+        if (
+          isGuestMode() &&
+          lessonId !== 1
+        ) {
+          setError(
+            "Guest users can only access Lesson 1."
+          );
+
+          return false;
+        }
+
+        /*
+          Do not allow updates to a lesson
+          that is not accessible.
+        */
+
+        if (!accessible) {
+          setError(
+            "This lesson is locked."
+          );
+
           return false;
         }
 
@@ -187,6 +289,7 @@ export function useLessonProgress(
         setError(null);
 
         try {
+
           const success =
             await saveLessonProgress(
               lessonId,
@@ -196,46 +299,45 @@ export function useLessonProgress(
             );
 
           if (!success) {
+
             setError(
-              "Unable to save your progress."
+              "Unable to save lesson progress."
             );
 
             return false;
           }
-
-          /*
-           * Reload from Supabase.
-           */
 
           const saved =
             await getLessonProgress(
               lessonId
             );
 
-          setProgress(
-            saved
-          );
+          setProgress(saved);
 
           return true;
+
         } catch (err) {
+
           console.error(
-            "CURIO: Failed to update lesson progress:",
+            "CURIO: Failed to save Lesson progress:",
             err
           );
 
           setError(
-            "Unable to save your progress."
+            "Unable to save lesson progress."
           );
 
           return false;
+
         } finally {
           setSaving(false);
         }
+
       },
       [
         lessonId,
         totalSections,
-        saving,
+        accessible,
       ]
     );
 
@@ -244,126 +346,103 @@ export function useLessonProgress(
   ========================================== */
 
   const markComplete =
-    useCallback(
-      async () => {
-        if (saving) {
-          return false;
-        }
+    useCallback(async () => {
 
-        setSaving(true);
-        setError(null);
+      /*
+        Guest can only complete Lesson 1.
+      */
 
-        try {
-          const success =
-            await completeLesson(
-              lessonId,
-              totalSections
-            );
+      if (
+        isGuestMode() &&
+        lessonId !== 1
+      ) {
+        setError(
+          "Guest users can only access Lesson 1."
+        );
 
-          if (!success) {
-            setError(
-              "Unable to mark this lesson as complete."
-            );
+        return false;
+      }
 
-            return false;
-          }
+      if (!accessible) {
+        setError(
+          "This lesson is locked."
+        );
 
-          const saved =
-            await getLessonProgress(
-              lessonId
-            );
+        return false;
+      }
 
-          setProgress(
-            saved
+      setSaving(true);
+      setError(null);
+
+      try {
+
+        const success =
+          await completeLesson(
+            lessonId,
+            totalSections
           );
 
-          return true;
-        } catch (err) {
-          console.error(
-            "CURIO: Failed to complete lesson:",
-            err
-          );
+        if (!success) {
 
           setError(
-            "Unable to complete this lesson."
+            "Unable to complete lesson."
           );
 
           return false;
-        } finally {
-          setSaving(false);
         }
-      },
-      [
-        lessonId,
-        totalSections,
-        saving,
-      ]
-    );
 
-  /* =========================================
-     CHECK ACCESS
-  ========================================== */
-
-  const checkAccess =
-    useCallback(
-      async () => {
-        try {
-          return await canAccessLesson(
+        const saved =
+          await getLessonProgress(
             lessonId
           );
-        } catch (err) {
-          console.error(
-            "CURIO: Failed to check lesson access:",
-            err
-          );
 
-          return false;
-        }
-      },
-      [lessonId]
-    );
+        setProgress(saved);
+
+        return true;
+
+      } catch (err) {
+
+        console.error(
+          "CURIO: Failed to complete Lesson:",
+          err
+        );
+
+        setError(
+          "Unable to complete lesson."
+        );
+
+        return false;
+
+      } finally {
+        setSaving(false);
+      }
+
+    }, [
+      lessonId,
+      totalSections,
+      accessible,
+    ]);
 
   /* =========================================
-     SAFE VALUES
+     CALCULATED VALUES
   ========================================== */
 
-  const safeTotalSections =
-    Math.max(
-      0,
-      totalSections
-    );
+  const currentSection =
+    progress?.currentSection ?? 0;
 
   const completedSections =
-    Math.max(
-      0,
-      Math.min(
-        progress?.completedSections ??
-          0,
-        safeTotalSections
-      )
-    );
-
-  const currentSection =
-    Math.max(
-      0,
-      Math.min(
-        progress?.currentSection ??
-          0,
-        safeTotalSections
-      )
-    );
+    progress?.completedSections ?? 0;
 
   const completed =
-    progress?.completed === true;
+    progress?.completed ?? false;
 
   const progressPercentage =
-    safeTotalSections > 0
+    totalSections > 0
       ? Math.round(
           (
             completedSections /
-            safeTotalSections
-          ) *
-            100
+            totalSections
+          ) * 100
         )
       : 0;
 
@@ -378,193 +457,163 @@ export function useLessonProgress(
     saving,
     error,
 
+    accessible,
+
     currentSection,
     completedSections,
-
-    totalSections:
-      safeTotalSections,
-
+    totalSections,
     completed,
 
     progressPercentage,
 
     updateProgress,
     markComplete,
-    checkAccess,
-
-    reload:
-      loadProgress,
+    reload,
   };
 }
 
 /* =========================================
-   ALL LESSONS PROGRESS
+   ALL LESSON PROGRESS
 ========================================= */
 
-export function useAllLessonProgress(
-  totalCourseLessons = 8
-) {
-  const [progress, setProgress] =
-    useState<
-      LessonProgress[]
-    >([]);
+export function useAllLessonProgress() {
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    progress,
+    setProgress,
+  ] = useState<LessonProgress[]>(
+    []
+  );
 
-  const [error, setError] =
-    useState<string | null>(
-      null
-    );
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
+
+  const [
+    error,
+    setError,
+  ] = useState<string | null>(null);
 
   /* =========================================
-     LOAD ALL
+     RELOAD ALL
   ========================================== */
 
-  const loadAllProgress =
-    useCallback(
-      async () => {
-        setLoading(true);
-        setError(null);
+  const reload =
+    useCallback(async () => {
 
-        try {
-          const saved =
-            await getAllLessonProgress();
+      setLoading(true);
+      setError(null);
 
-          setProgress(
-            Array.isArray(saved)
-              ? saved
-              : []
-          );
-        } catch (err) {
-          console.error(
-            "CURIO: Failed to load all lesson progress:",
-            err
-          );
+      try {
 
-          setError(
-            "Unable to load course progress."
-          );
+        /*
+          Guest mode:
 
-          setProgress([]);
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+          getAllLessonProgress() already
+          returns ONLY guest session progress
+          and never queries Supabase.
+        */
+
+        const saved =
+          await getAllLessonProgress();
+
+        setProgress(
+          Array.isArray(saved)
+            ? saved
+            : []
+        );
+
+      } catch (err) {
+
+        console.error(
+          "CURIO: Failed to load all Lesson progress:",
+          err
+        );
+
+        setError(
+          "Unable to load lesson progress."
+        );
+
+        setProgress([]);
+
+      } finally {
+        setLoading(false);
+      }
+
+    }, []);
 
   /* =========================================
      INITIAL LOAD
   ========================================== */
 
   useEffect(() => {
-    void loadAllProgress();
-  }, [
-    loadAllProgress,
-  ]);
+
+    void reload();
+
+  }, [reload]);
 
   /* =========================================
-     REFRESH EVENTS
+     PROGRESS EVENT
   ========================================== */
 
   useEffect(() => {
-    const refresh =
+
+    const handleProgressUpdate =
       () => {
-        void loadAllProgress();
+        void reload();
       };
 
     globalThis.addEventListener(
-      "focus",
-      refresh
-    );
-
-    globalThis.addEventListener(
-      "pageshow",
-      refresh
-    );
-
-    globalThis.addEventListener(
       "curio:lesson-progress-updated",
-      refresh
+      handleProgressUpdate
     );
 
     globalThis.addEventListener(
       "curio:lesson-completed",
-      refresh
+      handleProgressUpdate
     );
 
     return () => {
-      globalThis.removeEventListener(
-        "focus",
-        refresh
-      );
-
-      globalThis.removeEventListener(
-        "pageshow",
-        refresh
-      );
 
       globalThis.removeEventListener(
         "curio:lesson-progress-updated",
-        refresh
+        handleProgressUpdate
       );
 
       globalThis.removeEventListener(
         "curio:lesson-completed",
-        refresh
+        handleProgressUpdate
       );
     };
-  }, [
-    loadAllProgress,
-  ]);
+
+  }, [reload]);
 
   /* =========================================
-     COURSE CALCULATIONS
+     CALCULATIONS
   ========================================== */
 
   const completedLessons =
     progress.filter(
-      (lesson) =>
-        lesson.completed === true
+      (item) =>
+        item.completed === true
     ).length;
 
-  const totalLessons =
-    Math.max(
-      0,
-      totalCourseLessons
-    );
+  /*
+    CURIO currently uses 8 lessons.
+  */
 
-  const courseProgress =
+  const totalLessons = 8;
+
+  const progressPercentage =
     totalLessons > 0
       ? Math.round(
           (
             completedLessons /
             totalLessons
-          ) *
-            100
+          ) * 100
         )
       : 0;
-
-  /* =========================================
-     GET ONE LESSON
-  ========================================== */
-
-  const getProgressForLesson =
-    useCallback(
-      (
-        lessonId: number
-      ) => {
-        return (
-          progress.find(
-            (lesson) =>
-              lesson.lessonId ===
-              lessonId
-          ) ?? null
-        );
-      },
-      [progress]
-    );
 
   /* =========================================
      RETURN
@@ -578,11 +627,8 @@ export function useAllLessonProgress(
 
     completedLessons,
     totalLessons,
-    courseProgress,
+    progressPercentage,
 
-    getProgressForLesson,
-
-    reload:
-      loadAllProgress,
+    reload,
   };
 }

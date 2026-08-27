@@ -44,12 +44,12 @@ export const SECURITY_LIMITS = {
 
   /*
     Maximum number of requests allowed inside the
-    client-side time globalThis.
+    client-side time window.
   */
   MAX_REQUESTS_PER_WINDOW: 10,
 
   /*
-    Client-side rate-limit globalThis.
+    Client-side rate-limit window.
   */
   RATE_LIMIT_WINDOW_MS: 60 * 1000,
 } as const;
@@ -671,7 +671,7 @@ export function checkClientRateLimit(): RateLimitResult {
     getRateLimitState();
 
   /*
-    Remove requests outside the current globalThis.
+    Remove requests outside the current window.
   */
 
   const recent =
