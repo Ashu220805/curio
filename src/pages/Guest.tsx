@@ -5,117 +5,174 @@ import { supabase } from "../lib/supabase.ts";
 function Guest() {
   const navigate = useNavigate();
 
-  /*
-    =========================================
-    GUEST MODE STATE
-  =========================================
-  */
+  /* =========================================
+     GUEST MODE STATE
+  ========================================== */
 
-  const [isStarting, setIsStarting] = useState(false);
+  const [isStarting, setIsStarting] =
+    useState(false);
 
-  /*
-    =========================================
-    START EXPLORING AS GUEST
-  =========================================
-  */
+  /* =========================================
+     START EXPLORING AS GUEST
+  ========================================== */
 
-  const handleStartExploring = async () => {
-    /*
-      Prevent multiple clicks from creating
-      multiple navigation/session operations.
-    */
-    if (isStarting) {
-      return;
-    }
-
-    setIsStarting(true);
-
-    try {
+  const handleStartExploring =
+    async () => {
       /*
-        Make sure an old authenticated Supabase
-        session is not carried into Guest mode.
+        Prevent multiple clicks from creating
+        multiple navigation/session operations.
       */
-      const { error } =
-        await supabase.auth.signOut();
 
-      if (error) {
-        console.warn(
-          "CURIO guest mode sign-out warning:",
-          error.message,
-        );
+      if (isStarting) {
+        return;
       }
 
-      /*
-        Tell CURIO that this browser session
-        is currently using Guest Mode.
-      */
-      sessionStorage.setItem(
-        "curio_guest",
-        "true",
-      );
+      setIsStarting(true);
 
-      /*
-        Go directly to the dashboard.
-      */
-      navigate("/dashboard", {
-        replace: true,
-      });
+      try {
+        /*
+          Remove the existing Supabase session
+          from THIS browser/device.
+
+          We use local scope because Guest Mode
+          should not globally revoke the user's
+          sessions on other devices.
+        */
+
+        const {
+          error,
+        } =
+          await supabase.auth.signOut({
+            scope: "local",
+          });
+
+        if (error) {
+          console.warn(
+            "CURIO guest mode sign-out warning:",
+            error.message,
+          );
+        }
+
+        /*
+          Remove any old guest state first.
+          This guarantees a clean transition.
+        */
+
+        sessionStorage.removeItem(
+          "curio_guest",
+        );
+
+        /*
+          Enable Guest Mode for this browser tab.
+        */
+
+        sessionStorage.setItem(
+          "curio_guest",
+          "true",
+        );
+
+        /*
+          Navigate directly to the CURIO dashboard.
+        */
+
+        navigate(
+          "/dashboard",
+          {
+            replace: true,
+          },
+        );
+      } catch (error) {
+        console.error(
+          "CURIO guest mode error:",
+          error,
+        );
+
+        /*
+          If Supabase sign-out has a temporary
+          problem, still enter Guest Mode.
+
+          Guest Mode itself is controlled by
+          sessionStorage.
+
+          Protected database operations and
+          authenticated Edge Functions still
+          require a valid Supabase session.
+        */
+
+        try {
+          sessionStorage.removeItem(
+            "curio_guest",
+          );
+
+          sessionStorage.setItem(
+            "curio_guest",
+            "true",
+          );
+        } catch (storageError) {
+          console.error(
+            "CURIO guest storage error:",
+            storageError,
+          );
+        }
+
+        navigate(
+          "/dashboard",
+          {
+            replace: true,
+          },
+        );
+      } finally {
+        setIsStarting(false);
+      }
+    };
+
+  /* =========================================
+     GO TO SIGN IN
+  ========================================== */
+
+  const handleSignIn = () => {
+    /*
+      Make sure the authentication flow
+      does not accidentally remain in Guest Mode.
+    */
+
+    try {
+      sessionStorage.removeItem(
+        "curio_guest",
+      );
     } catch (error) {
       console.error(
-        "CURIO guest mode error:",
+        "CURIO: Unable to clear Guest Mode:",
         error,
       );
-
-      /*
-        Even if Supabase sign-out has an issue,
-        allow the user to enter Guest Mode.
-
-        IMPORTANT:
-        This only marks the browser as Guest Mode.
-        Protected database operations must still
-        require authentication through Supabase RLS
-        and authenticated Edge Functions.
-      */
-      sessionStorage.setItem(
-        "curio_guest",
-        "true",
-      );
-
-      navigate("/dashboard", {
-        replace: true,
-      });
-    } finally {
-      setIsStarting(false);
     }
   };
 
-  /*
-    =========================================
-    GO TO SIGN IN
-  =========================================
-    Remove Guest Mode before entering
-    the authentication flow.
-  */
-
-  const handleSignIn = () => {
-    sessionStorage.removeItem(
-      "curio_guest",
-    );
-  };
-
-  /*
-    =========================================
-    GO TO SIGN UP
-  =========================================
-    Remove Guest Mode before entering
-    the account creation flow.
-  */
+  /* =========================================
+     GO TO SIGN UP
+  ========================================== */
 
   const handleSignUp = () => {
-    sessionStorage.removeItem(
-      "curio_guest",
-    );
+    /*
+      Remove Guest Mode before creating
+      a CURIO account.
+    */
+
+    try {
+      sessionStorage.removeItem(
+        "curio_guest",
+      );
+    } catch (error) {
+      console.error(
+        "CURIO: Unable to clear Guest Mode:",
+        error,
+      );
+    }
   };
+
+  /* =========================================
+     UI
+  ========================================== */
 
   return (
     <main className="guest-page">
@@ -148,7 +205,6 @@ function Guest() {
 
         </div>
 
-
         {/* =========================================
             MAIN CONTENT
         ========================================== */}
@@ -162,15 +218,18 @@ function Guest() {
           <h1>
             Start learning
             <br />
-            <span>without an account.</span>
+            <span>
+              without an account.
+            </span>
           </h1>
 
           <p className="guest-description">
-            Explore CURIO's AI-learning experience as a guest.
-            You can discover the platform and begin learning
-            before creating your account.
+            Explore CURIO's AI-learning
+            experience as a guest. You can
+            discover the platform and begin
+            learning before creating your
+            account.
           </p>
-
 
           {/* =========================================
               ACTIONS
@@ -181,10 +240,13 @@ function Guest() {
             <button
               type="button"
               className="guest-primary-button"
-              onClick={handleStartExploring}
+              onClick={
+                handleStartExploring
+              }
               disabled={isStarting}
               aria-busy={isStarting}
             >
+
               {isStarting
                 ? "Starting..."
                 : "Start exploring"}
@@ -197,25 +259,25 @@ function Guest() {
 
             </button>
 
-
             <Link
               to="/login"
               className="guest-login-button"
-              onClick={handleSignIn}
+              onClick={
+                handleSignIn
+              }
             >
               Sign in
             </Link>
 
           </div>
 
-
           <p className="guest-note">
-            Some learning progress and personalized features
-            require a CURIO account.
+            Some learning progress and
+            personalized features require a
+            CURIO account.
           </p>
 
         </section>
-
 
         {/* =========================================
             SIMPLE FEATURE CARDS
@@ -237,12 +299,12 @@ function Guest() {
             </h2>
 
             <p>
-              Explore the fundamentals of AI through simple,
+              Explore the fundamentals of AI
+              through simple,
               beginner-friendly lessons.
             </p>
 
           </article>
-
 
           <article className="guest-feature-card">
 
@@ -255,12 +317,11 @@ function Guest() {
             </h2>
 
             <p>
-              Discover how AI tools work and how to use them
-              responsibly.
+              Discover how AI tools work and
+              how to use them responsibly.
             </p>
 
           </article>
-
 
           <article className="guest-feature-card">
 
@@ -273,14 +334,14 @@ function Guest() {
             </h2>
 
             <p>
-              Build practical AI skills that you can use in
-              your everyday learning.
+              Build practical AI skills that
+              you can use in your everyday
+              learning.
             </p>
 
           </article>
 
         </section>
-
 
         {/* =========================================
             CREATE ACCOUNT
@@ -294,7 +355,9 @@ function Guest() {
 
           <Link
             to="/signup"
-            onClick={handleSignUp}
+            onClick={
+              handleSignUp
+            }
           >
             Create an account
           </Link>

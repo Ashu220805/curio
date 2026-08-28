@@ -4,10 +4,12 @@ import { useAuth } from "../../hooks/useAuth.ts";
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  allowGuest?: boolean;
 }
 
 function ProtectedRoute({
   children,
+  allowGuest = false,
 }: ProtectedRouteProps) {
   const {
     session,
@@ -15,6 +17,37 @@ function ProtectedRoute({
   } = useAuth();
 
   const location = useLocation();
+
+  // -----------------------------------------
+  // GUEST MODE CHECK
+  // -----------------------------------------
+  let isGuest = false;
+
+  try {
+    isGuest =
+      sessionStorage.getItem(
+        "curio_guest",
+      ) === "true";
+  } catch (error) {
+    console.error(
+      "CURIO: Unable to check Guest Mode:",
+      error,
+    );
+  }
+
+  // -----------------------------------------
+  // GUEST ACCESS
+  // -----------------------------------------
+  if (
+    allowGuest &&
+    isGuest
+  ) {
+    return (
+      <>
+        {children}
+      </>
+    );
+  }
 
   // -----------------------------------------
   // AUTHENTICATION CHECK IN PROGRESS
