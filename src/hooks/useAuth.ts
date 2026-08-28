@@ -9,36 +9,8 @@ export function useAuth() {
   const [loading, setLoading] =
     useState(true);
 
-  const [isGuest, setIsGuest] =
-    useState(false);
-
   useEffect(() => {
     let mounted = true;
-
-    // -----------------------------------------
-    // CHECK GUEST MODE
-    // -----------------------------------------
-    const checkGuestMode = () => {
-      try {
-        const guest =
-          sessionStorage.getItem(
-            "curio_guest"
-          ) === "true";
-
-        if (mounted) {
-          setIsGuest(guest);
-        }
-      } catch (error) {
-        console.error(
-          "Failed to check CURIO guest mode:",
-          error
-        );
-
-        if (mounted) {
-          setIsGuest(false);
-        }
-      }
-    };
 
     // -----------------------------------------
     // GET INITIAL SESSION
@@ -57,34 +29,10 @@ export function useAuth() {
           );
         }
 
-        if (!mounted) {
-          return;
+        if (mounted) {
+          setSession(session);
+          setLoading(false);
         }
-
-        setSession(session);
-
-        /*
-         * A real Supabase session always takes
-         * priority over guest mode.
-         */
-        if (session) {
-          try {
-            sessionStorage.removeItem(
-              "curio_guest"
-            );
-          } catch (error) {
-            console.error(
-              "Failed to clear guest mode:",
-              error
-            );
-          }
-
-          setIsGuest(false);
-        } else {
-          checkGuestMode();
-        }
-
-        setLoading(false);
       } catch (error) {
         console.error(
           "Authentication initialization error:",
@@ -93,13 +41,12 @@ export function useAuth() {
 
         if (mounted) {
           setSession(null);
-          checkGuestMode();
           setLoading(false);
         }
       }
     };
 
-    void getInitialSession();
+    getInitialSession();
 
     // -----------------------------------------
     // LISTEN FOR AUTH CHANGES
@@ -113,32 +60,6 @@ export function useAuth() {
         }
 
         setSession(newSession);
-
-        if (newSession) {
-          /*
-           * Authenticated user:
-           * guest mode must be disabled.
-           */
-          try {
-            sessionStorage.removeItem(
-              "curio_guest"
-            );
-          } catch (error) {
-            console.error(
-              "Failed to clear guest mode:",
-              error
-            );
-          }
-
-          setIsGuest(false);
-        } else {
-          /*
-           * No authenticated session.
-           * Check whether the user is a guest.
-           */
-          checkGuestMode();
-        }
-
         setLoading(false);
       }
     );
@@ -156,15 +77,5 @@ export function useAuth() {
     session,
     user: session?.user ?? null,
     loading,
-
-    // -----------------------------------------
-    // GUEST INFORMATION
-    // -----------------------------------------
-    isGuest,
-
-    // A user is allowed to use CURIO when they
-    // are either authenticated OR a guest.
-    isAuthenticated:
-      Boolean(session) || isGuest,
   };
 }
