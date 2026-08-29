@@ -10,7 +10,6 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-
 // =========================================================
 // AUTHENTICATION
 // =========================================================
@@ -28,6 +27,7 @@ import OnboardingRoute from "./components/auth/OnboardingRoute.tsx";
 
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
+import ResetPassword from "./pages/auth/ResetPassword.tsx";
 
 // =========================================================
 // DASHBOARD / MAIN PAGES
@@ -488,6 +488,10 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/reset-password"
+  element={<ResetPassword />}
+/>
 
           {/* =================================================
               UNKNOWN ROUTES

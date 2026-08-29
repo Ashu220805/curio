@@ -20,6 +20,27 @@ interface LocationState {
   };
 }
 
+function getAuthErrorMessage(
+  error: unknown
+): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error
+  ) {
+    const message = (
+      error as { message?: unknown }
+    ).message;
+
+    if (typeof message === "string") {
+      return message;
+    }
+  }
+
+  return "Unable to sign in. Please try again.";
+}
+
+
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,6 +120,8 @@ function Login() {
     setSuccess("");
 
     const cleanEmail = email.trim();
+    const normalizedEmail =
+      cleanEmail.toLowerCase();
 
     if (!cleanEmail) {
       setError(
@@ -150,7 +173,7 @@ function Login() {
         error: signInError,
       } =
         await supabase.auth.signInWithPassword({
-          email: cleanEmail,
+          email: normalizedEmail,
           password,
         });
 
@@ -184,32 +207,63 @@ function Login() {
       );
 
       const message =
-        signInError instanceof Error
-          ? signInError.message
-          : "Unable to sign in. Please try again.";
+        getAuthErrorMessage(signInError);
+
+      const lowerMessage =
+        message.toLowerCase();
 
       /*
        * Convert common Supabase messages into
        * cleaner user-facing messages.
        */
       if (
-        message.toLowerCase().includes(
+        lowerMessage.includes(
           "invalid login credentials"
         )
       ) {
         setError(
-          "Incorrect email or password. Please try again."
+          "Incorrect email or password. If you don't remember it, use Forgot password."
         );
+
+        /*
+         * Clear only the password after a failed
+         * credential check. The email stays visible.
+         */
+        setPassword("");
       } else if (
-        message.toLowerCase().includes(
+        lowerMessage.includes(
           "email not confirmed"
         )
       ) {
         setError(
           "Please confirm your email address before signing in."
         );
+      } else if (
+        lowerMessage.includes(
+          "too many requests"
+        ) ||
+        lowerMessage.includes(
+          "rate limit"
+        )
+      ) {
+        setError(
+          "Too many sign-in attempts. Please wait a moment and try again."
+        );
+      } else if (
+        lowerMessage.includes(
+          "failed to fetch"
+        ) ||
+        lowerMessage.includes(
+          "network"
+        )
+      ) {
+        setError(
+          "Unable to reach CURIO right now. Please check your internet connection and try again."
+        );
       } else {
-        setError(message);
+        setError(
+          "Unable to sign in right now. Please try again."
+        );
       }
     } finally {
       setLoading(false);
@@ -261,6 +315,8 @@ function Login() {
     setSuccess("");
 
     const cleanEmail = email.trim();
+    const normalizedEmail =
+      cleanEmail.toLowerCase();
 
     if (!cleanEmail) {
       setError(
@@ -283,7 +339,7 @@ function Login() {
         error: resetError,
       } =
         await supabase.auth.resetPasswordForEmail(
-          cleanEmail,
+          normalizedEmail,
           {
             redirectTo:
               `${globalThis.location.origin}/reset-password`,
@@ -303,9 +359,22 @@ function Login() {
         resetError
       );
 
-      setError(
-        "Unable to send password reset instructions. Please try again."
-      );
+      const message =
+        getAuthErrorMessage(resetError);
+
+      if (
+        message
+          .toLowerCase()
+          .includes("too many requests")
+      ) {
+        setError(
+          "Too many reset requests. Please wait a moment and try again."
+        );
+      } else {
+        setError(
+          "Unable to send password reset instructions. Please try again."
+        );
+      }
     } finally {
       setForgotLoading(false);
     }
@@ -458,6 +527,8 @@ function Login() {
                     }
                     placeholder="you@example.com"
                     autoComplete="email"
+                    autoCapitalize="none"
+                    inputMode="email"
                     spellCheck={false}
                     disabled={loading}
                     className="login-input"
@@ -482,7 +553,10 @@ function Login() {
                     onClick={
                       handleForgotPassword
                     }
-                    disabled={forgotLoading}
+                    disabled={
+                      forgotLoading ||
+                      loading
+                    }
                   >
                     {forgotLoading
                       ? "Sending..."
