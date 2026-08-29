@@ -1,607 +1,761 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import AuthLayout from "../../layouts/AuthLayout";
-import { supabase } from "../../lib/supabase";
+import {
+  type FormEvent,
+  useEffect,
+  useState,
+} from "react";
 
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
+import { supabase } from "../../lib/supabase.ts";
+
+import "./Login.css";
+
+interface LocationState {
+  from?: {
+    pathname?: string;
+  };
+}
 
 function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const locationState =
+    location.state as LocationState | null;
+
+  const redirectPath =
+    locationState?.from?.pathname ||
+    "/dashboard";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [keepSignedIn, setKeepSignedIn] =
+    useState(true);
 
+  const [loading, setLoading] =
+    useState(false);
 
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [error, setError] =
+    useState("");
 
+  const [success, setSuccess] =
+    useState("");
 
-  /*
-    =========================================
-    SIGNUP SUCCESS MESSAGE
-  =========================================
-  */
+  const [guestLoading, setGuestLoading] =
+    useState(false);
 
-
-  const signupState = location.state as
-    | {
-        signupSuccess?: boolean;
-        emailConfirmationRequired?: boolean;
-        email?: string;
-      }
-    | null;
-
-
-  const signupSuccess =
-    signupState?.signupSuccess === true;
-
-
-  const emailConfirmationRequired =
-    signupState?.emailConfirmationRequired === true;
-
-
-  const signupEmail = signupState?.email || "";
-
+  const [forgotLoading, setForgotLoading] =
+    useState(false);
 
   /*
-    =========================================
-    NORMAL SUPABASE LOGIN
-  =========================================
-  */
+   * -------------------------------------------------------
+   * CLEAR OLD GUEST MODE WHEN LOGIN PAGE OPENS
+   * -------------------------------------------------------
+   */
 
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("curio_guest");
+    } catch (storageError) {
+      console.warn(
+        "CURIO: Unable to clear guest mode.",
+        storageError
+      );
+    }
+  }, []);
+
+  /*
+   * -------------------------------------------------------
+   * EMAIL VALIDATION
+   * -------------------------------------------------------
+   */
+
+  const isValidEmail = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      value.trim()
+    );
+  };
+
+  /*
+   * -------------------------------------------------------
+   * SIGN IN
+   * -------------------------------------------------------
+   */
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
-
     setError("");
+    setSuccess("");
 
+    const cleanEmail = email.trim();
 
-    if (!email.trim()) {
-      setError("Please enter your email address.");
+    if (!cleanEmail) {
+      setError(
+        "Please enter your email address."
+      );
       return;
     }
 
+    if (!isValidEmail(cleanEmail)) {
+      setError(
+        "Please enter a valid email address."
+      );
+      return;
+    }
 
     if (!password) {
-      setError("Please enter your password.");
+      setError(
+        "Please enter your password."
+      );
       return;
     }
 
+    if (password.length < 6) {
+      setError(
+        "Your password must contain at least 6 characters."
+      );
+      return;
+    }
 
-    setIsLoading(true);
-
+    setLoading(true);
 
     try {
+      /*
+       * Remove guest mode before authenticating.
+       */
+      try {
+        sessionStorage.removeItem(
+          "curio_guest"
+        );
+      } catch (storageError) {
+        console.warn(
+          "CURIO: Unable to clear guest mode.",
+          storageError
+        );
+      }
+
       const {
         data,
         error: signInError,
-      } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
+      } =
+        await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
 
       if (signInError) {
         throw signInError;
       }
 
-
-      if (data.user) {
-        console.log(
-          "CURIO user signed in:",
-          data.user.id
+      if (!data.session) {
+        throw new Error(
+          "Authentication completed without an active session."
         );
-
-
-        /*
-          =========================================
-          LOGIN SUCCESS
-          =========================================
-
-          Authentication is successful.
-
-          The guest session is removed so that
-          the authenticated user's profile is
-          displayed on the dashboard.
-        */
-
-
-        console.log("CURIO login successful.");
-
-
-        /*
-          =========================================
-          REMOVE GUEST MODE
-          =========================================
-
-          If this browser was previously being used
-          as a guest, make sure the authenticated
-          account takes priority.
-        */
-
-
-        sessionStorage.removeItem("curio_guest");
-
-
-        /*
-          =========================================
-          DASHBOARD
-          =========================================
-        */
-
-
-        navigate("/dashboard");
       }
-    } catch (error) {
-      console.error("CURIO login error:", error);
 
+      /*
+       * Supabase is configured to persist sessions
+       * in your supabase.ts configuration.
+       *
+       * keepSignedIn is therefore kept as a UX
+       * preference without changing Supabase's
+       * authentication mechanism here.
+       */
+      void keepSignedIn;
 
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
+      navigate(redirectPath, {
+        replace: true,
+      });
+    } catch (signInError) {
+      console.error(
+        "CURIO: Sign-in failed:",
+        signInError
+      );
+
+      const message =
+        signInError instanceof Error
+          ? signInError.message
+          : "Unable to sign in. Please try again.";
+
+      /*
+       * Convert common Supabase messages into
+       * cleaner user-facing messages.
+       */
+      if (
+        message.toLowerCase().includes(
+          "invalid login credentials"
+        )
+      ) {
         setError(
-          "Unable to sign in. Please check your credentials."
+          "Incorrect email or password. Please try again."
         );
+      } else if (
+        message.toLowerCase().includes(
+          "email not confirmed"
+        )
+      ) {
+        setError(
+          "Please confirm your email address before signing in."
+        );
+      } else {
+        setError(message);
       }
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-
   /*
-    =========================================
-    CONTINUE AS GUEST
-  =========================================
-  */
+   * -------------------------------------------------------
+   * GUEST MODE
+   * -------------------------------------------------------
+   */
 
-
-  const handleGuestContinue = () => {
+  const handleGuestMode = () => {
     setError("");
+    setSuccess("");
+    setGuestLoading(true);
 
+    try {
+      sessionStorage.setItem(
+        "curio_guest",
+        "true"
+      );
 
-    /*
-      Store guest mode only for this browser session.
+      navigate("/guest", {
+        replace: true,
+      });
+    } catch (storageError) {
+      console.error(
+        "CURIO: Guest mode could not be enabled:",
+        storageError
+      );
 
-      This does NOT create a Supabase account.
+      setError(
+        "Guest mode could not be started. Please check your browser settings."
+      );
 
-      The Dashboard will use this flag to display
-      the Guest profile instead of the authenticated
-      user's profile.
-    */
-
-
-    sessionStorage.setItem("curio_guest", "true");
-
-
-    console.log("CURIO guest mode enabled.");
-
-
-    /*
-      Send guest user to the dashboard.
-    */
-
-
-    navigate("/dashboard");
+      setGuestLoading(false);
+    }
   };
 
+  /*
+   * -------------------------------------------------------
+   * FORGOT PASSWORD
+   * -------------------------------------------------------
+   */
+
+  const handleForgotPassword = async () => {
+    setError("");
+    setSuccess("");
+
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail) {
+      setError(
+        "Enter your email address first."
+      );
+      return;
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      setError(
+        "Please enter a valid email address."
+      );
+      return;
+    }
+
+    setForgotLoading(true);
+
+    try {
+      const {
+        error: resetError,
+      } =
+        await supabase.auth.resetPasswordForEmail(
+          cleanEmail,
+          {
+            redirectTo:
+              `${globalThis.location.origin}/reset-password`,
+          }
+        );
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      setSuccess(
+        "Password reset instructions have been sent to your email."
+      );
+    } catch (resetError) {
+      console.error(
+        "CURIO: Password reset failed:",
+        resetError
+      );
+
+      setError(
+        "Unable to send password reset instructions. Please try again."
+      );
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   return (
-    <AuthLayout>
-      <div className="login-card">
+    <main className="login-page">
+      {/* ==================================================
+          BACKGROUND DECORATION
+      =================================================== */}
 
+      <div
+        className="login-background-orb login-background-orb-one"
+        aria-hidden="true"
+      />
 
-        {/* =========================================
-            CURIO BRANDING — RIGHT SIDE
-        ========================================== */}
+      <div
+        className="login-background-orb login-background-orb-two"
+        aria-hidden="true"
+      />
 
+      <div
+        className="login-background-grid"
+        aria-hidden="true"
+      />
 
-        <div className="auth-right-brand">
+      {/* ==================================================
+          BRAND
+      =================================================== */}
 
-
-          <img
-            src="/curio-symbol.png"
-            alt="CURIO symbol"
-            className="auth-right-logo"
-          />
-
-
-          <div className="auth-right-brand-name">
-            CURIO
-          </div>
-
-
-          <div className="auth-right-tagline">
-            <span>LEARN</span>
-            <i>•</i>
-            <span>UNDERSTAND</span>
-            <i>•</i>
-            <span>GROW</span>
-          </div>
-
-
-        </div>
-
-
-        {/* =========================================
-            SIGN IN INTRO
-        ========================================== */}
-
-
-        <div className="login-heading">
-
-
-          <h2>Sign in</h2>
-
-
-          <p>
-            Sign in to continue your learning journey.
-          </p>
-
-
-        </div>
-
-
-        {/* =========================================
-            SIGNUP SUCCESS
-        ========================================== */}
-
-
-        {signupSuccess && (
-          <div
-            className="auth-success"
-            role="status"
-          >
-            <strong>
-              Account created successfully!
-            </strong>
-
-
-            {emailConfirmationRequired ? (
-              <p>
-                Please check your email
-                {signupEmail
-                  ? ` (${signupEmail})`
-                  : ""}
-                {" "}and confirm your account before
-                signing in.
-              </p>
-            ) : (
-              <p>
-                Your account is ready. You can now
-                sign in.
-              </p>
-            )}
-          </div>
-        )}
-
-
-        {/* =========================================
-            ERROR
-        ========================================== */}
-
-
-        {error && (
-          <div
-            className="auth-error"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
-
-
-        {/* =========================================
-            LOGIN FORM
-        ========================================== */}
-
-
-        <form
-          onSubmit={handleSubmit}
-          noValidate
+      <header className="login-brand">
+        <Link
+          to="/login"
+          className="login-brand-link"
+          aria-label="CURIO home"
         >
+          <div className="login-brand-symbol">
+            <img
+              src="/curio-symbol.png"
+              alt=""
+            />
+          </div>
 
+          <div className="login-brand-copy">
+            <span className="login-brand-name">
+              CURIO
+            </span>
 
-          {/* EMAIL */}
+            <span className="login-brand-tagline">
+              LEARN&nbsp; • &nbsp;UNDERSTAND&nbsp; • &nbsp;GROW
+            </span>
+          </div>
+        </Link>
+      </header>
 
+      {/* ==================================================
+          MAIN CONTENT
+      =================================================== */}
 
-          <div className="auth-field">
+      <section className="login-layout">
+        {/* ==================================================
+            LOGIN CARD
+        =================================================== */}
 
+        <div className="login-card">
+          <div className="login-card-accent" />
 
-            <label htmlFor="login-email">
-              Email address
-            </label>
-
-
-            <div className="input-wrapper">
-
-
-              <span
-                className="input-icon"
-                aria-hidden="true"
-              >
-                ✉
-              </span>
-
-
-              <input
-                id="login-email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
-                autoComplete="email"
-                required
-              />
-
-
+          <div className="login-card-content">
+            <div className="login-eyebrow">
+              <span className="login-eyebrow-dot" />
+              WELCOME BACK
             </div>
 
+            <h1 className="login-title">
+              Continue your
+              <br />
+              <span>learning journey.</span>
+            </h1>
 
-          </div>
+            <p className="login-description">
+              Sign in to continue learning,
+              practicing and building your AI
+              skills with CURIO.
+            </p>
 
+            {/* ==================================================
+                STATUS MESSAGES
+            =================================================== */}
 
-          {/* PASSWORD */}
-
-
-          <div className="auth-field">
-
-
-            <label htmlFor="login-password">
-              Password
-            </label>
-
-
-            <div className="input-wrapper">
-
-
-              <span
-                className="input-icon password-lock-icon"
-                aria-hidden="true"
+            {error && (
+              <div
+                className="login-message login-message-error"
+                role="alert"
               >
-                🔒
-              </span>
+                <span className="login-message-icon">
+                  !
+                </span>
 
+                <span>{error}</span>
+              </div>
+            )}
 
-              <input
-                id="login-password"
-                type={
-                  showPassword
-                    ? "text"
-                    : "password"
-                }
-                placeholder="Enter your password"
-                value={password}
-                onChange={(event) =>
-                  setPassword(event.target.value)
-                }
-                autoComplete="current-password"
-                required
-              />
+            {success && (
+              <div
+                className="login-message login-message-success"
+                role="status"
+              >
+                <span className="login-message-icon">
+                  ✓
+                </span>
 
+                <span>{success}</span>
+              </div>
+            )}
 
-              {/* PASSWORD VISIBILITY BUTTON */}
+            {/* ==================================================
+                FORM
+            =================================================== */}
 
+            <form
+              className="login-form"
+              onSubmit={handleSubmit}
+              noValidate
+            >
+              {/* EMAIL */}
+
+              <div className="login-field">
+                <label
+                  htmlFor="curio-email"
+                  className="login-label"
+                >
+                  Email address
+                </label>
+
+                <div className="login-input-wrapper">
+                  <span
+                    className="login-input-icon"
+                    aria-hidden="true"
+                  >
+                    @
+                  </span>
+
+                  <input
+                    id="curio-email"
+                    name="email"
+                    type="email"
+                    value={email}
+                    onChange={(event) =>
+                      setEmail(event.target.value)
+                    }
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    spellCheck={false}
+                    disabled={loading}
+                    className="login-input"
+                  />
+                </div>
+              </div>
+
+              {/* PASSWORD */}
+
+              <div className="login-field">
+                <div className="login-label-row">
+                  <label
+                    htmlFor="curio-password"
+                    className="login-label"
+                  >
+                    Password
+                  </label>
+
+                  <button
+                    type="button"
+                    className="login-forgot"
+                    onClick={
+                      handleForgotPassword
+                    }
+                    disabled={forgotLoading}
+                  >
+                    {forgotLoading
+                      ? "Sending..."
+                      : "Forgot password?"}
+                  </button>
+                </div>
+
+                <div className="login-input-wrapper">
+                  <span
+                    className="login-input-icon login-password-icon"
+                    aria-hidden="true"
+                  >
+                    •
+                  </span>
+
+                  <input
+                    id="curio-password"
+                    name="password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={password}
+                    onChange={(event) =>
+                      setPassword(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                    disabled={loading}
+                    className="login-input login-password-input"
+                  />
+
+                  <button
+                    type="button"
+                    className="login-show-password"
+                    onClick={() =>
+                      setShowPassword(
+                        (current) => !current
+                      )
+                    }
+                    aria-label={
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                    disabled={loading}
+                  >
+                    {showPassword
+                      ? "Hide"
+                      : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              {/* KEEP SIGNED IN */}
+
+              <label className="login-checkbox">
+                <input
+                  type="checkbox"
+                  checked={keepSignedIn}
+                  onChange={(event) =>
+                    setKeepSignedIn(
+                      event.target.checked
+                    )
+                  }
+                  disabled={loading}
+                />
+
+                <span className="login-checkbox-box">
+                  ✓
+                </span>
+
+                <span>
+                  Keep me signed in
+                </span>
+              </label>
+
+              {/* SIGN IN */}
 
               <button
-                type="button"
-                className="password-toggle"
-                onClick={() =>
-                  setShowPassword(
-                    (previous) => !previous
-                  )
-                }
-                aria-label={
-                  showPassword
-                    ? "Hide password"
-                    : "Show password"
-                }
-                title={
-                  showPassword
-                    ? "Hide password"
-                    : "Show password"
-                }
+                type="submit"
+                className="login-submit"
+                disabled={loading}
               >
-                ◉
+                <span>
+                  {loading
+                    ? "Signing in..."
+                    : "Sign in"}
+                </span>
+
+                {!loading && (
+                  <span aria-hidden="true">
+                    →
+                  </span>
+                )}
+
+                {loading && (
+                  <span
+                    className="login-button-spinner"
+                    aria-hidden="true"
+                  />
+                )}
               </button>
+            </form>
 
+            {/* ==================================================
+                DIVIDER
+            =================================================== */}
 
+            <div className="login-divider">
+              <span />
+              <strong>OR</strong>
+              <span />
             </div>
 
-
-          </div>
-
-
-          {/* FORGOT PASSWORD */}
-
-
-          <div className="forgot-password-row">
-
+            {/* ==================================================
+                GUEST
+            =================================================== */}
 
             <button
               type="button"
-              className="forgot-password"
-              onClick={() =>
-                setError(
-                  "Password recovery will be connected with Supabase later."
-                )
-              }
+              className="login-guest-button"
+              onClick={handleGuestMode}
+              disabled={guestLoading}
             >
-              Forgot password?
+              <span>
+                {guestLoading
+                  ? "Opening CURIO..."
+                  : "Continue as Guest"}
+              </span>
+
+              {!guestLoading && (
+                <span aria-hidden="true">
+                  →
+                </span>
+              )}
             </button>
 
+            <p className="login-guest-note">
+              Explore CURIO without creating an
+              account. Your personal progress
+              won't be saved.
+            </p>
 
+            {/* ==================================================
+                SIGN UP
+            =================================================== */}
+
+            <p className="login-signup">
+              Don't have a CURIO account?
+
+              <Link to="/signup">
+                Create one
+              </Link>
+            </p>
+
+            {/* ==================================================
+                LEGAL
+            =================================================== */}
+
+            <p className="login-legal">
+  By continuing, you agree to CURIO's{" "}
+  <Link to="/terms">
+    Terms & Conditions
+  </Link>{" "}
+  and{" "}
+  <Link to="/privacy">
+    Privacy Policy
+  </Link>
+  .
+</p>
+          </div>
+        </div>
+
+        {/* ==================================================
+            RIGHT PANEL
+        =================================================== */}
+
+        <aside className="login-feature-panel">
+          <div
+            className="login-panel-glow login-panel-glow-one"
+            aria-hidden="true"
+          />
+
+          <div
+            className="login-panel-glow login-panel-glow-two"
+            aria-hidden="true"
+          />
+
+          <div className="login-feature-content">
+            <div className="login-feature-eyebrow">
+              <span className="login-feature-dot" />
+              CURIO AI LITERACY
+            </div>
+
+            <h2 className="login-feature-title">
+              Learn AI.
+              <br />
+              <span>Don't just use it.</span>
+            </h2>
+
+            <p className="login-feature-description">
+              CURIO helps you understand AI
+              through guided learning, practical
+              challenges and real-world
+              verification.
+            </p>
+
+            <div className="login-feature-grid">
+              <div className="login-feature-step">
+                <span>01</span>
+                <strong>Learn</strong>
+              </div>
+
+              <div className="login-feature-step">
+                <span>02</span>
+                <strong>Practice</strong>
+              </div>
+
+              <div className="login-feature-step">
+                <span>03</span>
+                <strong>Apply</strong>
+              </div>
+
+              <div className="login-feature-step">
+                <span>04</span>
+                <strong>Master</strong>
+              </div>
+            </div>
+
+            <div className="login-feature-flow">
+              <span>WATCH</span>
+              <b>→</b>
+              <span>SEE</span>
+              <b>→</b>
+              <span>PRACTICE</span>
+              <b>→</b>
+              <span>VERIFY</span>
+              <b>→</b>
+              <span>MASTER</span>
+            </div>
           </div>
 
+          <div className="login-feature-footer">
+            <span>CURIO</span>
+            <span>AI LITERACY PLATFORM</span>
+          </div>
+        </aside>
+      </section>
 
-          {/* SIGN IN */}
+      {/* ==================================================
+          FOOTER
+      =================================================== */}
 
+      <footer className="login-footer">
+        <span>© 2026 CURIO</span>
+        <span>Built for better AI understanding.</span>
 
-          <button
-            type="submit"
-            className="curio-signin-button"
-            disabled={isLoading}
-          >
-
-
-            <span>
-              {isLoading
-                ? "Signing in..."
-                : "Sign in"}
-            </span>
-
-
-            {!isLoading && (
-              <span className="button-arrow">
-                →
-              </span>
-            )}
-
-
-          </button>
-
-
-        </form>
-
-
-        {/* =========================================
-            DIVIDER
-        ========================================== */}
-
-
-        <div className="auth-divider">
-
-
-          <span />
-
-
-          <p>
-            or continue with
-          </p>
-
-
-          <span />
-
-
-        </div>
-
-
-        {/* =========================================
-            SOCIAL LOGIN
-            VISUAL ONLY FOR NOW
-        ========================================== */}
-
-
-        <div className="social-login-grid">
-
-
-          <button
-            type="button"
-            className="social-login-button"
-            aria-label="Continue with Google"
-          >
-            <strong className="google-icon">
-              G
-            </strong>
-
-
-            Google
-          </button>
-
-
-          <button
-            type="button"
-            className="social-login-button"
-            aria-label="Continue with Microsoft"
-          >
-            <strong className="microsoft-icon">
-              ▦
-            </strong>
-
-
-            Microsoft
-          </button>
-
-
-          <button
-            type="button"
-            className="social-login-button"
-            aria-label="Continue with Apple"
-          >
-            <strong className="apple-icon">
-              ●
-            </strong>
-
-
-            Apple
-          </button>
-
-
-        </div>
-
-
-        {/* =========================================
-            CONTINUE AS GUEST
-        ========================================== */}
-
-
-        <div className="continue-guest-wrapper">
-
-
-          <button
-            type="button"
-            className="continue-guest-button"
-            onClick={handleGuestContinue}
-          >
-
-
-            <span>
-              Continue as Guest
-            </span>
-
-
-            <span className="guest-button-arrow">
-              →
-            </span>
-
-
-          </button>
-
-
-        </div>
-
-
-        {/* =========================================
-            SIGN UP
-        ========================================== */}
-
-
-        <p className="auth-switch">
-
-
-          Don't have an account?{" "}
-
-
-          <Link to="/signup">
-            Sign up
+        <div className="login-footer-links">
+          <Link to="/terms">
+            Terms
           </Link>
 
-
-        </p>
-
-
-      </div>
-    </AuthLayout>
+          <Link to="/privacy">
+            Privacy
+          </Link>
+        </div>
+      </footer>
+    </main>
   );
 }
-
 
 export default Login;

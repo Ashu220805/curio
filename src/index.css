@@ -3316,3 +3316,126 @@ a {
     margin-top: 12px;
   }
 }
+.legal-page {
+  min-height: 100vh;
+  width: 100%;
+  padding: 70px 24px;
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(103, 92, 255, 0.12),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(30, 200, 255, 0.08),
+      transparent 28%
+    ),
+    #f7f8fc;
+}
+
+.legal-container {
+  width: min(820px, 100%);
+  margin: 0 auto;
+  padding: 56px;
+  border: 1px solid #e2e5ee;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow:
+    0 25px 80px rgba(20, 25, 50, 0.08);
+}
+
+.legal-back {
+  display: inline-flex;
+  margin-bottom: 55px;
+  color: #6258ff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.legal-back:hover {
+  text-decoration: underline;
+}
+
+.legal-eyebrow {
+  display: block;
+  margin-bottom: 12px;
+  color: #6258ff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+.legal-container h1 {
+  margin: 0;
+  color: #121625;
+  font-size: clamp(42px, 6vw, 68px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.legal-intro {
+  margin: 26px 0 55px;
+  color: #69738b;
+  font-size: 18px;
+  line-height: 1.75;
+}
+
+.legal-section {
+  padding: 30px 0;
+  border-top: 1px solid #e7e9ef;
+}
+
+.legal-section h2 {
+  margin: 0 0 12px;
+  color: #151a2a;
+  font-size: 22px;
+}
+
+.legal-section p {
+  margin: 0;
+  color: #68738b;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.legal-footer {
+  margin-top: 35px;
+  padding-top: 25px;
+  border-top: 1px solid #e7e9ef;
+  color: #929aae;
+  font-size: 13px;
+}
+
+.login-legal {
+  margin-top: 24px;
+  color: #8a94aa;
+  font-size: 12px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.login-legal a {
+  color: #6258ff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.login-legal a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .legal-page {
+    padding: 25px 14px;
+  }
+
+  .legal-container {
+    padding: 30px 22px;
+    border-radius: 22px;
+  }
+
+  .legal-back {
+    margin-bottom: 38px;
+  }
+}
