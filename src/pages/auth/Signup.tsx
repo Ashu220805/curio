@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import AuthLayout from "../../layouts/AuthLayout.tsx";
 import { supabase } from "../../lib/supabase.ts";
-
+import "./Signup.css";
 
 /* =========================================================
    TYPES
