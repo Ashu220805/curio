@@ -5,19 +5,26 @@ import {
   Routes,
 } from "react-router-dom";
 
-// =========================================
+// =========================================================
 // AUTHENTICATION
-// =========================================
+// =========================================================
 
 import Login from "./pages/auth/Login.tsx";
 import SignUp from "./pages/auth/Signup.tsx";
 import Guest from "./pages/Guest.tsx";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
+import OnboardingRoute from "./components/auth/OnboardingRoute.tsx";
 
-// =========================================
+// =========================================================
+// ONBOARDING
+// =========================================================
+
+import Onboarding from "./pages/onboarding/Onboarding.tsx";
+
+// =========================================================
 // DASHBOARD / MAIN PAGES
-// =========================================
+// =========================================================
 
 import Dashboard from "./pages/dashboard/Dashboard.tsx";
 import Learn from "./pages/dashboard/Learn.tsx";
@@ -25,9 +32,9 @@ import Practice from "./pages/dashboard/Practice.tsx";
 import RealityCheck from "./pages/dashboard/RealityCheck.tsx";
 import AISimulation from "./pages/dashboard/AISimulation.tsx";
 
-// =========================================
+// =========================================================
 // LESSONS
-// =========================================
+// =========================================================
 
 import Lesson1 from "./pages/dashboard/Lesson1.tsx";
 import Lesson2 from "./pages/dashboard/Lesson2.tsx";
@@ -38,19 +45,20 @@ import Lesson6 from "./pages/dashboard/Lesson6.tsx";
 import Lesson7 from "./pages/dashboard/Lesson7.tsx";
 import Lesson8 from "./pages/dashboard/Lesson8.tsx";
 
-// =========================================
+// =========================================================
 // APP
-// =========================================
+// =========================================================
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* =========================================
-            DEFAULT ROUTE
-        ========================================== */}
+        {/* =================================================
+            PUBLIC ROUTES
+        ================================================= */}
 
+        {/* Root */}
         <Route
           path="/"
           element={
@@ -61,46 +69,105 @@ function App() {
           }
         />
 
-        {/* =========================================
-            PUBLIC AUTHENTICATION ROUTES
-        ========================================== */}
-
+        {/* Login */}
         <Route
           path="/login"
           element={<Login />}
         />
 
+        {/* Sign Up */}
         <Route
           path="/signup"
           element={<SignUp />}
         />
 
+        {/* Guest Entry */}
         <Route
           path="/guest"
           element={<Guest />}
         />
 
-        {/* =========================================
-            DASHBOARD
 
-            Guest users are allowed.
-            Authenticated users are allowed.
-        ========================================== */}
+        {/* =================================================
+            ONBOARDING
+        ================================================= */}
+
+        {/*
+          Authentication is required.
+
+          If the user is not logged in:
+              /login
+
+          If the user is logged in:
+              Onboarding page opens.
+
+          Onboarding.tsx itself checks whether the user
+          has already completed onboarding and redirects
+          completed users to /dashboard.
+        */}
 
         <Route
-          path="/dashboard"
+          path="/onboarding"
           element={
-            <ProtectedRoute allowGuest>
-              <Dashboard />
+            <ProtectedRoute>
+              <Onboarding />
             </ProtectedRoute>
           }
         />
 
-        {/* =========================================
-            CURIO LEARN AI
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            AUTHENTICATED APPLICATION
+        ================================================= */}
+
+        {/*
+          IMPORTANT:
+
+          These routes use OnboardingRoute instead of
+          ProtectedRoute.
+
+          Therefore:
+
+          Not logged in
+                ↓
+             /login
+
+          Logged in + onboarding incomplete
+                ↓
+             /onboarding
+
+          Logged in + onboarding complete
+                ↓
+             requested page
+        */}
+
+
+        {/* =================================================
+            DASHBOARD
+        ================================================= */}
+
+        <Route
+          path="/dashboard"
+          element={
+            <OnboardingRoute>
+              <Dashboard />
+            </OnboardingRoute>
+          }
+        />
+
+
+        {/* =================================================
+            LEARN
+        ================================================= */}
+
+        {/*
+          Guest users can still access Learn.
+
+          Authenticated users can also access it.
+
+          NOTE:
+          We are preserving your existing guest architecture.
+        */}
 
         <Route
           path="/learn"
@@ -111,28 +178,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO AI SIMULATION
 
-            Authentication REQUIRED.
-
-            Guest users cannot access this.
-        ========================================== */}
-
-        <Route
-          path="/ai-simulation"
-          element={
-            <ProtectedRoute>
-              <AISimulation />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* =========================================
-            CURIO PRACTICE
-
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            PRACTICE
+        ================================================= */}
 
         <Route
           path="/practice"
@@ -143,11 +192,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO REALITY CHECK
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            REALITY CHECK
+        ================================================= */}
 
         <Route
           path="/reality-check"
@@ -158,11 +206,31 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 1
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            AI SIMULATION
+        ================================================= */}
+
+        {/*
+          AI Simulation is a CURIO account feature.
+
+          Authentication required.
+          Onboarding completion required.
+        */}
+
+        <Route
+          path="/ai-simulation"
+          element={
+            <OnboardingRoute>
+              <AISimulation />
+            </OnboardingRoute>
+          }
+        />
+
+
+        {/* =================================================
+            LESSON 1
+        ================================================= */}
 
         <Route
           path="/learn/lesson/1"
@@ -173,11 +241,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 2
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            LESSON 2
+        ================================================= */}
 
         <Route
           path="/learn/lesson/2"
@@ -188,11 +255,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 3
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            LESSON 3
+        ================================================= */}
 
         <Route
           path="/learn/lesson/3"
@@ -203,11 +269,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 4
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            LESSON 4
+        ================================================= */}
 
         <Route
           path="/learn/lesson/4"
@@ -218,11 +283,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 5
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            LESSON 5
+        ================================================= */}
 
         <Route
           path="/learn/lesson/5"
@@ -233,11 +297,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 6
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            LESSON 6
+        ================================================= */}
 
         <Route
           path="/learn/lesson/6"
@@ -248,11 +311,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 7
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            LESSON 7
+        ================================================= */}
 
         <Route
           path="/learn/lesson/7"
@@ -263,11 +325,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            CURIO LESSON 8
 
-            Guest users are allowed.
-        ========================================== */}
+        {/* =================================================
+            LESSON 8
+        ================================================= */}
 
         <Route
           path="/learn/lesson/8"
@@ -278,9 +339,10 @@ function App() {
           }
         />
 
-        {/* =========================================
-            INVALID ROUTES
-        ========================================== */}
+
+        {/* =================================================
+            UNKNOWN ROUTES
+        ================================================= */}
 
         <Route
           path="*"

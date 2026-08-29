@@ -1,0 +1,12 @@
+{
+  "visual": true,
+  "step_by_step": true,
+  "practice_first": false,
+  "audio_supported": true,
+  "calm_mode": true,
+  "session_length": "10_20",
+  "preferred_learning_methods": [
+    "examples",
+    "practice"
+  ]
+}

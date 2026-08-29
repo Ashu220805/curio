@@ -1,16 +1,31 @@
 import type { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import {
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+
 import { useAuth } from "../../hooks/useAuth.ts";
+
+
+// =========================================================
+// TYPES
+// =========================================================
 
 interface ProtectedRouteProps {
   children: ReactNode;
   allowGuest?: boolean;
 }
 
+
+// =========================================================
+// PROTECTED ROUTE
+// =========================================================
+
 function ProtectedRoute({
   children,
   allowGuest = false,
 }: ProtectedRouteProps) {
+
   const {
     session,
     loading,
@@ -18,30 +33,74 @@ function ProtectedRoute({
 
   const location = useLocation();
 
-  // -----------------------------------------
-  // GUEST MODE CHECK
-  // -----------------------------------------
+
+  // =======================================================
+  // GUEST MODE
+  // =======================================================
+
   let isGuest = false;
 
   try {
+
     isGuest =
       sessionStorage.getItem(
         "curio_guest",
       ) === "true";
+
   } catch (error) {
+
     console.error(
-      "CURIO: Unable to check Guest Mode:",
+      "CURIO: Unable to access guest session:",
       error,
+    );
+
+  }
+
+
+  // =======================================================
+  // AUTHENTICATION LOADING
+  //
+  // IMPORTANT:
+  // Do not redirect while Supabase is still checking
+  // whether an existing session is available.
+  // =======================================================
+
+  if (loading) {
+
+    return (
+      <div
+        className="auth-loading-screen"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading CURIO"
+      >
+
+        <div
+          className="auth-loading-spinner"
+          aria-hidden="true"
+        />
+
+        <p>
+          Loading CURIO...
+        </p>
+
+      </div>
     );
   }
 
-  // -----------------------------------------
+
+  // =======================================================
   // GUEST ACCESS
-  // -----------------------------------------
+  //
+  // Guest users can access only routes explicitly marked
+  // with allowGuest.
+  // =======================================================
+
   if (
     allowGuest &&
     isGuest
   ) {
+
     return (
       <>
         {children}
@@ -49,25 +108,16 @@ function ProtectedRoute({
     );
   }
 
-  // -----------------------------------------
-  // AUTHENTICATION CHECK IN PROGRESS
-  // -----------------------------------------
-  if (loading) {
-    return (
-      <div className="auth-loading-screen">
-        <div className="auth-loading-spinner" />
 
-        <p>
-          Loading CURIO...
-        </p>
-      </div>
-    );
-  }
+  // =======================================================
+  // AUTHENTICATION REQUIRED
+  //
+  // No Supabase session means the user is not authenticated.
+  // Send them to Login and remember where they came from.
+  // =======================================================
 
-  // -----------------------------------------
-  // USER NOT AUTHENTICATED
-  // -----------------------------------------
   if (!session) {
+
     return (
       <Navigate
         to="/login"
@@ -79,14 +129,17 @@ function ProtectedRoute({
     );
   }
 
-  // -----------------------------------------
-  // USER AUTHENTICATED
-  // -----------------------------------------
+
+  // =======================================================
+  // AUTHENTICATED USER
+  // =======================================================
+
   return (
     <>
       {children}
     </>
   );
 }
+
 
 export default ProtectedRoute;

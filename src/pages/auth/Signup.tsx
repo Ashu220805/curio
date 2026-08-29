@@ -1,58 +1,208 @@
-import { useState } from "react";
+
+import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import AuthLayout from "../../layouts/AuthLayout.tsx";
 import { supabase } from "../../lib/supabase.ts";
 
+
+/* =========================================================
+   TYPES
+   ========================================================= */
+
+type PasswordCheck = {
+  label: string;
+  passed: boolean;
+};
+
+
+/* =========================================================
+   CONSTANTS
+   ========================================================= */
+
+const MIN_PASSWORD_LENGTH = 8;
+
+const EMAIL_PATTERN =
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+/* =========================================================
+   SIGN UP
+   ========================================================= */
+
 function SignUp() {
+
+  const navigate = useNavigate();
+
+
+  /* =======================================================
+     BASIC ACCOUNT INFORMATION
+     ======================================================= */
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+
+
+  /* =======================================================
+     LEARNER PROFILE INFORMATION
+     ======================================================= */
+
   const [age, setAge] = useState("");
   const [learnerType, setLearnerType] = useState("");
   const [educationLevel, setEducationLevel] = useState("");
   const [aiExperience, setAiExperience] = useState("");
   const [learningGoal, setLearningGoal] = useState("");
 
+
+  /* =======================================================
+     PASSWORD
+     ======================================================= */
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const navigate = useNavigate();
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  /* =======================================================
+     FORM STATE
+     ======================================================= */
+
+  const [agreedToTerms, setAgreedToTerms] =
+    useState(false);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [successMessage, setSuccessMessage] =
+    useState("");
+
+
+  /* =======================================================
+     PASSWORD STRENGTH
+     ======================================================= */
+
+  const passwordChecks = useMemo<PasswordCheck[]>(
+    () => [
+      {
+        label: "At least 8 characters",
+        passed: password.length >= MIN_PASSWORD_LENGTH,
+      },
+      {
+        label: "Contains an uppercase letter",
+        passed: /[A-Z]/.test(password),
+      },
+      {
+        label: "Contains a lowercase letter",
+        passed: /[a-z]/.test(password),
+      },
+      {
+        label: "Contains a number",
+        passed: /\d/.test(password),
+      },
+    ],
+    [password]
+  );
+
+  const passwordScore =
+    passwordChecks.filter(
+      (check) => check.passed
+    ).length;
+
+  const passwordStrength =
+    password.length === 0
+      ? ""
+      : passwordScore <= 1
+        ? "Weak"
+        : passwordScore <= 3
+          ? "Good"
+          : "Strong";
+
+
+  /* =======================================================
+     ERROR HELPERS
+     ======================================================= */
+
+  const clearError = () => {
+    if (error) {
+      setError("");
+    }
+
+    if (successMessage) {
+      setSuccessMessage("");
+    }
+  };
+
+
+  /* =======================================================
+     SUBMIT
+     ======================================================= */
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
   ) => {
+
     event.preventDefault();
 
+    if (isLoading) {
+      return;
+    }
+
     setError("");
+    setSuccessMessage("");
 
-    /* =========================================
-       BASIC ACCOUNT VALIDATION
-    ========================================== */
 
-    if (!name.trim()) {
-      setError("Please enter your name.");
+    /* =====================================================
+       BASIC INFORMATION
+       ===================================================== */
+
+    const cleanName = name.trim();
+    const cleanEmail =
+      email.trim().toLowerCase();
+
+    if (!cleanName) {
+      setError("Please enter your full name.");
       return;
     }
 
-    if (!email.trim()) {
-      setError("Please enter your email address.");
+    if (cleanName.length < 2) {
+      setError(
+        "Please enter a valid name."
+      );
       return;
     }
 
-    /* =========================================
-       LEARNER PROFILE VALIDATION
-    ========================================== */
+    if (!cleanEmail) {
+      setError(
+        "Please enter your email address."
+      );
+      return;
+    }
+
+    if (!EMAIL_PATTERN.test(cleanEmail)) {
+      setError(
+        "Please enter a valid email address."
+      );
+      return;
+    }
+
+
+    /* =====================================================
+       LEARNER PROFILE
+       ===================================================== */
 
     if (!age.trim()) {
-      setError("Please enter your age.");
+      setError(
+        "Please enter your age."
+      );
       return;
     }
 
@@ -63,52 +213,101 @@ function SignUp() {
       numericAge < 10 ||
       numericAge > 100
     ) {
-      setError("Please enter a valid age between 10 and 100.");
+      setError(
+        "Please enter a valid age between 10 and 100."
+      );
       return;
     }
 
     if (!learnerType) {
-      setError("Please tell us who you are.");
+      setError(
+        "Please tell us which learner type best describes you."
+      );
       return;
     }
 
     if (!educationLevel) {
-      setError("Please select your education level.");
+      setError(
+        "Please select your education level."
+      );
       return;
     }
 
     if (!aiExperience) {
-      setError("Please select your current AI experience.");
+      setError(
+        "Please select your current AI experience."
+      );
       return;
     }
 
     if (!learningGoal) {
-      setError("Please select what you want to learn with CURIO.");
+      setError(
+        "Please select what you want to learn with CURIO."
+      );
       return;
     }
 
-    /* =========================================
-       PASSWORD VALIDATION
-    ========================================== */
+
+    /* =====================================================
+       PASSWORD
+       ===================================================== */
 
     if (!password) {
-      setError("Please create a password.");
+      setError(
+        "Please create a password."
+      );
       return;
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (
+      password.length <
+      MIN_PASSWORD_LENGTH
+    ) {
+      setError(
+        "Your password must contain at least 8 characters."
+      );
+      return;
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      setError(
+        "Your password must contain at least one uppercase letter."
+      );
+      return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+      setError(
+        "Your password must contain at least one lowercase letter."
+      );
+      return;
+    }
+
+    if (!/\d/.test(password)) {
+      setError(
+        "Your password must contain at least one number."
+      );
+      return;
+    }
+
+    if (!confirmPassword) {
+      setError(
+        "Please confirm your password."
+      );
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(
+        "Passwords do not match."
+      );
       return;
     }
 
-    /* =========================================
-       TERMS VALIDATION
-    ========================================== */
+
+    /* =====================================================
+       TERMS
+       ===================================================== */
 
     if (!agreedToTerms) {
       setError(
@@ -117,102 +316,243 @@ function SignUp() {
       return;
     }
 
+
+    /* =====================================================
+       CREATE ACCOUNT
+       ===================================================== */
+
     setIsLoading(true);
 
     try {
-      /* =========================================
-         CURIO ACCOUNT CREATION
-         
-         Existing Supabase authentication is kept.
-         Learner information is added to metadata.
-      ========================================== */
+
+      /*
+       * Supabase Auth is the source of truth for the
+       * authentication account.
+       *
+       * Learner information is also stored in user metadata
+       * so the information is available immediately after
+       * account creation.
+       *
+       * Our profiles table remains the application-level
+       * learner profile and will be connected through the
+       * finalized profile/onboarding flow.
+       */
 
       const {
         data,
         error: signUpError,
       } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password,
-        options: {
-          data: {
-            /* Existing information */
-            full_name: name.trim(),
 
-            /* =====================================
-               CURIO LEARNER PROFILE
-            ===================================== */
+        email: cleanEmail,
+
+        password,
+
+        options: {
+
+          data: {
+
+            full_name: cleanName,
 
             age: numericAge,
+
             learner_type: learnerType,
-            education_level: educationLevel,
-            ai_experience: aiExperience,
-            learning_goal: learningGoal,
+
+            education_level:
+              educationLevel,
+
+            ai_experience:
+              aiExperience,
+
+            learning_goal:
+              learningGoal,
+
           },
+
         },
+
       });
 
+
+      /* ===================================================
+         SUPABASE ERROR
+         =================================================== */
+
       if (signUpError) {
+
+        const message =
+          signUpError.message
+            .toLowerCase();
+
+        if (
+          message.includes(
+            "already registered"
+          ) ||
+          message.includes(
+            "already exists"
+          ) ||
+          message.includes(
+            "user already registered"
+          )
+        ) {
+          setError(
+            "An account with this email already exists. Please sign in instead."
+          );
+
+          return;
+        }
+
+        if (
+          message.includes(
+            "password"
+          )
+        ) {
+          setError(
+            "Your password does not meet the account security requirements."
+          );
+
+          return;
+        }
+
+        if (
+          message.includes(
+            "email"
+          )
+        ) {
+          setError(
+            "Please check your email address and try again."
+          );
+
+          return;
+        }
+
         throw signUpError;
       }
 
-      if (data.user) {
-        /*
-          =========================================
-          SUCCESSFUL SIGN UP
-          =========================================
 
-          If email confirmation is enabled in
-          Supabase, data.session will normally
-          be null.
+      /* ===================================================
+         USER CREATED
+         =================================================== */
 
-          We keep the existing CURIO behaviour:
-          the user is sent to Sign In rather than
-          being automatically logged in.
-        */
+      if (!data.user) {
 
-        navigate("/login", {
-          replace: true,
-          state: {
-            signupSuccess: true,
-            emailConfirmationRequired: !data.session,
-            email: email.trim().toLowerCase(),
-          },
-        });
+        setError(
+          "CURIO could not complete your account creation. Please try again."
+        );
 
         return;
       }
 
-      setError(
-        "Unable to create your account. Please try again."
-      );
-    } catch (error) {
-      console.error("CURIO signup error:", error);
 
-      if (error instanceof Error) {
-        setError(error.message);
+      /* ===================================================
+         EMAIL CONFIRMATION
+         =================================================== */
+
+      if (!data.session) {
+
+        /*
+         * Email confirmation is enabled.
+         *
+         * Do not manually create a session here.
+         * Supabase will authenticate the user after
+         * successful email verification and login.
+         */
+
+        navigate(
+          "/login",
+          {
+            replace: true,
+
+            state: {
+
+              signupSuccess: true,
+
+              emailConfirmationRequired:
+                true,
+
+              email: cleanEmail,
+
+            },
+
+          }
+        );
+
+        return;
+      }
+
+
+      /* ===================================================
+         SESSION AVAILABLE
+         =================================================== */
+
+      /*
+       * If email confirmation is disabled and Supabase
+       * gives us a session immediately, the user is already
+       * authenticated.
+       *
+       * The next stage of CURIO will route this user through
+       * onboarding before reaching the dashboard.
+       */
+
+      navigate(
+        "/dashboard",
+        {
+          replace: true,
+        }
+      );
+
+    } catch (signupError) {
+
+      console.error(
+        "CURIO signup error:",
+        signupError
+      );
+
+
+      if (
+        signupError instanceof Error
+      ) {
+
+        setError(
+          signupError.message ||
+          "Unable to create your account. Please try again."
+        );
+
       } else {
+
         setError(
           "Unable to create your account. Please try again."
         );
+
       }
+
     } finally {
+
       setIsLoading(false);
+
     }
   };
 
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
+
   return (
+
     <AuthLayout>
+
       <div className="signup-card">
 
-        {/* =========================================
-            CURIO BRANDING
-        ========================================== */}
+
+        {/* =================================================
+            CURIO BRAND
+        ================================================= */}
 
         <div className="auth-right-brand signup-brand">
 
           <img
             src="/curio-symbol.png"
-            alt="CURIO symbol"
+            alt="CURIO"
             className="auth-right-logo"
           />
 
@@ -221,71 +561,116 @@ function SignUp() {
           </div>
 
           <div className="auth-right-tagline">
+
             <span>LEARN</span>
-            <i>•</i>
+
+            <i aria-hidden="true">
+              •
+            </i>
+
             <span>UNDERSTAND</span>
-            <i>•</i>
+
+            <i aria-hidden="true">
+              •
+            </i>
+
             <span>GROW</span>
+
           </div>
 
         </div>
 
-        {/* =========================================
+
+        {/* =================================================
             HEADING
-        ========================================== */}
+        ================================================= */}
 
         <div className="login-heading signup-heading">
 
-          <h2>Create your account</h2>
+          <h2>
+            Create your account
+          </h2>
 
           <p>
-            Start your AI learning journey with CURIO.
+            Start your AI learning journey
+            with CURIO.
           </p>
 
           <p>
-            Tell us a little about yourself so CURIO
-            can understand how to guide your learning.
+            A few details help us build a
+            learning experience that fits you.
           </p>
 
         </div>
 
-        {/* =========================================
+
+        {/* =================================================
             ERROR
-        ========================================== */}
+        ================================================= */}
 
         {error && (
+
           <div
             className="auth-error"
             role="alert"
+            aria-live="assertive"
           >
+
             {error}
+
           </div>
+
         )}
 
-        {/* =========================================
-            SIGN UP FORM
-        ========================================== */}
+
+        {/* =================================================
+            SUCCESS
+        ================================================= */}
+
+        {successMessage && (
+
+          <div
+            className="auth-success"
+            role="status"
+            aria-live="polite"
+          >
+
+            {successMessage}
+
+          </div>
+
+        )}
+
+
+        {/* =================================================
+            FORM
+        ================================================= */}
 
         <form
           onSubmit={handleSubmit}
           noValidate
         >
 
-          {/* =========================================
-              BASIC INFORMATION
-          ========================================== */}
+
+          {/* ===============================================
+              ABOUT YOU
+          ================================================ */}
 
           <div className="signup-profile-section">
 
             <div className="signup-section-heading">
-              <h3>About you</h3>
+
+              <h3>
+                About you
+              </h3>
 
               <p>
-                This helps us understand who CURIO is
-                helping and design better learning
-                experiences.
+                Help CURIO understand where
+                you're starting from.
               </p>
+
             </div>
+
 
             {/* NAME */}
 
@@ -309,16 +694,19 @@ function SignUp() {
                   type="text"
                   placeholder="Your full name"
                   value={name}
-                  onChange={(event) =>
-                    setName(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    clearError();
+                  }}
                   autoComplete="name"
+                  maxLength={100}
                   required
                 />
 
               </div>
 
             </div>
+
 
             {/* EMAIL */}
 
@@ -342,16 +730,20 @@ function SignUp() {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(event) =>
-                    setEmail(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    clearError();
+                  }}
                   autoComplete="email"
+                  inputMode="email"
+                  maxLength={254}
                   required
                 />
 
               </div>
 
             </div>
+
 
             {/* AGE */}
 
@@ -377,16 +769,19 @@ function SignUp() {
                   max="100"
                   placeholder="Your age"
                   value={age}
-                  onChange={(event) =>
-                    setAge(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setAge(event.target.value);
+                    clearError();
+                  }}
                   autoComplete="off"
+                  inputMode="numeric"
                   required
                 />
 
               </div>
 
             </div>
+
 
             {/* LEARNER TYPE */}
 
@@ -408,9 +803,10 @@ function SignUp() {
                 <select
                   id="signup-learner-type"
                   value={learnerType}
-                  onChange={(event) =>
-                    setLearnerType(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setLearnerType(event.target.value);
+                    clearError();
+                  }}
                   className="signup-profile-select"
                   required
                 >
@@ -461,7 +857,8 @@ function SignUp() {
 
             </div>
 
-            {/* EDUCATION LEVEL */}
+
+            {/* EDUCATION */}
 
             <div className="auth-field signup-field">
 
@@ -481,9 +878,10 @@ function SignUp() {
                 <select
                   id="signup-education"
                   value={educationLevel}
-                  onChange={(event) =>
-                    setEducationLevel(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setEducationLevel(event.target.value);
+                    clearError();
+                  }}
                   className="signup-profile-select"
                   required
                 >
@@ -532,23 +930,27 @@ function SignUp() {
 
           </div>
 
-          {/* =========================================
-              AI EXPERIENCE
-          ========================================== */}
+
+          {/* ===============================================
+              AI STARTING POINT
+          ================================================ */}
 
           <div className="signup-profile-section">
 
             <div className="signup-section-heading">
 
-              <h3>Your AI starting point</h3>
+              <h3>
+                Your AI starting point
+              </h3>
 
               <p>
                 There is no right or wrong answer.
-                CURIO is designed for beginners as
-                well as experienced AI users.
+                CURIO is built for beginners and
+                experienced AI users.
               </p>
 
             </div>
+
 
             {/* AI EXPERIENCE */}
 
@@ -570,9 +972,10 @@ function SignUp() {
                 <select
                   id="signup-ai-experience"
                   value={aiExperience}
-                  onChange={(event) =>
-                    setAiExperience(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setAiExperience(event.target.value);
+                    clearError();
+                  }}
                   className="signup-profile-select"
                   required
                 >
@@ -607,6 +1010,7 @@ function SignUp() {
 
             </div>
 
+
             {/* LEARNING GOAL */}
 
             <div className="auth-field signup-field">
@@ -627,9 +1031,10 @@ function SignUp() {
                 <select
                   id="signup-learning-goal"
                   value={learningGoal}
-                  onChange={(event) =>
-                    setLearningGoal(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setLearningGoal(event.target.value);
+                    clearError();
+                  }}
                   className="signup-profile-select"
                   required
                 >
@@ -686,9 +1091,10 @@ function SignUp() {
 
           </div>
 
-          {/* =========================================
-              PROFILE INFORMATION NOTE
-          ========================================== */}
+
+          {/* ===============================================
+              PRIVACY NOTE
+          ================================================ */}
 
           <div className="signup-profile-note">
 
@@ -697,19 +1103,24 @@ function SignUp() {
             </span>
 
             <p>
-              CURIO will use this information to
-              understand its learners and improve
-              personalized learning experiences.
-              You can always review how your
-              information is used through CURIO's
-              privacy policy.
+              CURIO uses these details to
+              understand your learning needs
+              and improve your experience.
+              See our{" "}
+
+              <Link to="/privacy">
+                Privacy Policy
+              </Link>
+
+              {" "}for more information.
             </p>
 
           </div>
 
-          {/* =========================================
+
+          {/* ===============================================
               PASSWORD
-          ========================================== */}
+          ================================================ */}
 
           <div className="auth-field signup-field">
 
@@ -735,10 +1146,12 @@ function SignUp() {
                 }
                 placeholder="Create a password"
                 value={password}
-                onChange={(event) =>
-                  setPassword(event.target.value)
-                }
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  clearError();
+                }}
                 autoComplete="new-password"
+                maxLength={128}
                 required
               />
 
@@ -761,16 +1174,92 @@ function SignUp() {
                     : "Show password"
                 }
               >
-                ◉
+                {showPassword
+                  ? "◉"
+                  : "○"}
               </button>
 
             </div>
 
+
+            {/* PASSWORD STRENGTH */}
+
+            {password.length > 0 && (
+
+              <div
+                className="signup-password-strength"
+                aria-live="polite"
+              >
+
+                <div className="signup-password-bars">
+
+                  {[1, 2, 3, 4].map(
+                    (level) => (
+
+                      <span
+                        key={level}
+                        className={
+                          level <= passwordScore
+                            ? "active"
+                            : ""
+                        }
+                      />
+
+                    )
+                  )}
+
+                </div>
+
+                <span>
+                  {passwordStrength}
+                </span>
+
+              </div>
+
+            )}
+
+
+            {/* PASSWORD REQUIREMENTS */}
+
+            {password.length > 0 && (
+
+              <div className="signup-password-requirements">
+
+                {passwordChecks.map(
+                  (check) => (
+
+                    <span
+                      key={check.label}
+                      className={
+                        check.passed
+                          ? "passed"
+                          : ""
+                      }
+                    >
+
+                      {check.passed
+                        ? "✓"
+                        : "○"}
+
+                      {" "}
+
+                      {check.label}
+
+                    </span>
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
           </div>
 
-          {/* =========================================
+
+          {/* ===============================================
               CONFIRM PASSWORD
-          ========================================== */}
+          ================================================ */}
 
           <div className="auth-field signup-field">
 
@@ -796,12 +1285,14 @@ function SignUp() {
                 }
                 placeholder="Confirm your password"
                 value={confirmPassword}
-                onChange={(event) =>
+                onChange={(event) => {
                   setConfirmPassword(
                     event.target.value
-                  )
-                }
+                  );
+                  clearError();
+                }}
                 autoComplete="new-password"
+                maxLength={128}
                 required
               />
 
@@ -824,16 +1315,39 @@ function SignUp() {
                     : "Show password"
                 }
               >
-                ◉
+                {showConfirmPassword
+                  ? "◉"
+                  : "○"}
               </button>
 
             </div>
 
+
+            {confirmPassword.length > 0 && (
+
+              <div
+                className={
+                  password === confirmPassword
+                    ? "signup-password-match matched"
+                    : "signup-password-match"
+                }
+                aria-live="polite"
+              >
+
+                {password === confirmPassword
+                  ? "✓ Passwords match"
+                  : "Passwords do not match"}
+
+              </div>
+
+            )}
+
           </div>
 
-          {/* =========================================
-              TERMS AGREEMENT
-          ========================================== */}
+
+          {/* ===============================================
+              TERMS
+          ================================================ */}
 
           <div className="terms-checkbox">
 
@@ -841,34 +1355,38 @@ function SignUp() {
               id="signup-terms"
               type="checkbox"
               checked={agreedToTerms}
-              onChange={(event) =>
+              onChange={(event) => {
                 setAgreedToTerms(
                   event.target.checked
-                )
-              }
+                );
+                clearError();
+              }}
+              required
             />
 
             <label htmlFor="signup-terms">
 
               I agree to CURIO's{" "}
 
-              <button
-                type="button"
+              <Link
+                to="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="terms-link"
-                onClick={() => {}}
               >
                 Terms of Service
-              </button>{" "}
+              </Link>
 
-              and{" "}
+              and
 
-              <button
-                type="button"
+              <Link
+                to="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="terms-link"
-                onClick={() => {}}
               >
                 Privacy Policy
-              </button>
+              </Link>
 
               .
 
@@ -876,35 +1394,46 @@ function SignUp() {
 
           </div>
 
-          {/* =========================================
+
+          {/* ===============================================
               CREATE ACCOUNT
-          ========================================== */}
+          ================================================ */}
 
           <button
             type="submit"
             className="curio-signin-button signup-submit-button"
             disabled={isLoading}
+            aria-busy={isLoading}
           >
 
             <span>
+
               {isLoading
                 ? "Creating account..."
                 : "Create account"}
+
             </span>
 
             {!isLoading && (
-              <span className="button-arrow">
+
+              <span
+                className="button-arrow"
+                aria-hidden="true"
+              >
                 →
               </span>
+
             )}
 
           </button>
 
+
         </form>
 
-        {/* =========================================
+
+        {/* =================================================
             SOCIAL DIVIDER
-        ========================================== */}
+        ================================================= */}
 
         <div className="auth-divider signup-divider">
 
@@ -918,10 +1447,11 @@ function SignUp() {
 
         </div>
 
-        {/* =========================================
-            GOOGLE / MICROSOFT / APPLE
-            UI ONLY FOR NOW
-        ========================================== */}
+
+        {/* =================================================
+            SOCIAL PROVIDERS
+            UI ONLY — PROVIDERS NOT CONNECTED YET
+        ================================================= */}
 
         <div className="social-login-grid">
 
@@ -929,43 +1459,58 @@ function SignUp() {
             type="button"
             className="social-login-button"
             aria-label="Continue with Google"
+            disabled
+            title="Google sign-in will be available soon"
           >
+
             <strong className="google-icon">
               G
             </strong>
 
             Google
+
           </button>
+
 
           <button
             type="button"
             className="social-login-button"
             aria-label="Continue with Microsoft"
+            disabled
+            title="Microsoft sign-in will be available soon"
           >
+
             <strong className="microsoft-icon">
               ▦
             </strong>
 
             Microsoft
+
           </button>
+
 
           <button
             type="button"
             className="social-login-button"
             aria-label="Continue with Apple"
+            disabled
+            title="Apple sign-in will be available soon"
           >
+
             <strong className="apple-icon">
               ●
             </strong>
 
             Apple
+
           </button>
 
         </div>
 
-        {/* =========================================
-            SIGN IN
-        ========================================== */}
+
+        {/* =================================================
+            LOGIN
+        ================================================= */}
 
         <p className="auth-switch signup-switch">
 
@@ -977,9 +1522,12 @@ function SignUp() {
 
         </p>
 
+
       </div>
+
     </AuthLayout>
   );
 }
+
 
 export default SignUp;

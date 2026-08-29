@@ -842,3 +842,177 @@ a {
     transition: none !important;
   }
 }
+/* =========================================================
+   CURIO SIGNUP - PROFESSIONAL FORM STATES
+   ========================================================= */
+
+.auth-field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #b42318;
+}
+
+.auth-field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #667085;
+}
+
+.terms-error {
+  margin-top: 8px;
+}
+
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: #667085;
+}
+
+.password-strength-bar {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  max-width: 180px;
+}
+
+.password-strength-bar span {
+  height: 4px;
+  flex: 1;
+  border-radius: 999px;
+  background: #e4e7ec;
+  transition: background 0.2s ease;
+}
+
+.password-strength-bar span.active {
+  background: currentColor;
+}
+
+
+/* =========================================================
+   CURIO LEGAL PAGES
+   ========================================================= */
+
+.legal-page {
+  min-height: 100vh;
+  padding: 48px 20px;
+  background: #f8fafc;
+}
+
+.legal-container {
+  width: min(900px, 100%);
+  margin: 0 auto;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+.legal-back {
+  display: inline-flex;
+  margin-bottom: 28px;
+  color: #475467;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.legal-back:hover {
+  text-decoration: underline;
+}
+
+.legal-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 30px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #101828;
+}
+
+.legal-logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.legal-container h1 {
+  margin: 0;
+  color: #101828;
+  font-size: 2.2rem;
+  line-height: 1.2;
+}
+
+.legal-updated {
+  margin-top: 10px;
+  margin-bottom: 32px;
+  color: #667085;
+  font-size: 0.9rem;
+}
+
+.legal-container section {
+  margin-top: 32px;
+}
+
+.legal-container h2 {
+  margin-bottom: 10px;
+  color: #101828;
+  font-size: 1.2rem;
+}
+
+.legal-container p {
+  color: #475467;
+  font-size: 0.96rem;
+  line-height: 1.75;
+}
+
+.legal-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #eaecf0;
+  font-size: 0.9rem;
+}
+
+.legal-footer a {
+  color: #344054;
+  text-decoration: none;
+}
+
+.legal-footer a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+  .legal-page {
+    padding: 24px 14px;
+  }
+
+  .legal-container {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .legal-container h1 {
+    font-size: 1.8rem;
+  }
+
+  .legal-footer {
+    flex-wrap: wrap;
+  }
+
+}
