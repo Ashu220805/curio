@@ -9,6 +9,8 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 // =========================================================
 // AUTHENTICATION
@@ -21,6 +23,7 @@ import Guest from "./pages/Guest.tsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 import OnboardingRoute from "./components/auth/OnboardingRoute.tsx";
 
+import "./styles/GlobalBackButton.css";
 // =========================================================
 // LEGAL / INFORMATION PAGES
 // =========================================================
@@ -151,6 +154,60 @@ function RouteLoadingScreen() {
 }
 
 // =========================================================
+// GLOBAL BACK BUTTON
+// =========================================================
+//
+// Kept at App level so existing page code does not need
+// to be rewritten. Login, Signup and Guest are excluded.
+// All other CURIO routes receive the same Back control.
+//
+function GlobalBackButton() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const hiddenPaths = [
+    "/",
+    "/login",
+    "/signup",
+    "/guest",
+  ];
+
+  if (hiddenPaths.includes(location.pathname)) {
+    return null;
+  }
+
+  const handleBack = () => {
+    if (globalThis.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/dashboard", {
+      replace: true,
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      className="curio-global-back-button"
+      onClick={handleBack}
+      aria-label="Go back"
+      title="Go back"
+    >
+      <span
+        className="curio-global-back-button-arrow"
+        aria-hidden="true"
+      >
+        ←
+      </span>
+      <span>Back</span>
+    </button>
+  );
+}
+
+
+// =========================================================
 // MEMBER ROUTE
 // =========================================================
 //
@@ -239,6 +296,8 @@ function DashboardEntry() {
 function App() {
   return (
     <BrowserRouter>
+      <GlobalBackButton />
+
       <Suspense
         fallback={
           <RouteLoadingScreen />

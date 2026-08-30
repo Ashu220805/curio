@@ -1,0 +1,72 @@
+.curio-global-back-button {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 9999;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  min-height: 40px;
+  padding: 8px 14px;
+
+  border: 1px solid rgba(105, 116, 145, 0.18);
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.90);
+  color: #56617a;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 20px rgba(40, 48, 80, 0.08);
+  backdrop-filter: blur(12px);
+
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.curio-global-back-button:hover {
+  background: #ffffff;
+  border-color: rgba(98, 91, 213, 0.30);
+  color: #625bd5;
+  transform: translateX(-2px);
+  box-shadow: 0 9px 24px rgba(40, 48, 80, 0.12);
+}
+
+.curio-global-back-button:focus-visible {
+  outline: 3px solid rgba(98, 91, 213, 0.18);
+  outline-offset: 2px;
+}
+
+.curio-global-back-button:active {
+  transform: translateX(0);
+}
+
+.curio-global-back-button-arrow {
+  font-size: 17px;
+  line-height: 1;
+}
+
+@media (max-width: 700px) {
+  .curio-global-back-button {
+    top: 14px;
+    left: 14px;
+    min-height: 38px;
+    padding: 7px 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curio-global-back-button {
+    transition: none;
+  }
+}
