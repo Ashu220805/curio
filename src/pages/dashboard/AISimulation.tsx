@@ -4,6 +4,23 @@ import { supabase } from "../../lib/supabase.ts";
 import { runAISimulation } from "../../lib/aiSimulator.ts";
 import "./AiSimulation.css";
 
+type PromptDimensionKey =
+  | "clarity"
+  | "context"
+  | "specificity"
+  | "goal"
+  | "outputFormat";
+
+type PromptDimension = {
+  key: PromptDimensionKey;
+  label: string;
+  score: number;
+  status: "Strong" | "Good" | "Needs work" | "Weak";
+  reason: string;
+  action: string;
+  evidence: string[];
+};
+
 type AnalysisResult = {
   score?: number;
   accuracy?: number;
@@ -15,6 +32,639 @@ type AnalysisResult = {
   response?: string;
   answer?: string;
   skillTips?: string[];
+
+  /* Optional AI dimensions + locally derived dimensions. */
+  clarity?: number;
+  context?: number;
+  specificity?: number;
+  goal?: number;
+  outputFormat?: number;
+  dimensions?: PromptDimension[];
+  analysisQuality?: "AI + structural" | "Structural";
+  promptType?: string;
+  priorityFix?: string;
+  confidence?: number;
+};
+
+
+/*
+  ============================================================
+  CURIO PROMPT ANALYSIS ENGINE
+  ============================================================
+
+  The previous implementation treated missing AI dimension
+  fields as 0/100. That is the direct reason the dimension cards
+  could show five zeros even when the overall prompt score was
+  valid.
+
+  This engine is evidence-based and deterministic:
+  - it never invents facts about the user's request;
+  - it does not reward length by itself;
+  - it looks for concrete signals in the actual prompt;
+  - it uses a backend/AI dimension score when one is supplied;
+  - otherwise it calculates a structural score.
+
+  The result is used for coaching, not as a claim of objective
+  "perfect" prompt quality.
+*/
+
+const clamp = (value: number) =>
+  Math.max(0, Math.min(100, Math.round(value)));
+
+const numericScore = (value: unknown): number | null => {
+  const number = Number(value);
+  return Number.isFinite(number) &&
+    number >= 0 &&
+    number <= 100
+    ? number
+    : null;
+};
+
+const uniqueStrings = (items: string[]) => {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const normalized = item.trim().toLowerCase();
+
+    if (!normalized || seen.has(normalized)) {
+      return false;
+    }
+
+    seen.add(normalized);
+    return true;
+  });
+};
+
+const wordCount = (text: string) =>
+  text.trim().split(/\s+/).filter(Boolean).length;
+
+const hasSignal = (
+  text: string,
+  expression: RegExp,
+) => expression.test(text);
+
+const dimensionStatus = (
+  score: number,
+): PromptDimension["status"] => {
+  if (score >= 85) return "Strong";
+  if (score >= 70) return "Good";
+  if (score >= 50) return "Needs work";
+  return "Weak";
+};
+
+const dimensionInfo: Record<
+  PromptDimensionKey,
+  {
+    label: string;
+    strongReason: string;
+    action: string;
+  }
+> = {
+  clarity: {
+    label: "Clarity",
+    strongReason:
+      "The instruction is easy to interpret and gives the AI a recognizable action to perform.",
+    action:
+      "Make the instruction direct and unambiguous; avoid wording that allows multiple interpretations.",
+  },
+  context: {
+    label: "Context",
+    strongReason:
+      "The prompt supplies useful background, audience, situation, purpose, or constraints.",
+    action:
+      "Add only the background the AI needs: audience, situation, purpose, existing state, or relevant constraints.",
+  },
+  specificity: {
+    label: "Specificity",
+    strongReason:
+      "The prompt narrows the task with concrete scope, requirements, limits, examples, or measurable criteria.",
+    action:
+      "Replace broad wording with exact scope, requirements, examples, limits, or measurable criteria.",
+  },
+  goal: {
+    label: "Goal",
+    strongReason:
+      "The prompt clearly communicates what the AI should accomplish and why the result is useful.",
+    action:
+      "State the desired outcome explicitly and define what a useful result should help you accomplish.",
+  },
+  outputFormat: {
+    label: "Output format",
+    strongReason:
+      "The prompt gives useful instructions about how the answer should be presented.",
+    action:
+      "Specify the useful presentation: bullets, table, steps, sections, code, length, comparison, or another concrete format.",
+  },
+};
+
+const structuralAnalysis = (prompt: string) => {
+  const text = prompt.trim();
+  const lower = text.toLowerCase();
+  const words = wordCount(text);
+  const sentences = text
+    .split(/[.!?]+/)
+    .map((part) => part.trim())
+    .filter(Boolean).length;
+
+  const evidence: Record<
+    PromptDimensionKey,
+    string[]
+  > = {
+    clarity: [],
+    context: [],
+    specificity: [],
+    goal: [],
+    outputFormat: [],
+  };
+
+  /*
+    1. CLARITY
+  */
+  let clarity = 42;
+
+  if (
+    hasSignal(
+      lower,
+      /\b(explain|describe|analyze|analyse|compare|create|write|solve|design|summarize|summarise|evaluate|generate|list|identify|teach|recommend|improve|rewrite|debug|review|calculate|translate|plan)\b/i,
+    )
+  ) {
+    clarity += 25;
+    evidence.clarity.push(
+      "A clear action verb tells the AI what to do.",
+    );
+  }
+
+  if (words >= 12) {
+    clarity += 8;
+    evidence.clarity.push(
+      "The prompt contains enough wording to express a complete request.",
+    );
+  }
+
+  if (sentences >= 2) {
+    clarity += 5;
+    evidence.clarity.push(
+      "Separate sentences provide room for the task and supporting details.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(step[- ]by[- ]step|in simple terms|for a beginner|clearly|briefly|in detail|deeply)\b/i,
+    )
+  ) {
+    clarity += 8;
+    evidence.clarity.push(
+      "The prompt specifies useful explanation depth or style.",
+    );
+  }
+
+  if (/[,:;]/.test(text)) clarity += 4;
+
+  if (words <= 5) {
+    clarity -= 8;
+    evidence.clarity.push(
+      "The request is extremely short, leaving little instruction to follow.",
+    );
+  }
+
+  /*
+    2. CONTEXT
+  */
+  let context = 28;
+
+  if (
+    hasSignal(
+      lower,
+      /\b(i am|i'm|as a|my role|for a|for an|audience|student|beginner|developer|manager|teacher|researcher|customer|interviewer|candidate|exam|client|team)\b/i,
+    )
+  ) {
+    context += 22;
+    evidence.context.push(
+      "An audience, role, or user situation is specified.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(context|background|situation|scenario|purpose|because|currently|project|environment|use case|problem|challenge|existing|current)\b/i,
+    )
+  ) {
+    context += 20;
+    evidence.context.push(
+      "Relevant background or situation is explicitly mentioned.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(assuming|given that|based on|using|with|without|within|under|limited to|for the purpose of)\b/i,
+    )
+  ) {
+    context += 12;
+    evidence.context.push(
+      "Assumptions or situational boundaries are included.",
+    );
+  }
+
+  if (words >= 25) context += 8;
+
+  if (words <= 8) {
+    context -= 6;
+    evidence.context.push(
+      "Very little background is supplied, so the AI may need to infer context.",
+    );
+  }
+
+  /*
+    3. SPECIFICITY
+  */
+  let specificity = 30;
+
+  if (/\b\d+(?:\.\d+)?\b/.test(text)) {
+    specificity += 10;
+    evidence.specificity.push(
+      "The prompt contains a concrete number or measurable value.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(exactly|specific|only|must|should|include|exclude|focus on|cover|criteria|requirements|constraints|scope|limit|maximum|minimum|at least|at most)\b/i,
+    )
+  ) {
+    specificity += 22;
+    evidence.specificity.push(
+      "Concrete requirements or boundaries are stated.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(example|examples|such as|like|including|e\.g\.|for instance)\b/i,
+    )
+  ) {
+    specificity += 12;
+    evidence.specificity.push(
+      "An example or concrete reference narrows the request.",
+    );
+  }
+
+  if (
+    /\b\d+\s*(?:words?|sentences?|points?|steps?|examples?|items?|rows?|columns?|minutes?|days?)\b/i.test(
+      text,
+    )
+  ) {
+    specificity += 10;
+    evidence.specificity.push(
+      "A measurable output constraint is included.",
+    );
+  }
+
+  /*
+    4. GOAL
+  */
+  let goal = 38;
+
+  if (
+    hasSignal(
+      lower,
+      /\b(explain|describe|analyze|analyse|compare|create|write|solve|design|summarize|summarise|evaluate|generate|list|identify|teach|recommend|improve|rewrite|debug|review|calculate|translate|plan)\b/i,
+    )
+  ) {
+    goal += 22;
+    evidence.goal.push(
+      "The prompt contains an explicit task for the AI.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(goal|objective|outcome|purpose|so that|so i can|help me|i need|i want|i'm trying to|success means|decision)\b/i,
+    )
+  ) {
+    goal += 22;
+    evidence.goal.push(
+      "The intended outcome or reason is stated.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(learn|understand|prepare|implement|choose|decide|build|use|apply|practice|present|submit)\b/i,
+    )
+  ) {
+    goal += 10;
+    evidence.goal.push(
+      "The prompt indicates how the result will be used.",
+    );
+  }
+
+  /*
+    5. OUTPUT FORMAT
+  */
+  let outputFormat = 22;
+
+  if (
+    hasSignal(
+      lower,
+      /\b(bullet points?|bullets?|numbered list|table|json|csv|markdown|headings?|sections?|steps?|step[- ]by[- ]step|code|code block|template|checklist|summary|short answer|detailed answer|comparison|pros and cons|pros\/cons|columns?|rows?)\b/i,
+    )
+  ) {
+    outputFormat += 38;
+    evidence.outputFormat.push(
+      "A concrete answer structure is requested.",
+    );
+  }
+
+  if (
+    hasSignal(
+      lower,
+      /\b(words?|characters?|paragraphs?|lines?|format|structure|length|limit|organize|organise|present|respond with|return as|format as)\b/i,
+    )
+  ) {
+    outputFormat += 20;
+    evidence.outputFormat.push(
+      "A presentation or length instruction is included.",
+    );
+  }
+
+  /*
+    Anti-gaming / quality adjustment:
+    verbosity is not the same as quality.
+  */
+  const chainedInstructions =
+    (lower.match(/\b(and|also|then|but)\b/gi) || [])
+      .length;
+
+  if (chainedInstructions >= 8) {
+    clarity -= 8;
+    evidence.clarity.push(
+      "Many chained instructions may make the request harder to follow.",
+    );
+  }
+
+  if (words > 250) {
+    clarity -= 5;
+    specificity -= 3;
+    evidence.clarity.push(
+      "The prompt is unusually long; organizing requirements into sections may improve usability.",
+    );
+  }
+
+  return {
+    clarity: clamp(clarity),
+    context: clamp(context),
+    specificity: clamp(specificity),
+    goal: clamp(goal),
+    outputFormat: clamp(outputFormat),
+    evidence,
+  };
+};
+
+const buildDimensions = (
+  prompt: string,
+  aiAnalysis: Record<string, unknown>,
+): PromptDimension[] => {
+  const local = structuralAnalysis(prompt);
+
+  const keys: PromptDimensionKey[] = [
+    "clarity",
+    "context",
+    "specificity",
+    "goal",
+    "outputFormat",
+  ];
+
+  /*
+    IMPORTANT: Some backend/Edge Function versions return 0
+    for dimension fields that they did not actually calculate.
+    A zero here is therefore treated as "not supplied", not as
+    a real prompt-quality score. We fall back to the local
+    evidence-based score in that case.
+  */
+  const nestedDimensions =
+    aiAnalysis.dimensions &&
+    typeof aiAnalysis.dimensions === "object"
+      ? (aiAnalysis.dimensions as Record<string, unknown>)
+      : null;
+
+  return keys.map((key) => {
+    const directValue = numericScore(aiAnalysis[key]);
+
+    const nestedValue =
+      nestedDimensions &&
+      nestedDimensions[key] &&
+      typeof nestedDimensions[key] === "object"
+        ? numericScore(
+            (nestedDimensions[key] as Record<string, unknown>).score,
+          )
+        : null;
+
+    /* Treat 0 as an omitted dimension from the backend. */
+    const supplied =
+      directValue !== null && directValue > 0
+        ? directValue
+        : nestedValue !== null && nestedValue > 0
+          ? nestedValue
+          : null;
+
+    const score = clamp(
+      supplied === null
+        ? local[key]
+        : supplied,
+    );
+
+    const reason =
+      score >= 70
+        ? dimensionInfo[key].strongReason
+        : key === "clarity"
+          ? "The request is understandable, but some wording can still be interpreted in more than one way."
+          : key === "context"
+            ? "The AI has limited background information and may need to make assumptions."
+            : key === "specificity"
+              ? "The task remains broad or leaves important requirements unspecified."
+              : key === "goal"
+                ? "The task is present, but the desired end result is not fully defined."
+                : "The AI is mostly free to choose how the answer should be presented.";
+
+    return {
+      key,
+      label: dimensionInfo[key].label,
+      score,
+      status: dimensionStatus(score),
+      reason,
+      action: dimensionInfo[key].action,
+      evidence: uniqueStrings(
+        local.evidence[key],
+      ).slice(0, 3),
+    };
+  });
+};
+
+const detectPromptType = (prompt: string) => {
+  const lower = prompt.toLowerCase();
+
+  if (/\b(debug|fix|error|bug|code)\b/.test(lower))
+    return "Problem solving";
+  if (/\b(compare|difference|versus|vs\.?)\b/.test(lower))
+    return "Comparison";
+  if (/\b(write|draft|compose|rewrite|email|essay|story)\b/.test(lower))
+    return "Writing";
+  if (/\b(explain|teach|learn|understand)\b/.test(lower))
+    return "Learning";
+  if (/\b(analyze|analyse|evaluate|research|investigate)\b/.test(lower))
+    return "Analysis";
+  if (/\b(create|generate|design|build)\b/.test(lower))
+    return "Creation";
+  if (/\b(plan|roadmap|strategy)\b/.test(lower))
+    return "Planning";
+
+  return "General request";
+};
+
+const buildFeedback = (
+  prompt: string,
+  dimensions: PromptDimension[],
+) => {
+  const weakest = [...dimensions]
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 2);
+
+  if (weakest[0].score >= 85) {
+    return `This is a strong ${detectPromptType(prompt).toLowerCase()} prompt. The next improvement is refinement: add detail only where it reduces ambiguity or improves the result.`;
+  }
+
+  const first = weakest[0];
+  const second = weakest[1];
+
+  return `Your request is understandable, but ${first.label.toLowerCase()} is the biggest opportunity. ${first.reason}${second ? ` Next, improve ${second.label.toLowerCase()} so the AI has fewer decisions to make.` : ""}`;
+};
+
+const buildStrengths = (
+  dimensions: PromptDimension[],
+  serviceStrengths: unknown,
+) => {
+  const fromService = Array.isArray(serviceStrengths)
+    ? serviceStrengths.filter(
+        (item): item is string =>
+          typeof item === "string" &&
+          item.trim().length > 0,
+      )
+    : [];
+
+  const fromStructure = dimensions
+    .filter((dimension) => dimension.score >= 70)
+    .sort((a, b) => b.score - a.score)
+    .map(
+      (dimension) =>
+        `${dimension.label}: ${dimension.reason}`,
+    );
+
+  return uniqueStrings([
+    ...fromService,
+    ...fromStructure,
+  ]).slice(0, 4);
+};
+
+const buildMissing = (
+  dimensions: PromptDimension[],
+) =>
+  [...dimensions]
+    .filter((dimension) => dimension.score < 70)
+    .sort((a, b) => a.score - b.score)
+    .map(
+      (dimension) =>
+        `${dimension.label}: ${dimension.action}`,
+    )
+    .slice(0, 4);
+
+const buildSuggestions = (
+  dimensions: PromptDimension[],
+  prompt: string,
+) => {
+  const weakest = [...dimensions]
+    .filter((dimension) => dimension.score < 85)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3);
+
+  const suggestions = weakest.map(
+    (dimension, index) =>
+      `${index === 0 ? "Priority" : "Next"} — ${dimension.action}`,
+  );
+
+  if (
+    wordCount(prompt) < 12 &&
+    !suggestions.some((item) =>
+      /background|audience|context/i.test(item),
+    )
+  ) {
+    suggestions.push(
+      "Add one sentence explaining who the answer is for or why you need it.",
+    );
+  }
+
+  return uniqueStrings(suggestions).slice(0, 4);
+};
+
+const buildImprovedPrompt = (
+  prompt: string,
+  dimensions: PromptDimension[],
+  aiImprovedPrompt: unknown,
+) => {
+  if (
+    typeof aiImprovedPrompt === "string" &&
+    aiImprovedPrompt.trim()
+  ) {
+    return aiImprovedPrompt.trim();
+  }
+
+  const missing = new Set(
+    dimensions
+      .filter((dimension) => dimension.score < 70)
+      .map((dimension) => dimension.key),
+  );
+
+  const additions: string[] = [];
+
+  if (missing.has("goal")) {
+    additions.push(
+      "Goal: [state the exact outcome you want].",
+    );
+  }
+
+  if (missing.has("context")) {
+    additions.push(
+      "Context/audience: [add only the background the AI needs].",
+    );
+  }
+
+  if (missing.has("specificity")) {
+    additions.push(
+      "Requirements: [add scope, constraints, examples, or measurable limits].",
+    );
+  }
+
+  if (missing.has("outputFormat")) {
+    additions.push(
+      "Output format: [specify the desired structure, length, or format].",
+    );
+  }
+
+  if (!additions.length) {
+    return prompt.trim();
+  }
+
+  return `${prompt.trim()}
+
+${additions.join("\n")}`;
 };
 
 function AISimulation() {
@@ -494,83 +1144,129 @@ function AISimulation() {
       */
 
       const result =
-        simulatorResult.analysis;
+        simulatorResult.analysis as Record<string, unknown>;
 
       /*
         =========================================
-        NORMALIZE FOR EXISTING UI
+        INTELLIGENT ANALYSIS NORMALIZATION
         =========================================
 
-        The existing UI expects:
-
-        feedback
-        missing
-        suggestions
-        response
-        answer
-        skillTips
-
-        We map the service response into that
-        existing structure without changing
-        your UI.
+        Backend dimensions are preferred when present.
+        Missing dimensions are derived from the user's actual
+        prompt rather than becoming 0/100.
       */
-
-      const missing: string[] = [];
-
-      if (result.clarity < 60) {
-        missing.push(
-          "Clear and understandable instructions.",
-        );
-      }
-
-      if (result.context < 60) {
-        missing.push(
-          "More context about the task or situation.",
-        );
-      }
-
-      if (result.specificity < 60) {
-        missing.push(
-          "More specific details about what you want.",
-        );
-      }
-
-      if (result.goal < 60) {
-        missing.push(
-          "A clearly defined goal or desired outcome.",
-        );
-      }
-
-      if (result.outputFormat < 60) {
-        missing.push(
-          "A clear description of the desired output format.",
-        );
-      }
-
-      const suggestions =
-        result.improvements.length > 0
-          ? result.improvements
-          : [];
+      const dimensions = buildDimensions(
+        prompt.trim(),
+        result,
+      );
 
       const feedback =
-        result.tip ||
-        "Review the score and try improving the weaker parts of your prompt.";
+        typeof result.tip === "string" &&
+        result.tip.trim()
+          ? result.tip.trim()
+          : buildFeedback(
+              prompt.trim(),
+              dimensions,
+            );
+
+      const strengths = buildStrengths(
+        dimensions,
+        result.strengths,
+      );
+
+      const missing = buildMissing(
+        dimensions,
+      );
+
+      const suggestions = buildSuggestions(
+        dimensions,
+        prompt.trim(),
+      );
+
+      const improvedPrompt =
+        buildImprovedPrompt(
+          prompt.trim(),
+          dimensions,
+          result.improvedPrompt,
+        );
+
+      const dimensionAverage =
+        dimensions.reduce(
+          (sum, dimension) =>
+            sum + dimension.score,
+          0,
+        ) / dimensions.length;
+
+      /*
+        Some older backend responses use 0 as a placeholder for
+        an unavailable overall score. Never let that placeholder
+        overwrite the real dimension-based score.
+      */
+      const rawServiceScore =
+        numericScore(result.score) ??
+        numericScore(result.accuracy);
+
+      const serviceScore =
+        rawServiceScore !== null && rawServiceScore > 0
+          ? rawServiceScore
+          : null;
+
+      /*
+        Preserve the service's overall score when valid.
+        If it is absent, derive it from the five dimensions.
+      */
+      const overallScore = clamp(
+        serviceScore === null
+          ? dimensionAverage
+          : serviceScore,
+      );
+
+      const weakest = [...dimensions].sort(
+        (a, b) => a.score - b.score,
+      )[0];
+
+      const hasAIDimensions =
+        dimensions.some((dimension) => {
+          const direct = numericScore(
+            result[dimension.key],
+          );
+
+          if (direct !== null && direct > 0) {
+            return true;
+          }
+
+          const nested =
+            result.dimensions &&
+            typeof result.dimensions === "object"
+              ? (result.dimensions as Record<string, unknown>)[
+                  dimension.key
+                ]
+              : null;
+
+          if (nested && typeof nested === "object") {
+            const nestedScore = numericScore(
+              (nested as Record<string, unknown>).score,
+            );
+
+            return nestedScore !== null && nestedScore > 0;
+          }
+
+          return false;
+        });
 
       setAnalysis({
-        score: result.score,
-
-        accuracy: result.score,
+        score: overallScore,
+        accuracy: overallScore,
 
         feedback,
 
-        strengths: result.strengths,
+        strengths,
 
         missing,
 
         suggestions,
 
-        improvedPrompt:
-          result.improvedPrompt,
+        improvedPrompt,
 
         response:
           simulatorResult.response,
@@ -578,14 +1274,60 @@ function AISimulation() {
         answer:
           simulatorResult.response,
 
-        skillTips: [
-          `Clarity: ${result.clarity}/100`,
-          `Context: ${result.context}/100`,
-          `Specificity: ${result.specificity}/100`,
-          `Goal: ${result.goal}/100`,
-          `Output format: ${result.outputFormat}/100`,
-        ],
+        skillTips: dimensions.map(
+          (dimension) =>
+            `${dimension.label}: ${dimension.score}/100`,
+        ),
+
+        clarity:
+          dimensions.find(
+            (dimension) =>
+              dimension.key === "clarity",
+          )?.score,
+
+        context:
+          dimensions.find(
+            (dimension) =>
+              dimension.key === "context",
+          )?.score,
+
+        specificity:
+          dimensions.find(
+            (dimension) =>
+              dimension.key === "specificity",
+          )?.score,
+
+        goal:
+          dimensions.find(
+            (dimension) =>
+              dimension.key === "goal",
+          )?.score,
+
+        outputFormat:
+          dimensions.find(
+            (dimension) =>
+              dimension.key === "outputFormat",
+          )?.score,
+
+        dimensions,
+
+        analysisQuality:
+          hasAIDimensions
+            ? "AI + structural"
+            : "Structural",
+
+        promptType:
+          detectPromptType(
+            prompt.trim(),
+          ),
+
+        priorityFix:
+          `${weakest.label}: ${weakest.action}`,
+
+        confidence:
+          hasAIDimensions ? 92 : 82,
       });
+
     } catch (error) {
       console.error(
         "CURIO AI Simulation error:",
@@ -1037,6 +1779,116 @@ function AISimulation() {
             </div>
 
             {/* =================================
+                PROMPT DIMENSIONS
+            ================================== */}
+
+            {analysis.dimensions &&
+              analysis.dimensions.length > 0 && (
+                <div className="ai-simulation-dimensions-card">
+                  <div className="ai-simulation-section-title">
+                    <span>
+                      HOW YOUR SCORE IS BUILT
+                    </span>
+
+                    <h2>
+                      Prompt dimensions
+                    </h2>
+
+                    <p>
+                      Each dimension answers a different
+                      question about your prompt. The
+                      analysis focuses on evidence in your
+                      wording, not on prompt length.
+                    </p>
+                  </div>
+
+                  <div className="ai-simulation-dimensions-grid">
+                    {analysis.dimensions.map(
+                      (dimension) => (
+                        <div
+                          className="ai-simulation-dimension"
+                          key={dimension.key}
+                        >
+                          <div className="ai-simulation-dimension-heading">
+                            <span>
+                              {dimension.label}
+                            </span>
+
+                            <strong>
+                              {dimension.score}/100
+                            </strong>
+                          </div>
+
+                          <div className="ai-simulation-dimension-track">
+                            <div
+                              className="ai-simulation-dimension-fill"
+                              style={{
+                                width: `${dimension.score}%`,
+                              }}
+                            />
+                          </div>
+
+                          <div className="ai-simulation-dimension-status">
+                            {dimension.status}
+                          </div>
+
+                          <p>
+                            {dimension.reason}
+                          </p>
+
+                          {dimension.evidence.length >
+                            0 && (
+                            <ul className="ai-simulation-dimension-evidence">
+                              {dimension.evidence.map(
+                                (
+                                  item,
+                                  index,
+                                ) => (
+                                  <li
+                                    key={`${dimension.key}-${index}`}
+                                  >
+                                    {item}
+                                  </li>
+                                ),
+                              )}
+                            </ul>
+                          )}
+
+                          {dimension.score < 85 && (
+                            <div className="ai-simulation-dimension-action">
+                              <strong>
+                                Improve:
+                              </strong>{" "}
+                              {dimension.action}
+                            </div>
+                          )}
+                        </div>
+                      ),
+                    )}
+                  </div>
+
+                  <div className="ai-simulation-analysis-meta">
+                    <span>
+                      Type:{" "}
+                      {analysis.promptType ||
+                        "General request"}
+                    </span>
+
+                    <span>
+                      Method:{" "}
+                      {analysis.analysisQuality ||
+                        "Structural"}
+                    </span>
+
+                    <span>
+                      Confidence:{" "}
+                      {analysis.confidence || 82}%
+                    </span>
+                  </div>
+                </div>
+              )}
+
+            {/* =================================
                 FEEDBACK
             ================================== */}
 
@@ -1202,7 +2054,8 @@ function AISimulation() {
 
                   <p>
                     Compare your original prompt
-                    with a more structured version.
+                    with a stronger version that targets
+                    the actual weak dimensions.
                   </p>
                 </div>
 

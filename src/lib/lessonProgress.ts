@@ -265,8 +265,16 @@ function mapProgress(
       row.total_sections
     ),
 
+    /*
+     * Completion is derived from section progress.
+     * The database `completed` flag is retained for storage
+     * compatibility, but it is never trusted as the source
+     * of truth.
+     */
     completed:
-      row.completed === true,
+      safeNumber(row.total_sections) > 0 &&
+      safeNumber(row.completed_sections) >=
+        safeNumber(row.total_sections),
 
     lastAccessedAt:
       typeof row.last_accessed_at ===
@@ -461,6 +469,11 @@ export async function saveLessonProgress(
   totalSections: number
 ): Promise<boolean> {
 
+  /*
+   * Kept in the function signature for compatibility with
+   * existing callers. Completion is derived exclusively
+   * from completedSections and totalSections.
+   */
   /* -----------------------------------------
      GUEST MODE
   ----------------------------------------- */
@@ -518,11 +531,6 @@ export async function saveLessonProgress(
         )
       );
 
-    const completed =
-      safeTotalSections > 0 &&
-      safeCompletedSections >=
-        safeTotalSections;
-
     const now =
       new Date().toISOString();
 
@@ -543,14 +551,14 @@ export async function saveLessonProgress(
         safeCurrentSection
       );
 
+    /*
+     * `completed` is intentionally derived from sections.
+     * Do not trust an older/stale completed flag.
+     */
     const finalCompleted =
-      completed ||
-      existing?.completed === true ||
-      (
-        safeTotalSections > 0 &&
-        finalCompletedSections >=
-          safeTotalSections
-      );
+      safeTotalSections > 0 &&
+      finalCompletedSections >=
+        safeTotalSections;
 
     const guestProgress: LessonProgress = {
       userId: "guest",
@@ -686,11 +694,6 @@ export async function saveLessonProgress(
       )
     );
 
-  const completed =
-    safeTotalSections > 0 &&
-    safeCompletedSections >=
-      safeTotalSections;
-
   const now =
     new Date().toISOString();
 
@@ -717,14 +720,14 @@ export async function saveLessonProgress(
       safeCurrentSection
     );
 
+  /*
+   * `completed` is intentionally derived from sections.
+   * Do not trust an older/stale completed flag.
+   */
   const finalCompleted =
-    completed ||
-    existing?.completed === true ||
-    (
-      safeTotalSections > 0 &&
-      finalCompletedSections >=
-        safeTotalSections
-    );
+    safeTotalSections > 0 &&
+    finalCompletedSections >=
+      safeTotalSections;
 
   const {
     error,
@@ -896,8 +899,9 @@ export async function canAccessLesson(
     );
 
   return (
-    previousProgress?.completed ===
-    true
+    (previousProgress?.totalSections ?? 0) > 0 &&
+    (previousProgress?.completedSections ?? 0) >=
+      (previousProgress?.totalSections ?? 0)
   );
 }
 
@@ -915,6 +919,8 @@ export async function isLessonCompleted(
     );
 
   return (
-    progress?.completed === true
+    (progress?.totalSections ?? 0) > 0 &&
+    (progress?.completedSections ?? 0) >=
+      (progress?.totalSections ?? 0)
   );
 }

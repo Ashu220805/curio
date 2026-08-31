@@ -34,21 +34,6 @@
   min-width: 0;
 }
 
-.reality-back-button {
-  width: 42px;
-  height: 42px;
-  border: 1px solid #e4e6ef;
-  border-radius: 12px;
-  background: #fff;
-  color: #20263a;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.reality-back-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(25, 31, 55, 0.08);
-}
 
 .reality-logo {
   width: 42px;
@@ -993,5 +978,127 @@
 
   .reality-position {
     order: -1;
+  }
+}
+
+
+/* =========================================================
+   REALITY CHECK · GLOBAL BACK BUTTON
+   =========================================================
+   Reality Check already owns its page header. Hide the
+   shared GlobalBackButton here so it cannot overlap CURIO.
+   ========================================================= */
+
+body:has(.reality-page) .global-back-button {
+  display: none !important;
+}
+
+
+/* =========================================================
+   UPGRADED LEARNING CONTENT
+   ========================================================= */
+
+.reality-hero-method {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.reality-hero-method > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.reality-hero-method span {
+  display: block;
+  color: #bdb5ff;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.reality-hero-method strong {
+  display: block;
+  margin-top: 6px;
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.reality-hero-method small {
+  display: block;
+  margin-top: 4px;
+  color: #bfc2d9;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.reality-practice {
+  margin: 6px 0 30px;
+  padding: 18px;
+  border: 1px solid #e2e4ee;
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, #fbfbff, #f7f8fc);
+}
+
+.reality-practice-label {
+  display: inline-block;
+  color: #5e55d3;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.reality-practice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.reality-practice-grid > div {
+  padding: 14px;
+  border-radius: 13px;
+  background: #fff;
+  border: 1px solid #eaebf1;
+}
+
+.reality-practice-grid strong {
+  display: block;
+  font-size: 11px;
+  color: #343b50;
+}
+
+.reality-practice-grid p {
+  margin: 6px 0 0;
+  color: #686f82;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .reality-hero-method {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .reality-hero-method {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .reality-practice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .reality-hero-method {
+    grid-template-columns: 1fr 1fr;
   }
 }

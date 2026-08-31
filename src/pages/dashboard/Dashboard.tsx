@@ -64,45 +64,6 @@ function Dashboard() {
   =========================================
   */
 
-  const readCompletedLessons = (): number[] => {
-    /*
-      =========================================
-      GUEST PROTECTION
-      =========================================
-    */
-
-    if (isGuest) {
-      return [];
-    }
-
-    try {
-      const stored = localStorage.getItem(
-        "curio_completed_lessons"
-      );
-
-      if (!stored) return [];
-
-      const parsed = JSON.parse(stored);
-
-      if (!Array.isArray(parsed)) return [];
-
-      return Array.from(
-        new Set(
-          parsed
-            .map(Number)
-            .filter(
-              (lesson) =>
-                Number.isInteger(lesson) &&
-                lesson >= 1 &&
-                lesson <= TOTAL_LESSONS
-            )
-        )
-      );
-    } catch {
-      return [];
-    }
-  };
-
   /*
     =========================================
     READ LESSON SECTION PROGRESS
@@ -123,7 +84,7 @@ function Dashboard() {
   ): number => {
     /*
       =========================================
-      GUEST PROTECTION
+      GUEST MODE
       =========================================
     */
 
@@ -133,134 +94,44 @@ function Dashboard() {
 
     /*
       =========================================
-      SUPABASE PROGRESS
+      SUPABASE IS THE ONLY SOURCE OF TRUTH
       =========================================
+
+      Authenticated Dashboard progress is
+      calculated only from completed_sections.
+
+      The database `completed` flag is NOT
+      allowed to turn a lesson into 100%.
+    =========================================
     */
 
     const savedProgress =
       lessonProgress.find(
         (item) =>
-          item.lessonId === lessonId
+          Number(item.lessonId) === lessonId
       );
 
-    if (savedProgress) {
-      const completedSections = Math.max(
-        0,
-        Math.min(
-          Number(
-            savedProgress.completedSections ?? 0
-          ),
-          TOTAL_SECTIONS_PER_LESSON
-        )
-      );
-
-      /*
-        If database says completed, always
-        display 100%.
-      */
-
-      if (
-        savedProgress.completed === true ||
-        completedSections >=
-          TOTAL_SECTIONS_PER_LESSON
-      ) {
-        return 100;
-      }
-
-      return Math.round(
-        (completedSections /
-          TOTAL_SECTIONS_PER_LESSON) *
-          100
-      );
-    }
-
-    /*
-      =========================================
-      LOCAL STORAGE FALLBACK
-      =========================================
-
-      This preserves your existing behavior
-      for older progress records.
-    =========================================
-    */
-
-    try {
-      const completedLessons =
-        readCompletedLessons();
-
-      if (
-        completedLessons.includes(
-          lessonId
-        )
-      ) {
-        return 100;
-      }
-
-      const matchingKeys =
-        Object.keys(localStorage).filter(
-          (key) => {
-            const lowerKey =
-              key.toLowerCase();
-
-            return (
-              lowerKey.includes(
-                `lesson${lessonId}`
-              ) &&
-              lowerKey.includes(
-                "sections"
-              ) &&
-              lowerKey.includes(
-                "completed"
-              )
-            );
-          }
-        );
-
-      let bestCount = 0;
-
-      matchingKeys.forEach((key) => {
-        try {
-          const parsed = JSON.parse(
-            localStorage.getItem(key) ||
-              "null"
-          );
-
-          if (Array.isArray(parsed)) {
-            const validSections =
-              parsed.filter(
-                (item) =>
-                  item !== null &&
-                  item !== undefined
-              );
-
-            bestCount = Math.max(
-              bestCount,
-              validSections.length
-            );
-          }
-        } catch {
-          /*
-            Ignore unrelated localStorage
-            values.
-          */
-        }
-      });
-
-      if (bestCount <= 0) {
-        return 0;
-      }
-
-      return Math.min(
-        100,
-        Math.round(
-          (bestCount /
-            TOTAL_SECTIONS_PER_LESSON) *
-            100
-        )
-      );
-    } catch {
+    if (!savedProgress) {
       return 0;
     }
+
+    const completedSections = Math.max(
+      0,
+      Math.min(
+        Math.floor(
+          Number(
+            savedProgress.completedSections ?? 0
+          )
+        ),
+        TOTAL_SECTIONS_PER_LESSON
+      )
+    );
+
+    return Math.round(
+      (completedSections /
+        TOTAL_SECTIONS_PER_LESSON) *
+        100
+    );
   };
 
   /*
@@ -487,11 +358,10 @@ function Dashboard() {
       lessonProgress
         .filter(
           (lesson) =>
-            lesson.completed === true ||
             Number(
               lesson.completedSections ?? 0
             ) >=
-              TOTAL_SECTIONS_PER_LESSON
+            TOTAL_SECTIONS_PER_LESSON
         )
         .map(
           (lesson) => lesson.lessonId
@@ -532,6 +402,11 @@ function Dashboard() {
     );
 
     globalThis.addEventListener(
+      "curio:lesson-progress-updated",
+      handleLessonCompleted
+    );
+
+    globalThis.addEventListener(
       "storage",
       handleLessonCompleted
     );
@@ -544,6 +419,11 @@ function Dashboard() {
     return () => {
       globalThis.removeEventListener(
         "curio:lesson-completed",
+        handleLessonCompleted
+      );
+
+      globalThis.removeEventListener(
+        "curio:lesson-progress-updated",
         handleLessonCompleted
       );
 

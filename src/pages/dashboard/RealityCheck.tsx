@@ -99,6 +99,11 @@ const PAGE_CONTENT: Record<
     icon: string;
     principle: string;
     points: { icon: string; title: string; text: string }[];
+    practice: {
+      label: string;
+      scenario: string;
+      action: string;
+    };
     question: string;
     correctMessage: string;
     wrongMessage: string;
@@ -112,10 +117,15 @@ const PAGE_CONTENT: Record<
     icon: "⏸️",
     principle: "A dramatic headline, shocking image or emotional message can make you react immediately. Give yourself a moment before you like, share, comment or believe it.",
     points: [
-      { icon: "⚡", title: "Notice the reaction", text: "Strong emotion can make quick decisions feel urgent." },
-      { icon: "⏸️", title: "Create space", text: "Pause before accepting the claim or passing it on." },
-      { icon: "🔎", title: "Start checking", text: "Ask what you actually know and what still needs evidence." },
+      { icon: "01", title: "Notice the reaction", text: "Strong emotion can make a claim feel urgent before you have checked it." },
+      { icon: "02", title: "Create space", text: "Give yourself a few seconds before liking, forwarding, commenting or believing." },
+      { icon: "03", title: "Name the claim", text: "Separate what you saw from what the post is asking you to believe." },
     ],
+    practice: {
+      label: "TRY IT IN REAL LIFE",
+      scenario: "A post says: “BREAKING — everyone is sharing this right now!”",
+      action: "Do not let popularity create urgency. Pause, identify the exact claim, and begin checking it.",
+    },
     question: "What should you do first?",
     correctMessage: "Correct. Pausing gives you space to think before reacting.",
     wrongMessage: "Not quite. A strong emotional reaction should not replace checking.",
@@ -128,10 +138,15 @@ const PAGE_CONTENT: Record<
     icon: "🔎",
     principle: "Ask: “Who is saying this?” Identify the person, organisation or publication behind the information and check whether the claim can actually be verified.",
     points: [
-      { icon: "01", title: "Identify the source", text: "Who created or published it?" },
-      { icon: "02", title: "Check the date", text: "Is the information current and relevant?" },
-      { icon: "03", title: "Look for evidence", text: "Does the source support its claim?" },
+      { icon: "01", title: "Identify the source", text: "Find the person, organisation or publication responsible for the claim." },
+      { icon: "02", title: "Check the date", text: "Confirm when it was published and whether it still applies." },
+      { icon: "03", title: "Trace the evidence", text: "Follow links, documents, data or original reporting instead of trusting a screenshot." },
     ],
+    practice: {
+      label: "SOURCE CHECK",
+      scenario: "Two posts make the same claim. One is anonymous; the other links to an identifiable report with supporting evidence.",
+      action: "Start with the source you can identify and independently verify. A confident tone is not proof.",
+    },
     question: "Which source gives you stronger evidence?",
     correctMessage: "Correct. A source with verifiable information gives you a stronger basis for judgment.",
     wrongMessage: "Look again. An unsupported anonymous claim gives you less evidence to work with.",
@@ -144,10 +159,15 @@ const PAGE_CONTENT: Record<
     icon: "🧩",
     principle: "A cropped image, shortened quote, old video or isolated statistic can create a very different impression from the complete information.",
     points: [
-      { icon: "✂️", title: "Look beyond the crop", text: "Check what happened before and after the visible part." },
-      { icon: "🕰️", title: "Check when", text: "Old information can be presented as if it were new." },
-      { icon: "🧩", title: "Complete the picture", text: "Find the surrounding facts before judging." },
+      { icon: "01", title: "Look beyond the crop", text: "Check what happened before and after the visible part of an image, video or quote." },
+      { icon: "02", title: "Check when", text: "Old information can be reposted as if it happened today." },
+      { icon: "03", title: "Complete the picture", text: "Look for the original post, full statement, location and surrounding facts." },
     ],
+    practice: {
+      label: "CONTEXT CHECK",
+      scenario: "A video shows a crowded street with the caption “This happened today.”",
+      action: "Check the original upload, date, location and full video before deciding what the clip proves.",
+    },
     question: "Which approach is better?",
     correctMessage: "Correct. Context helps you understand what the information actually represents.",
     wrongMessage: "A headline or isolated quote is only one part of the information. Look deeper.",
@@ -160,10 +180,15 @@ const PAGE_CONTENT: Record<
     icon: "📌",
     principle: "Confidence is not evidence. A person can sound completely certain and still be wrong.",
     points: [
-      { icon: "💬", title: "Claim", text: "Someone says something happened." },
-      { icon: "🔎", title: "Evidence", text: "Look for information that supports or challenges the claim." },
-      { icon: "🧠", title: "Reasoning", text: "Decide what the evidence actually tells you." },
+      { icon: "01", title: "Separate claim from proof", text: "A statement tells you what someone believes happened; it does not prove that it happened." },
+      { icon: "02", title: "Find supporting evidence", text: "Look for records, data, original sources or independent reporting." },
+      { icon: "03", title: "Test the conclusion", text: "Ask whether the evidence really supports the strength of the claim." },
     ],
+    practice: {
+      label: "EVIDENCE TEST",
+      scenario: "A creator says, “Experts agree,” but gives no names, sources or data.",
+      action: "Treat the statement as a claim. Ask which experts, what evidence and where the original information can be checked.",
+    },
     question: "Which approach is strongest?",
     correctMessage: "Correct. Evidence gives you something you can examine instead of simply trusting confidence.",
     wrongMessage: "Confidence does not guarantee accuracy. Look for evidence.",
@@ -176,10 +201,15 @@ const PAGE_CONTENT: Record<
     icon: "✂️",
     principle: "Don't only ask “Is this real?” Also ask “Is this being presented accurately?”",
     points: [
-      { icon: "✂️", title: "Cropping", text: "Removing surrounding information can change what a scene appears to mean." },
-      { icon: "🎞️", title: "Editing", text: "Parts of a recording can be removed or rearranged." },
-      { icon: "🕰️", title: "Old content", text: "Genuine content can be presented as though it happened recently." },
+      { icon: "01", title: "Cropping", text: "Removing surrounding information can change what a scene appears to mean." },
+      { icon: "02", title: "Editing", text: "Cuts, rearrangement, captions or selective clips can change the impression." },
+      { icon: "03", title: "Presentation", text: "A genuine piece of content can still be framed to imply something it does not establish." },
     ],
+    practice: {
+      label: "MANIPULATION CHECK",
+      scenario: "A genuine photograph is posted with a caption claiming it proves a completely different event.",
+      action: "Separate authenticity from meaning. Verify when, where and why the image was originally created.",
+    },
     question: "What should you check?",
     correctMessage: "Correct. Authenticity and context both matter.",
     wrongMessage: "Something can look genuine and still be misleading.",
@@ -192,11 +222,16 @@ const PAGE_CONTENT: Record<
     icon: "🤖",
     principle: "The fact that something looks, sounds or reads convincingly does not automatically prove that it is accurate.",
     points: [
-      { icon: "🖼️", title: "Images", text: "Synthetic or edited images can appear realistic." },
-      { icon: "🎙️", title: "Voices", text: "Audio can be generated or altered." },
-      { icon: "🎥", title: "Video", text: "Video can be manipulated or generated." },
-      { icon: "✍️", title: "Text", text: "AI can produce convincing written content." },
+      { icon: "01", title: "Images", text: "Synthetic or edited images can appear realistic and detailed." },
+      { icon: "02", title: "Voices", text: "Audio can be generated, cloned or altered." },
+      { icon: "03", title: "Video", text: "Video can be manipulated, composited or generated." },
+      { icon: "04", title: "Text", text: "AI can produce fluent content without guaranteeing that its claims are correct." },
     ],
+    practice: {
+      label: "AI CONTENT CHECK",
+      scenario: "A realistic AI-generated image is being shared as proof of a breaking event.",
+      action: "Do not use realism as verification. Check the source, original publication, independent reporting and supporting evidence.",
+    },
     question: "What is the safest approach?",
     correctMessage: "Correct. Convincing appearance is not enough evidence.",
     wrongMessage: "Something can be convincing without being accurate.",
@@ -209,10 +244,15 @@ const PAGE_CONTENT: Record<
     icon: "⚖️",
     principle: "Compare, don't just collect. Examine what different sources say and where their evidence comes from.",
     points: [
-      { icon: "01", title: "Find the claim", text: "What exactly is being said?" },
-      { icon: "02", title: "Find other sources", text: "What do independent reliable sources say?" },
-      { icon: "03", title: "Compare evidence", text: "Where does the evidence agree or disagree?" },
+      { icon: "01", title: "Find the claim", text: "Reduce the post to one precise statement you can actually check." },
+      { icon: "02", title: "Find other sources", text: "Look for independent, reliable sources rather than copies of the same post." },
+      { icon: "03", title: "Compare evidence", text: "Notice where sources agree, disagree or rely on the same original claim." },
     ],
+    practice: {
+      label: "COMPARE BEFORE DECIDING",
+      scenario: "The first search result supports a claim, but several independent sources give a different picture.",
+      action: "Do not stop at the first result. Compare source quality, evidence, dates and whether the reports are actually independent.",
+    },
     question: "What is the strongest habit?",
     correctMessage: "Correct. Comparing information helps you make a better-supported judgment.",
     wrongMessage: "The first result is not automatically the best or most accurate source.",
@@ -478,15 +518,6 @@ function RealityCheck() {
     <main className="reality-page">
       <header className="reality-header">
         <div className="reality-brand">
-          <button
-            type="button"
-            className="reality-back-button"
-            onClick={() => navigate("/learn")}
-            aria-label="Back to learning"
-          >
-            ←
-          </button>
-
           <div className="reality-logo">🧠</div>
 
           <div>
@@ -589,6 +620,23 @@ function RealityCheck() {
                   and make better decisions.
                 </p>
               </div>
+            </div>
+
+            <div className="reality-hero-method">
+              {[
+                ["01", "PAUSE", "Slow the reaction."],
+                ["02", "VERIFY", "Check the source."],
+                ["03", "CONTEXT", "Find what is missing."],
+                ["04", "EVIDENCE", "Test the claim."],
+                ["05", "COMPARE", "Check independent sources."],
+                ["06", "DECIDE", "Act on what you know."],
+              ].map(([number, title, text]) => (
+                <div key={number}>
+                  <span>{number}</span>
+                  <strong>{title}</strong>
+                  <small>{text}</small>
+                </div>
+              ))}
             </div>
           </section>
 
@@ -708,6 +756,20 @@ function RealityLearningPage({
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="reality-practice">
+        <span className="reality-practice-label">{content.practice.label}</span>
+        <div className="reality-practice-grid">
+          <div>
+            <strong>Scenario</strong>
+            <p>{content.practice.scenario}</p>
+          </div>
+          <div>
+            <strong>Better move</strong>
+            <p>{content.practice.action}</p>
+          </div>
+        </div>
       </div>
 
       <div className="reality-question">
