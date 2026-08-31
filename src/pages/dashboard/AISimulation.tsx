@@ -1144,7 +1144,7 @@ function AISimulation() {
       */
 
       const result =
-        simulatorResult.analysis as Record<string, unknown>;
+      simulatorResult.analysis as unknown as Record<string, unknown>;
 
       /*
         =========================================
