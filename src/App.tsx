@@ -170,6 +170,8 @@ function GlobalBackButton() {
     "/login",
     "/signup",
     "/guest",
+    // These pages already provide their own navigation.
+    "/dashboard",
   ];
 
   if (hiddenPaths.includes(location.pathname)) {
@@ -177,14 +179,23 @@ function GlobalBackButton() {
   }
 
   const handleBack = () => {
-    if (globalThis.history.length > 1) {
+    // Only go back when React Router has a same-tab history entry.
+    // Otherwise a direct visit must stay inside CURIO.
+    const historyState = globalThis.history.state as
+      | { idx?: unknown }
+      | null;
+
+    const historyIndex =
+      typeof historyState?.idx === "number"
+        ? historyState.idx
+        : 0;
+
+    if (historyIndex > 0) {
       navigate(-1);
       return;
     }
 
-    navigate("/dashboard", {
-      replace: true,
-    });
+    navigate("/dashboard", { replace: true });
   };
 
   return (

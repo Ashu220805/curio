@@ -1,15 +1,18 @@
-/* =========================================
-   CURIO LESSON DATA
-   Single source of truth for the
-   CURIO learning pathway.
-========================================= */
+export type LessonDifficulty = "Beginner" | "Intermediate" | "Advanced";
+export type LessonSectionKind = "concept" | "decision" | "practice" | "challenge";
 
 export interface LessonSection {
   id: number;
   title: string;
-  shortDescription: string;
+  kind: LessonSectionKind;
+  summary: string;
   explanation: string;
-  estimatedMinutes: number;
+  example: string;
+  action: string;
+  checkQuestion: string;
+  options: string[];
+  answer: number;
+  answerExplanation: string;
 }
 
 export interface LessonData {
@@ -17,948 +20,217 @@ export interface LessonData {
   title: string;
   subtitle: string;
   description: string;
-
-  difficulty:
-    | "Beginner"
-    | "Intermediate"
-    | "Advanced";
-
+  difficulty: LessonDifficulty;
   estimatedMinutes: number;
-
   skills: string[];
-
   objectives: string[];
-
   sections: LessonSection[];
-
   prerequisiteLessonId: number | null;
-
-  requiresCompletion: boolean;
 }
 
-/* =========================================
-   LESSON 1
-   AI FUNDAMENTALS
-========================================= */
+const section = (
+  id: number,
+  title: string,
+  kind: LessonSectionKind,
+  summary: string,
+  explanation: string,
+  example: string,
+  action: string,
+  checkQuestion: string,
+  options: string[],
+  answer: number,
+  answerExplanation: string,
+): LessonSection => ({
+  id,
+  title,
+  kind,
+  summary,
+  explanation,
+  example,
+  action,
+  checkQuestion,
+  options,
+  answer,
+  answerExplanation,
+});
 
 export const lessons: LessonData[] = [
-
   {
     id: 1,
-
-    title: "Understanding AI",
-
-    subtitle: "What AI is, how it works, and where it fits in everyday life.",
-
-    description:
-      "Build a strong foundation in artificial intelligence before learning how to use generative AI tools.",
-
+    title: "AI Foundations",
+    subtitle: "Build a useful mental model of AI before you start relying on it.",
+    description: "Learn what AI systems do, what they do not guarantee, and how to use them as tools rather than authorities.",
     difficulty: "Beginner",
-
-    estimatedMinutes: 15,
-
-    skills: [
-      "AI Fundamentals",
-      "AI Literacy",
-      "Technology Awareness",
-    ],
-
+    estimatedMinutes: 18,
+    skills: ["AI literacy", "Mental models", "Responsible use"],
     objectives: [
-      "Understand what artificial intelligence means.",
-      "Distinguish AI from traditional software.",
-      "Understand what machine learning is at a basic level.",
-      "Recognize common AI systems in everyday life.",
-      "Understand the limitations of AI.",
+      "Explain AI in practical terms.",
+      "Distinguish pattern-based systems from human understanding.",
+      "Recognise common AI capabilities and limitations.",
+      "Use context to improve an AI request.",
+      "Protect sensitive information when using AI.",
     ],
-
     prerequisiteLessonId: null,
-
-    requiresCompletion: false,
-
     sections: [
-      {
-        id: 1,
-
-        title: "What is AI?",
-
-        shortDescription:
-          "Understand the basic idea behind artificial intelligence.",
-
-        explanation:
-          "Artificial intelligence refers to computer systems designed to perform tasks that normally require human-like abilities such as recognizing patterns, understanding language, making predictions, and solving problems.",
-
-        estimatedMinutes: 2,
-      },
-
-      {
-        id: 2,
-
-        title: "How AI Learns",
-
-        shortDescription:
-          "Understand the basic idea of learning from data.",
-
-        explanation:
-          "Many modern AI systems learn patterns from examples. Instead of manually programming every possible answer, developers provide data and training methods that allow the system to identify useful patterns.",
-
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-
-        title: "AI Around You",
-
-        shortDescription:
-          "Recognize AI systems you may already use.",
-
-        explanation:
-          "AI is already present in search engines, recommendation systems, navigation applications, spam filters, translation tools, voice assistants, image recognition systems, and generative AI applications.",
-
-        estimatedMinutes: 2,
-      },
-
-      {
-        id: 4,
-
-        title: "Generative AI",
-
-        shortDescription:
-          "Learn what makes generative AI different.",
-
-        explanation:
-          "Generative AI creates new content such as text, images, audio, video, and code based on patterns learned during training.",
-
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 5,
-
-        title: "What AI Cannot Do Reliably",
-
-        shortDescription:
-          "Understand why AI answers must be evaluated.",
-
-        explanation:
-          "AI systems can produce incorrect, incomplete, outdated, or misleading information. A confident answer is not automatically a correct answer.",
-
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 6,
-
-        title: "AI Responsibility",
-
-        shortDescription:
-          "Understand why responsible AI use matters.",
-
-        explanation:
-          "Using AI responsibly means protecting private information, checking important information, understanding limitations, and thinking about the consequences of AI-generated outputs.",
-
-        estimatedMinutes: 2,
-      },
+      section(1, "A practical definition", "concept", "AI is a class of computer systems that perform tasks that normally require aspects of human intelligence.", "For everyday use, think of AI as software that can process information, detect patterns, classify or predict things, generate content, or choose an action from available information. The useful question is not whether a system is 'really intelligent', but what capability it provides and under what conditions it works.", "A spam filter classifies messages. A recommendation system predicts what you may like. A generative model produces a new response from patterns learned during training.", "Name one AI system you already use and describe the task it performs.", "Which description is the most useful working definition of AI?", ["Software that is always correct", "Systems that perform useful tasks involving capabilities associated with intelligence", "A robot that looks human", "Any program with an internet connection"], 1, "AI is broader than robots and is not defined by perfect accuracy or internet access."),
+      section(2, "Patterns are not understanding", "concept", "AI can produce convincing results without possessing human-like understanding.", "Many AI systems learn statistical relationships in data. A model can therefore produce a fluent explanation or recognise a visual pattern without having human experience, beliefs, intentions, or common-sense grounding in the same way a person does.", "A model may correctly complete a sentence about rain while having no personal experience of standing in the rain.", "When an AI answer sounds confident, separate fluency from evidence.", "What should you infer from a confident AI response?", ["It must be true", "It has human understanding", "It is plausible output that may still require checking", "It has personally experienced the topic"], 2, "Confidence in wording is not a reliability guarantee."),
+      section(3, "Where AI is useful", "decision", "AI is strongest when the task can benefit from pattern recognition, transformation, generation, or structured assistance.", "AI can accelerate drafting, summarising, classification, brainstorming, tutoring, coding support, translation, and many other workflows. Its value depends on the quality of the input, the model, the available tools, and the cost of mistakes.", "For a study session, AI can turn a chapter into practice questions. For a business process, it can classify incoming requests before a human reviews them.", "Choose one repetitive task in your day that could be assisted by AI.", "Which task is a strong candidate for AI assistance?", ["A task where no evaluation is possible", "A repetitive task with clear examples and a review step", "Sharing a private password with a chatbot", "A high-stakes decision with no human oversight"], 1, "Clear tasks with review checkpoints are safer and easier to improve."),
+      section(4, "Limitations and failure", "concept", "Useful AI use includes knowing when the system may fail.", "AI can be wrong, incomplete, outdated, biased, or misaligned with the user's actual intent. Failure can come from poor input, missing context, weak evidence, ambiguous language, or model limitations. High-impact decisions need stronger verification and human judgement.", "If you ask for a current policy without giving a date or source, the system may produce an answer that sounds reasonable but does not match the current rule.", "For an important answer, identify what would make the answer wrong and check that point.", "Why can an AI answer be wrong even when it sounds polished?", ["Polished language proves accuracy", "AI outputs are generated from learned patterns and available information, not guaranteed truth", "AI never uses data", "Only users make mistakes"], 1, "A polished response can still contain unsupported or incorrect claims."),
+      section(5, "Context changes the result", "practice", "Good context reduces guessing and gives the model a clearer target.", "Context can include audience, purpose, constraints, starting knowledge, available material, and what success looks like. More context is not automatically better; include information that changes the decision or output.", "Instead of 'Explain economics', try 'Explain inflation to a first-year student in 150 words using one household example.'", "Rewrite one vague request by adding audience, purpose, and one constraint.", "Which addition usually improves a broad request most?", ["More emojis", "Relevant audience, purpose, and constraints", "A longer greeting", "Repeating the same sentence"], 1, "Relevant context narrows interpretation and improves usefulness."),
+      section(6, "Protect sensitive information", "decision", "Convenience should never require exposing secrets or unnecessary personal data.", "Treat passwords, OTPs, private keys, financial credentials, authentication codes, confidential documents, and sensitive personal information as data that should not be pasted into a general AI tool. Redact information when possible.", "If you need help debugging a configuration file, replace tokens, API keys, and personal identifiers with placeholders before sharing it.", "Before sending data to an AI tool, ask: does the model actually need this exact value?",
+        "Which item should be removed before sharing a debugging example?", ["A fake username", "A public error message", "A real API secret", "A generic code snippet"], 2, "Secrets should be rotated or redacted, not exposed for convenience."),
+      section(7, "A reliable AI habit", "practice", "The strongest beginner workflow is ask → inspect → verify → decide.", "Use AI to accelerate thinking, but retain responsibility for the final result. Inspect the response for assumptions, verify important facts, and adapt the output to your actual situation.", "For a study answer, ask for an explanation, compare it with your textbook or trusted source, then create your own notes.", "Apply the four-step workflow to a real question you have today.", "What is the best general workflow for important AI-assisted work?", ["Ask and copy", "Ask, inspect, verify, decide", "Ask repeatedly until it sounds confident", "Avoid all AI outputs"], 1, "The workflow keeps AI useful without turning it into an unquestioned authority."),
+      section(8, "Foundation challenge", "challenge", "Bring the foundation together in one realistic decision.", "A good AI user can identify the task, provide relevant context, recognise risks, and decide where human verification belongs. This final section asks you to combine those habits.", "You want AI to help prepare a short study plan for an exam. The safest approach is to provide your subjects, time available, target date, and constraints, then review the plan for realism.", "Choose the response that demonstrates the complete CURIO foundation workflow.", "Which approach best demonstrates responsible AI use?", ["Give the AI private credentials and follow its first answer", "Ask a vague question and copy the result", "Give relevant context, request a useful format, verify important claims, and make the final decision yourself", "Never question an AI response"], 2, "The strongest workflow combines clear input, useful constraints, verification, and human judgement."),
     ],
   },
-
-  /* =========================================
-     LESSON 2
-     AI TOOLS
-  ========================================== */
-
   {
     id: 2,
-
-    title: "Understanding AI Tools",
-
-    subtitle:
-      "Learn how different AI tools work and when to choose them.",
-
-    description:
-      "Understand the difference between AI assistants, search-based tools, image generators, coding assistants, and other AI applications.",
-
+    title: "Choosing AI Tools",
+    subtitle: "Match the job to the capability instead of choosing a tool by popularity.",
+    description: "Learn how assistants, search systems, coding tools, image systems, and data tools differ and how to select the right one.",
     difficulty: "Beginner",
-
-    estimatedMinutes: 15,
-
-    skills: [
-      "AI Tools",
-      "Tool Selection",
-      "Digital Literacy",
-    ],
-
-    objectives: [
-      "Identify different categories of AI tools.",
-      "Understand what an AI assistant does.",
-      "Understand the difference between generation and search.",
-      "Choose an appropriate AI tool for a task.",
-      "Recognize that different tools have different strengths.",
-    ],
-
+    estimatedMinutes: 20,
+    skills: ["Tool selection", "Search literacy", "Workflow design"],
+    objectives: ["Identify the capability a task needs.", "Separate retrieval from generation.", "Compare tools using evidence rather than brand familiarity.", "Design a simple multi-tool workflow."],
     prerequisiteLessonId: 1,
-
-    requiresCompletion: true,
-
     sections: [
-      {
-        id: 1,
-        title: "AI Assistants",
-        shortDescription:
-          "Understand conversational AI assistants.",
-        explanation:
-          "AI assistants allow users to interact with AI through natural language. They can help explain concepts, brainstorm ideas, transform text, plan tasks, and support problem solving.",
-        estimatedMinutes: 2,
-      },
-
-      {
-        id: 2,
-        title: "Search vs AI Generation",
-        shortDescription:
-          "Understand an important difference between searching and generating.",
-        explanation:
-          "Search systems primarily retrieve information from available sources, while generative AI produces responses based on learned patterns and the information available to the system.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-        title: "Choosing the Right Tool",
-        shortDescription:
-          "Learn to match a task with an appropriate AI tool.",
-        explanation:
-          "The best AI tool depends on the task. Research, writing, coding, image creation, data analysis, and real-time information may require different capabilities.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 4,
-        title: "AI Tool Strengths",
-        shortDescription:
-          "Understand why different AI systems behave differently.",
-        explanation:
-          "Different AI systems may use different models, data sources, interfaces, tools, and capabilities. Therefore their responses and strengths can differ.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 5,
-        title: "Using Multiple AI Tools",
-        shortDescription:
-          "Learn when multiple tools can work together.",
-        explanation:
-          "A workflow can combine different tools. For example, one tool may help research, another may organize information, and another may help create a presentation.",
-        estimatedMinutes: 2,
-      },
-
-      {
-        id: 6,
-        title: "Tool Selection Practice",
-        shortDescription:
-          "Practice choosing the appropriate tool for a situation.",
-        explanation:
-          "You will evaluate realistic tasks and select the type of AI tool that is most suitable for each situation.",
-        estimatedMinutes: 2,
-      },
+      section(1, "Start with the job", "concept", "Tool choice should begin with the task, not the product name.", "Write down the desired outcome first. Then identify whether you need current information, reasoning, generation, code execution, image creation, structured data work, or a combination.", "'Find today's regulation' needs current sources; 'turn these notes into flashcards' mainly needs transformation.", "Describe the outcome before naming an AI tool.", "What should you identify first when choosing an AI tool?", ["The most famous brand", "The task and required capability", "The colour of the interface", "The number of buttons"], 1, "Capability requirements determine whether a tool is appropriate."),
+      section(2, "Search and generation", "decision", "Retrieval and generation solve different parts of a problem.", "Search-oriented systems are designed to retrieve or ground answers in available sources. Generative systems create responses from model knowledge and any information supplied through tools or context. A workflow may use both.", "For a current policy question, retrieve the official document first; then use an AI system to summarise the document.", "For one task, identify what must be sourced and what can be generated.", "Which workflow best separates retrieval from generation?", ["Generate a current legal rule from memory", "Retrieve the official source, then summarise it", "Ignore sources and ask for confidence", "Use an image generator for a legal citation"], 1, "Current or high-stakes claims benefit from source retrieval before summarisation."),
+      section(3, "Tool strengths", "concept", "Different tools have different interfaces, models, context limits, and connected capabilities.", "Two systems can give different results because they use different models, instructions, retrieval systems, tools, data, or safety policies. Evaluate a tool on the task you actually need it for.", "A coding assistant with repository context may outperform a general chatbot on a codebase question because it can inspect the relevant files.", "Compare two tools on the same small task instead of relying on reputation.", "Why can two AI tools produce different answers to the same request?", ["AI tools are identical", "Their models, context, tools, data, or instructions can differ", "One tool is always human", "The question changes by itself"], 1, "Tool behaviour depends on the system and context, not only the wording."),
+      section(4, "Evidence and freshness", "decision", "Current information requires a freshness strategy.", "Ask whether the task depends on information that changes: prices, schedules, policies, software versions, news, laws, or live data. If it does, prefer a source-connected workflow or verify against the current authoritative source.", "A model's general knowledge may explain how a passport works, but a government site is the right place to confirm the current fee or requirement.", "Mark one part of your next task as 'must be current'.", "Which task most clearly needs current-source verification?", ["Explaining the water cycle", "Checking today's flight status", "Defining a basic noun", "Brainstorming fictional names"], 1, "Live or changing information needs a current source."),
+      section(5, "Compare before committing", "practice", "A small evaluation can prevent a poor tool choice.", "Compare tools using accuracy on your task, source quality, privacy requirements, speed, cost, controllability, and integration with your workflow. Do not judge solely from a single impressive demo.", "Run the same five representative prompts through two candidates and record where each succeeds or fails.", "Create three criteria that matter for your own most common AI task.", "Which comparison is most useful?", ["Logo quality only", "Task accuracy, source quality, privacy, speed, and workflow fit", "Follower count only", "How colourful the landing page is"], 1, "Evaluation criteria should reflect actual requirements and risk."),
+      section(6, "Use tools together", "practice", "A workflow can assign each tool the part it handles best.", "One tool can retrieve information, another can transform it, a third can validate a calculation, and a human can approve the final result. This is often more reliable than asking one system to do everything.", "Retrieve a document → extract key points → draft a summary → check the summary against the document.", "Sketch a four-step workflow for a task you repeat.", "What is the main advantage of a multi-tool workflow?", ["It removes the need for review", "It can assign different subtasks to suitable capabilities", "It guarantees every output", "It makes privacy irrelevant"], 1, "Division of labour can improve fit and verification."),
+      section(7, "Privacy as a selection criterion", "decision", "The best tool is not useful if its data handling conflicts with your requirements.", "Consider whether data is sensitive, whether the service stores inputs, what account controls exist, and whether an organisation has approved the tool. Minimise the data sent to external systems.", "A confidential company document may require an approved enterprise environment rather than a public consumer chatbot.", "For your next AI task, classify the information as public, internal, or sensitive before choosing a tool.", "Which factor belongs in a responsible tool-selection decision?", ["Only response style", "Data sensitivity and handling requirements", "Number of emojis", "Logo colour"], 1, "Privacy and governance are part of technical tool selection."),
+      section(8, "Tool selection challenge", "challenge", "Choose a tool strategy for a realistic research task.", "The best answer identifies the changing information, the source requirement, the transformation step, and the review point.", "For a current scholarship application, retrieve the official eligibility rules, summarise them, compare them with your situation, and verify the final interpretation against the source.", "Select the strategy that gives the strongest balance of capability and verification.", "Which strategy is strongest for a current, high-impact application?", ["Ask any chatbot and submit its answer", "Use a source-connected workflow, preserve the official source, and verify the final interpretation", "Use an image generator", "Choose the tool with the best advertisement"], 1, "Tool selection should follow the task, freshness requirement, risk, and verification path."),
     ],
   },
-
-  /* =========================================
-     LESSON 3
-     PROMPTING
-  ========================================== */
-
   {
     id: 3,
-
-    title: "What is a Prompt?",
-
-    subtitle:
-      "Learn how to communicate clearly with AI.",
-
-    description:
-      "Learn how prompts influence AI responses and how to construct clear, useful instructions.",
-
+    title: "Prompt Engineering",
+    subtitle: "Turn vague requests into instructions that give the model a clear job.",
+    description: "Learn how goals, context, constraints, examples, and output requirements work together in a prompt.",
     difficulty: "Beginner",
-
-    estimatedMinutes: 20,
-
-    skills: [
-      "Prompting",
-      "Communication",
-      "Problem Solving",
-    ],
-
-    objectives: [
-      "Understand what a prompt is.",
-      "Identify the important parts of a prompt.",
-      "Write clear instructions for AI.",
-      "Improve vague prompts.",
-      "Use prompt shortcuts effectively.",
-      "Evaluate whether a prompt contains enough context.",
-    ],
-
+    estimatedMinutes: 22,
+    skills: ["Prompt design", "Instruction writing", "Iterative refinement"],
+    objectives: ["Write unambiguous instructions.", "Add only useful context.", "Define output requirements.", "Use examples and constraints when they improve the result.", "Iterate from evidence instead of adding random words."],
     prerequisiteLessonId: 2,
-
-    requiresCompletion: true,
-
     sections: [
-      {
-        id: 1,
-        title: "Prompt Alphabet",
-        shortDescription:
-          "Learn the building blocks of a useful prompt.",
-        explanation:
-          "A strong prompt can include a goal, context, task, format, rules, and audience. These components help communicate what you actually want from the AI.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 2,
-        title: "Build a Prompt",
-        shortDescription:
-          "Construct a prompt step by step.",
-        explanation:
-          "Start with the desired outcome, add relevant context, describe the task, and specify the format or constraints when necessary.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-        title: "How Prompting Works",
-        shortDescription:
-          "Understand why wording affects AI responses.",
-        explanation:
-          "AI systems interpret the information and instructions provided in a prompt. Clearer context and instructions can make the desired response easier to produce.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 4,
-        title: "What Prompts Can Do",
-        shortDescription:
-          "Discover practical uses of prompting.",
-        explanation:
-          "Prompts can be used to explain, create, transform, analyze, compare, plan, coach, and critique information.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 5,
-        title: "Make Prompts Better",
-        shortDescription:
-          "Improve vague or incomplete prompts.",
-        explanation:
-          "Instead of asking a broad question, provide enough context, specify the desired outcome, define constraints, and explain the format you want.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 6,
-        title: "Prompt Shortcuts",
-        shortDescription:
-          "Use structured instructions for common tasks.",
-        explanation:
-          "Shortcuts such as asking for steps, tables, examples, summaries, quizzes, flashcards, comparisons, or checklists can make instructions easier to understand.",
-        estimatedMinutes: 2,
-      },
-
-      {
-        id: 7,
-        title: "Prompt Lab",
-        shortDescription:
-          "Experiment with prompts.",
-        explanation:
-          "You will modify prompts and observe how changing the goal, context, format, or constraints affects the resulting answer.",
-        estimatedMinutes: 2,
-      },
-
-      {
-        id: 8,
-        title: "Final Practice",
-        shortDescription:
-          "Demonstrate your prompting skills.",
-        explanation:
-          "Apply the prompting techniques from this lesson to construct a complete prompt for a realistic task.",
-        estimatedMinutes: 2,
-      },
+      section(1, "The job", "concept", "A strong prompt makes the requested action explicit.", "Start with a verb such as explain, compare, classify, rewrite, plan, extract, critique, or generate. Then specify the object of the task.", "'Compare two study methods' is easier to follow than 'Tell me about studying'.", "Rewrite one vague request using a precise action verb.", "Which prompt has the clearest task?", ["AI and studying", "Help", "Compare active recall and rereading for exam revision", "Something about exams"], 2, "The third prompt names a concrete action and subject."),
+      section(2, "Audience and context", "practice", "The same answer can be wrong for the wrong audience or situation.", "Audience, prior knowledge, purpose, and situation tell the model how to shape the response. Add only context that changes the answer.", "'Explain recursion to a first-year student who knows loops but not recursion' gives useful context.", "Add one audience detail and one purpose detail to a prompt you already use.", "Which context is most useful?", ["The user's favourite colour", "Audience and intended use", "A long greeting", "Repeated adjectives"], 1, "Context should affect the answer, not merely make the prompt longer."),
+      section(3, "Constraints", "decision", "Constraints turn a general task into a bounded task.", "Useful constraints include word count, number of examples, allowed sources, time period, difficulty level, exclusions, and evaluation criteria. Constraints should be realistic and relevant.", "'Explain photosynthesis in 120 words for a Class 10 student and include one everyday analogy.'", "Add one measurable constraint to a prompt.", "Which is a measurable constraint?", ["Make it nice", "Give exactly five examples", "Be helpful", "Explain well"], 1, "A measurable constraint can be checked against the output."),
+      section(4, "Output design", "practice", "Tell the model what a useful answer should look like.", "Output format can reduce editing. Specify bullets, a table, numbered steps, headings, JSON, a comparison matrix, or another format when it matters.", "'Return a three-column table: concept, definition, example.'", "Choose a format that would make your next AI answer easier to use.", "When is an output format especially useful?", ["When structure matters to the task", "Only when the prompt is short", "Never", "Only for greetings"], 0, "Format instructions are valuable when the result must fit a workflow."),
+      section(5, "Examples and boundaries", "concept", "A small example can show the model what 'good' means.", "Examples are useful when the desired style or classification is difficult to describe. Boundaries clarify what to include and exclude.", "Provide one sample support-ticket classification and state that unrelated requests should be labelled 'other'.", "Add one positive example or one explicit exclusion to a difficult prompt.", "What is the main value of an example in a prompt?", ["It guarantees factual accuracy", "It demonstrates the desired pattern or style", "It makes context unnecessary", "It replaces the goal"], 1, "Examples guide the pattern the model should reproduce."),
+      section(6, "Prompt iteration", "practice", "Improve a prompt based on the failure you observed.", "If the response is too broad, add scope. If it ignores a requirement, make that requirement explicit. If facts are weak, add a source requirement. If formatting is wrong, specify the schema. Avoid adding unrelated detail.", "Weak output: too generic. Useful revision: specify audience, decision criteria, and number of examples.", "Change one variable at a time and observe whether the output improves.", "What is the most reliable way to refine a prompt?", ["Add random words", "Diagnose the failure and change the relevant instruction", "Make it as long as possible", "Repeat the same request"], 1, "Evidence-based iteration makes prompt improvements explainable."),
+      section(7, "Prompt quality is task-dependent", "decision", "There is no universal perfect prompt length.", "A short prompt can be excellent for a simple task. A complex task may need context, constraints, examples, and an output contract. Judge quality by whether the instructions remove important ambiguity.", "'Convert this sentence to French' needs little context. A multi-step research brief needs much more.", "Remove one detail from a prompt that does not change the desired answer.", "What matters more than prompt length?", ["Number of words", "Whether the wording supplies the information needed for the task", "Number of emojis", "How formal the greeting is"], 1, "Prompt quality depends on task-relevant information, not length alone."),
+      section(8, "Prompt challenge", "challenge", "Build a complete prompt for a real task.", "Combine task, context, constraints, and output format only where each part contributes to a better result. The goal is a prompt that another person could follow without guessing.", "A strong study prompt might state the subject, level, exam purpose, topics, required depth, number of examples, and output format.", "Choose the prompt that is most operationally complete.", "Which prompt is strongest?", ["Explain history", "History please", "I am preparing for an undergraduate exam. Compare causes of the French Revolution and Industrial Revolution in a table, using five points for each and a short conclusion.", "Tell me everything about history"], 2, "The third option defines audience, purpose, scope, comparison method, and output structure."),
     ],
   },
-
-  /* =========================================
-     LESSON 4
-     VERIFICATION
-  ========================================== */
-
   {
     id: 4,
-
     title: "Verifying AI Answers",
-
-    subtitle:
-      "Learn how to question, check, and validate AI-generated information.",
-
-    description:
-      "Develop critical thinking skills so you can distinguish useful AI output from information that requires verification.",
-
+    subtitle: "Learn to separate a convincing answer from a trustworthy one.",
+    description: "Build a verification workflow for facts, calculations, citations, summaries, and claims that matter.",
     difficulty: "Intermediate",
-
-    estimatedMinutes: 20,
-
-    skills: [
-      "Verification",
-      "Critical Thinking",
-      "Fact Checking",
-    ],
-
-    objectives: [
-      "Understand why AI can produce incorrect answers.",
-      "Identify claims that require verification.",
-      "Compare AI output with reliable sources.",
-      "Recognize hallucinations and unsupported claims.",
-      "Develop a verification habit.",
-    ],
-
+    estimatedMinutes: 22,
+    skills: ["Fact checking", "Source evaluation", "Uncertainty"],
+    objectives: ["Identify claims that need verification.", "Trace important claims to sources.", "Detect unsupported citations and reasoning gaps.", "Match verification effort to consequence."],
     prerequisiteLessonId: 3,
-
-    requiresCompletion: true,
-
     sections: [
-      {
-        id: 1,
-        title: "Why AI Can Be Wrong",
-        shortDescription:
-          "Understand the limitations behind AI answers.",
-        explanation:
-          "AI generates responses from learned patterns and available context. It does not guarantee that every statement it produces is factually correct.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 2,
-        title: "Spot Suspicious Claims",
-        shortDescription:
-          "Identify information that deserves closer checking.",
-        explanation:
-          "Specific statistics, dates, quotations, legal claims, medical information, financial information, and unfamiliar facts should receive additional scrutiny.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-        title: "Finding Reliable Sources",
-        shortDescription:
-          "Learn what makes a source useful.",
-        explanation:
-          "Reliable verification often requires checking authoritative organizations, primary sources, official documents, academic publications, or reputable reporting.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 4,
-        title: "Cross Checking",
-        shortDescription:
-          "Compare information across sources.",
-        explanation:
-          "A useful verification process compares important claims with independent sources instead of relying on a single AI response.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 5,
-        title: "AI Verification Workflow",
-        shortDescription:
-          "Build a repeatable verification process.",
-        explanation:
-          "Ask, inspect the claim, identify the evidence needed, check reliable sources, compare the information, and only then decide whether the answer is trustworthy enough to use.",
-        estimatedMinutes: 4,
-      },
-
-      {
-        id: 6,
-        title: "Verification Practice",
-        shortDescription:
-          "Apply the verification process.",
-        explanation:
-          "You will evaluate AI-generated claims and determine what should be accepted, questioned, or verified.",
-        estimatedMinutes: 4,
-      },
+      section(1, "Claim or opinion?", "concept", "Verification starts by identifying what can actually be checked.", "Separate factual claims, calculations, interpretations, recommendations, and creative content. Factual claims and calculations often have an external reference point.", "'The treaty was signed in 1919' is a factual claim; 'this is the most interesting treaty' is an opinion.", "Underline the factual claims in an AI answer before checking it.", "Which statement is easiest to verify directly?", ["This book is beautiful", "The event occurred in 1947", "This explanation feels clearer", "The design is elegant"], 1, "Dates and other factual claims can be checked against authoritative sources."),
+      section(2, "Use the right source", "decision", "Source quality depends on the claim being checked.", "Prefer primary or authoritative sources when the task calls for exact rules, official statistics, legal requirements, scientific findings, or current information. Secondary sources can help explain but may introduce their own errors.", "For a visa requirement, start with the official government source rather than a random travel blog.", "For one important claim, identify the highest-authority source available.", "Which source is strongest for an official eligibility rule?", ["An anonymous forum", "The relevant government authority", "A social media comment", "An old screenshot"], 1, "The issuing authority is normally the strongest source for its current rule."),
+      section(3, "Citations need checking", "practice", "A citation-looking reference is not proof by itself.", "Check whether the cited source exists, actually supports the claim, and is current enough for the question. AI systems can misstate titles, links, authors, dates, or what a source says.", "An answer cites a study. Open the study and confirm the reported result rather than assuming the citation is accurate.", "Open one citation from an AI answer and compare the source with the claim.", "What should you verify about a citation?", ["Only that it has a URL", "That the source exists and supports the exact claim", "Only the font used", "Nothing"], 1, "Citation verification requires checking both existence and evidentiary support."),
+      section(4, "Calculations and code", "practice", "Independent checks are often easier than arguing with a generated answer.", "For arithmetic, use a calculator. For code, run tests or inspect outputs. For data, reproduce a calculation where feasible. Verification should use an independent method rather than the same uncertain process.", "If an AI calculates compound interest, recompute the result using a spreadsheet or calculator.", "Recalculate one AI-generated numerical result independently.", "What is the strongest check for an arithmetic answer?", ["Ask the same model again", "Recalculate independently", "Choose the answer that looks best", "Ignore the calculation"], 1, "An independent calculation reduces the chance of repeating the same error."),
+      section(5, "Look for missing conditions", "concept", "Many errors come from omitted assumptions rather than obviously false statements.", "An answer may be correct only under particular dates, definitions, units, jurisdictions, populations, or assumptions. Ask what conditions must be true for the claim to hold.", "A tax answer can change by country, financial year, income type, and taxpayer status.", "Add a 'what assumptions does this answer depend on?' step to your workflow.", "Why are assumptions important during verification?", ["They make every answer false", "They define the conditions under which a claim may be valid", "They only matter in fiction", "They replace sources"], 1, "Conditions and assumptions determine the scope of many claims."),
+      section(6, "Risk-based verification", "decision", "Spend more verification effort where mistakes cost more.", "A casual trivia answer and a medical, legal, financial, academic, or security decision should not receive the same verification standard. Match source quality and independent checking to consequence.", "A wrong restaurant recommendation is inconvenient; a wrong tax filing instruction can be costly.", "Classify one AI task as low, medium, or high consequence and choose a verification level.", "Which situation deserves the strongest verification?", ["Choosing a fictional character name", "Checking a current legal obligation", "Brainstorming slogans", "Writing a story"], 1, "High-consequence claims require stronger evidence and current sources."),
+      section(7, "Disagreement is a signal", "practice", "Conflicting sources should trigger investigation, not instant selection of the convenient answer.", "When sources disagree, compare publication dates, definitions, authority, methodology, and scope. Document uncertainty when the evidence cannot establish one clear answer.", "Two sources give different population estimates because one uses a different year and definition.", "When you find disagreement, write down why the sources may differ before choosing.", "What should you do when two credible sources disagree?", ["Pick the first result", "Compare scope, date, authority, and evidence", "Choose the more confident wording", "Assume both are wrong"], 1, "Source disagreement often becomes understandable after examining definitions and scope."),
+      section(8, "Verification challenge", "challenge", "Build a verification plan for a high-impact AI answer.", "A strong plan identifies the claims, selects authoritative sources, independently checks calculations or evidence, and records uncertainty or conditions.", "For a scholarship eligibility answer, verify each requirement against the current official notice and do not treat an AI summary as the final authority.", "Choose the complete verification workflow.", "Which workflow is strongest?", ["Copy the AI answer", "Ask the model to promise accuracy", "Break the answer into claims, check important claims against authoritative current sources, independently verify calculations, and record uncertainty", "Use only social media"], 2, "Verification is a process of tracing claims to evidence and checking them independently."),
     ],
   },
-
-  /* =========================================
-     LESSON 5
-     SAFETY & ETHICS
-  ========================================== */
-
   {
     id: 5,
-
-    title: "AI Ethics & Safety",
-
-    subtitle:
-      "Use AI responsibly while protecting yourself and others.",
-
-    description:
-      "Understand privacy, security, responsible AI use, bias, misinformation, and ethical decision-making.",
-
+    title: "AI Safety & Privacy",
+    subtitle: "Use AI without giving away secrets, rights, or control.",
+    description: "Understand data minimisation, account security, misinformation, copyright awareness, and safe human oversight.",
     difficulty: "Intermediate",
-
-    estimatedMinutes: 20,
-
-    skills: [
-      "Privacy",
-      "Security",
-      "AI Ethics",
-      "Responsible AI",
-    ],
-
-    objectives: [
-      "Understand why private information should not be casually entered into AI tools.",
-      "Recognize sensitive information.",
-      "Understand AI-related risks.",
-      "Identify biased or harmful outputs.",
-      "Use AI responsibly.",
-    ],
-
+    estimatedMinutes: 23,
+    skills: ["Privacy", "Security", "Responsible AI"],
+    objectives: ["Classify sensitive information.", "Apply data minimisation.", "Recognise manipulation and unsafe automation.", "Use human review for consequential decisions."],
     prerequisiteLessonId: 4,
-
-    requiresCompletion: true,
-
     sections: [
-      {
-        id: 1,
-        title: "Think Before You Send",
-        shortDescription:
-          "Learn what information should stay private.",
-        explanation:
-          "Before entering information into an AI system, consider whether it contains passwords, financial information, personal identifiers, confidential documents, private conversations, or other sensitive data.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 2,
-        title: "Privacy & Data",
-        shortDescription:
-          "Understand why data handling matters.",
-        explanation:
-          "AI applications can have different data handling policies. Users should understand the privacy settings and policies of the system they are using before sharing sensitive information.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-        title: "AI Bias",
-        shortDescription:
-          "Understand how bias can appear in AI systems.",
-        explanation:
-          "AI systems can reproduce patterns or biases present in their training data, system design, or user inputs. Outputs should therefore be evaluated critically.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 4,
-        title: "Misinformation",
-        shortDescription:
-          "Recognize how AI can amplify incorrect information.",
-        explanation:
-          "Generated content can make incorrect information appear convincing. Verification is especially important when AI output could influence important decisions.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 5,
-        title: "Responsible AI Use",
-        shortDescription:
-          "Develop responsible habits.",
-        explanation:
-          "Responsible AI use combines privacy awareness, verification, transparency, appropriate tool selection, and human judgment.",
-        estimatedMinutes: 4,
-      },
-
-      {
-        id: 6,
-        title: "Safety Scenarios",
-        shortDescription:
-          "Practice making safe AI decisions.",
-        explanation:
-          "You will evaluate realistic situations and decide whether information should be shared, verified, modified, or kept private.",
-        estimatedMinutes: 4,
-      },
+      section(1, "Data minimisation", "concept", "Only provide the information an AI task actually needs.", "Data minimisation reduces exposure. Remove names, account numbers, secrets, exact addresses, and other unnecessary identifiers when they do not affect the answer.", "A writing assistant can edit a paragraph without knowing the writer's home address or phone number.", "Remove one unnecessary personal detail from an example prompt.", "What is the safest default for personal data?", ["Send everything for context", "Send only what is necessary for the task", "Publish it first", "Use real credentials to improve accuracy"], 1, "Reducing unnecessary data lowers exposure without reducing the task's usefulness."),
+      section(2, "Secrets are different", "decision", "Credentials are not ordinary context.", "Passwords, OTPs, private keys, recovery codes, API secrets, and authentication tokens can grant access. Never share real credentials with a general AI system or place them in prompts, screenshots, or logs.", "Replace an API key with '<API_KEY_REDACTED>' before asking for help with code.", "Check a code sample for credentials before sharing it.", "Which value should always be redacted?", ["A public package name", "A real API secret", "A fictional variable", "A public error code"], 1, "Credentials can directly enable unauthorised access."),
+      section(3, "Sensitive documents", "practice", "Confidentiality requirements should influence the tool and workflow.", "Workplace, academic, legal, financial, or personal documents may have restrictions. Use approved environments, remove unnecessary identifiers, and understand who can access the information.", "A confidential client document should not automatically be pasted into a public chatbot because it is convenient.", "Classify a document before uploading it: public, internal, confidential, or highly sensitive.", "What should you do before sending a confidential document to an AI service?", ["Upload it immediately", "Check the data-handling requirements and use an approved workflow", "Remove the title only", "Ask the AI whether privacy matters"], 1, "Privacy is a system and policy decision, not something the model can guarantee for you."),
+      section(4, "Manipulation and synthetic content", "concept", "AI can make false material look plausible, so evidence needs context.", "Generated images, voices, videos, and text can be edited or fabricated. Human-made material can also be misleading when cropped or removed from context. Provenance, corroboration, and source history matter.", "A realistic audio clip of a public figure should not be treated as authentic solely because the voice sounds convincing.", "When a surprising claim matters, find an independent source rather than relying on the media itself.", "What makes synthetic content verification difficult?", ["It is always obviously fake", "Generated and edited media can look or sound convincing", "Only images can be manipulated", "Sources are unnecessary"], 1, "Realistic output increases the need for provenance and corroboration."),
+      section(5, "Automation needs boundaries", "decision", "Do not automate irreversible or high-impact decisions without appropriate controls.", "Automation can be efficient, but errors scale when a system acts repeatedly. Use approval steps, logs, permissions, limits, and rollback mechanisms where consequences matter.", "An email classifier can draft a response, while a human approves sensitive customer actions.", "Identify the point in one workflow where a human should approve the result.", "What is a sensible control for consequential automation?", ["Unlimited permissions", "Human approval and bounded permissions", "No logs", "No way to undo actions"], 1, "Boundaries reduce the blast radius of mistakes."),
+      section(6, "Misinformation loops", "practice", "Repeated AI-generated claims do not become true through repetition.", "Models can reproduce errors found in data or introduced during generation. Copying an AI answer into another AI system does not create independent evidence.", "Three chatbots repeating the same unsupported statistic are not three independent sources.", "Trace an important claim back to an external source instead of counting AI repetitions.", "Why is asking several AI systems the same factual question not enough?", ["They cannot generate text", "They may share similar information and failure patterns", "It always makes answers worse", "AI systems are identical"], 1, "Independent evidence should come from sources or methods outside the same generation loop."),
+      section(7, "Copyright and ownership awareness", "concept", "AI assistance does not remove the need to respect other people's work and rights.", "Use licensed or authorised material, avoid copying protected text unnecessarily, and understand the rules that apply to your context. For important work, preserve attribution and review organisational requirements.", "Instead of asking for a full reproduction of a book chapter, ask for a summary of a provided excerpt or concepts.", "For your next project, identify which source materials require attribution or permission.", "Which approach is safest when using third-party material?", ["Assume anything online is free to copy", "Respect applicable licences, permissions, and attribution requirements", "Remove the author's name", "Publish first and ask later"], 1, "Rights and permissions depend on the material and use; they should be checked rather than assumed."),
+      section(8, "Safety challenge", "challenge", "Design an AI workflow that protects data and keeps humans in control.", "A strong safety plan minimises data, separates secrets, chooses an appropriate environment, verifies important outputs, limits automation, and preserves a human decision point.", "A safe customer-support workflow can redact sensitive fields, classify requests, draft responses, and route high-risk cases to trained staff.", "Select the workflow with the strongest safety controls.", "Which workflow is safest?", ["Send all customer data to a public bot and auto-send every response", "Minimise data, use an approved tool, restrict permissions, verify sensitive outputs, and escalate high-risk cases", "Share credentials so the tool can work faster", "Remove all human review"], 1, "Safety is created through data minimisation, access controls, verification, and escalation."),
     ],
   },
-
-  /* =========================================
-     LESSON 6
-     AI IN REAL LIFE
-  ========================================== */
-
   {
     id: 6,
-
-    title: "AI in Real Life",
-
-    subtitle:
-      "Turn AI knowledge into practical everyday skills.",
-
-    description:
-      "Learn how AI can support studying, communication, creativity, planning, research, and everyday problem solving.",
-
+    title: "AI in Real Work",
+    subtitle: "Move from isolated prompts to useful, repeatable AI-assisted tasks.",
+    description: "Apply AI to study, writing, planning, research, communication, and analysis while keeping quality under control.",
     difficulty: "Intermediate",
-
-    estimatedMinutes: 20,
-
-    skills: [
-      "Practical AI",
-      "Problem Solving",
-      "Productivity",
-    ],
-
-    objectives: [
-      "Use AI for learning.",
-      "Use AI for writing and communication.",
-      "Use AI for brainstorming and creativity.",
-      "Use AI for planning.",
-      "Recognize when human judgment is still required.",
-    ],
-
+    estimatedMinutes: 24,
+    skills: ["Application", "Task decomposition", "Review"],
+    objectives: ["Break real tasks into useful AI steps.", "Choose where AI adds value.", "Create review checkpoints.", "Measure whether an AI workflow actually helps."],
     prerequisiteLessonId: 5,
-
-    requiresCompletion: true,
-
     sections: [
-      {
-        id: 1,
-        title: "AI for Studying",
-        shortDescription:
-          "Use AI as a learning assistant.",
-        explanation:
-          "AI can help explain concepts, generate practice questions, create summaries, compare ideas, and provide different explanations of difficult topics.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 2,
-        title: "AI for Communication",
-        shortDescription:
-          "Use AI to improve communication.",
-        explanation:
-          "AI can help draft emails, simplify complex writing, adjust tone, organize ideas, and translate text while the user remains responsible for the final message.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-        title: "AI for Creativity",
-        shortDescription:
-          "Use AI as a creative partner.",
-        explanation:
-          "AI can support brainstorming, idea generation, storytelling, design concepts, and creative experimentation.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 4,
-        title: "AI for Planning",
-        shortDescription:
-          "Use AI to structure tasks.",
-        explanation:
-          "AI can help break large goals into smaller tasks, create schedules, prepare checklists, and identify possible next steps.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 5,
-        title: "AI Problem Solving",
-        shortDescription:
-          "Use AI to explore possible solutions.",
-        explanation:
-          "AI can help identify options, explain trade-offs, organize information, and suggest approaches. Important decisions should still involve human judgment and appropriate verification.",
-        estimatedMinutes: 4,
-      },
-
-      {
-        id: 6,
-        title: "Real World Challenge",
-        shortDescription:
-          "Apply AI to a realistic problem.",
-        explanation:
-          "You will solve a practical problem using the complete CURIO learning process: understand, prompt, evaluate, verify, and apply.",
-        estimatedMinutes: 4,
-      },
+      section(1, "Find the bottleneck", "concept", "Start with the part of a workflow that consumes time or attention.", "AI is most useful when it reduces a meaningful bottleneck: drafting, sorting, summarising, transforming, comparing, or generating options. Do not add AI merely because a task can contain AI.", "If you spend 30 minutes turning notes into flashcards, automated transformation may be useful; if the task takes 20 seconds, the extra setup may not be.", "Identify the biggest repetitive bottleneck in one workflow.", "Where should you start when introducing AI to a workflow?", ["The flashiest step", "A meaningful bottleneck where AI can help", "Every step at once", "The logo"], 1, "Start where there is measurable value and manageable risk."),
+      section(2, "Break the task apart", "practice", "Complex tasks become easier when you separate planning, generation, checking, and delivery.", "Instead of one giant prompt, decompose the task into stages. This makes failures easier to locate and allows different tools or checks at each stage.", "Research question → collect sources → extract evidence → outline → draft → verify → final edit.", "Take one large task and write its stages in order.", "What is an advantage of task decomposition?", ["It hides errors", "It makes stages and failure points easier to inspect", "It guarantees success", "It removes the need for goals"], 1, "Explicit stages make the workflow easier to test and improve."),
+      section(3, "Study with AI", "practice", "AI can support learning best when it makes you retrieve, explain, compare, or practise.", "Passive summaries can feel productive without proving understanding. Ask for questions, feedback, alternative explanations, or practice scenarios, then answer yourself.", "Ask an AI tutor to quiz you one question at a time and explain your mistake only after you answer.", "Turn one topic you are studying into five retrieval questions.", "Which study use best supports active learning?", ["Copy a summary and stop", "Ask for retrieval questions and answer them yourself", "Memorise the chatbot's wording", "Avoid checking your understanding"], 1, "Retrieval and feedback provide stronger evidence of learning than passive reading alone."),
+      section(4, "Writing with control", "concept", "AI can accelerate drafting while the human retains voice, facts, and responsibility.", "Use AI for outlines, alternatives, editing, or restructuring. Keep control of the claims, tone, audience, and final judgement. Do not let fluent wording hide unsupported assertions.", "Draft an email with AI, then verify dates, commitments, names, and tone before sending it.", "Create a short checklist for reviewing AI-assisted writing.", "What should remain under human control in important writing?", ["Only punctuation", "Claims, intent, tone, and final approval", "Nothing", "The model's confidence"], 1, "Human review protects meaning and accountability."),
+      section(5, "Research without shortcutting", "decision", "Use AI to navigate information, not to replace evidence.", "AI can help generate search terms, compare source summaries, and organise notes. For serious research, preserve the underlying sources and distinguish source findings from AI interpretation.", "Use AI to turn a research question into search queries, then read the actual papers or official documents.", "For one research task, keep a source list separate from AI-generated notes.", "What should be preserved for serious research?", ["Only the AI summary", "The underlying sources and their relevant evidence", "The chatbot's confidence score", "A screenshot of the prompt"], 1, "The sources provide the evidence needed to audit the research."),
+      section(6, "Measure the workflow", "practice", "A workflow is useful only if it improves a real outcome.", "Measure time saved, error rate, quality, revision effort, user satisfaction, or another relevant metric. Compare against a reasonable baseline rather than assuming AI is beneficial.", "If AI cuts drafting time by half but doubles review time, the workflow may not actually be faster.", "Choose one metric for evaluating an AI workflow you use repeatedly.", "What is a useful workflow metric?", ["How futuristic it feels", "Time saved or error rate on the actual task", "Number of prompts used", "Number of AI tools involved"], 1, "Useful metrics connect the workflow to an outcome."),
+      section(7, "Keep a human checkpoint", "decision", "Human review should occur where mistakes become consequential.", "Not every step needs manual approval. Place review at points where errors can become external commitments, financial losses, safety issues, or misleading claims.", "AI can draft a meeting summary automatically, while a human confirms decisions and action owners before distribution.", "Mark the last safe review point before an AI output creates a real-world consequence.", "Where should human review be concentrated?", ["Only at the first prompt", "At consequential decision or release points", "Nowhere", "Only after a failure"], 1, "Review is most valuable before an output becomes consequential."),
+      section(8, "Real-work challenge", "challenge", "Design an AI-assisted workflow that saves effort without losing quality.", "The strongest workflow has a clear outcome, decomposed steps, appropriate tools, evidence or data controls, measurable success, and a human checkpoint.", "For a weekly report: gather approved data → summarise trends → draft report → validate numbers → human review → publish.", "Choose the workflow that balances speed, evidence, and control.", "Which workflow is best designed?", ["One giant prompt with automatic publishing", "Clear stages, verified inputs, measurable output, and human approval before release", "AI-generated output with no source record", "Using five tools because more tools are better"], 1, "A good workflow is explicit about inputs, stages, validation, and release control."),
     ],
   },
-
-  /* =========================================
-     LESSON 7
-     AI WORKFLOWS
-  ========================================== */
-
   {
     id: 7,
-
-    title: "AI Workflows",
-
-    subtitle:
-      "Combine AI tools and human judgment into useful workflows.",
-
-    description:
-      "Learn how multiple AI capabilities can be connected to complete larger tasks systematically.",
-
+    title: "AI Workflows & Agents",
+    subtitle: "Coordinate multiple AI steps without losing visibility or control.",
+    description: "Understand structured workflows, tool use, memory, evaluation, and the boundaries required for agentic systems.",
     difficulty: "Advanced",
-
-    estimatedMinutes: 20,
-
-    skills: [
-      "AI Workflows",
-      "Automation",
-      "Tool Integration",
-      "Problem Solving",
-    ],
-
-    objectives: [
-      "Understand what an AI workflow is.",
-      "Break large tasks into stages.",
-      "Assign different tools to different tasks.",
-      "Add verification checkpoints.",
-      "Design a responsible AI workflow.",
-    ],
-
+    estimatedMinutes: 26,
+    skills: ["Workflow architecture", "Agents", "Evaluation"],
+    objectives: ["Distinguish a workflow from an agent.", "Define tools and permissions.", "Add checkpoints and failure handling.", "Evaluate multi-step AI systems."],
     prerequisiteLessonId: 6,
-
-    requiresCompletion: true,
-
     sections: [
-      {
-        id: 1,
-        title: "What is an AI Workflow?",
-        shortDescription:
-          "Understand workflows instead of isolated prompts.",
-        explanation:
-          "An AI workflow is a sequence of connected steps where AI tools and human decisions work together to achieve a larger outcome.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 2,
-        title: "Break the Problem Down",
-        shortDescription:
-          "Turn a large task into smaller steps.",
-        explanation:
-          "Complex tasks become easier to manage when they are divided into clear stages such as research, analysis, creation, review, and finalization.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-        title: "Connecting AI Tools",
-        shortDescription:
-          "Understand how different tools can cooperate.",
-        explanation:
-          "Different tools can contribute different capabilities. A workflow can combine research, writing, analysis, coding, image generation, or other AI capabilities.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 4,
-        title: "Human Checkpoints",
-        shortDescription:
-          "Keep humans in control of important decisions.",
-        explanation:
-          "Important workflows should include points where a person reviews information, checks accuracy, evaluates risks, and decides whether to continue.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 5,
-        title: "Safe AI Workflow",
-        shortDescription:
-          "Design workflows with privacy and verification.",
-        explanation:
-          "A responsible workflow limits sensitive data, verifies important outputs, documents decisions where appropriate, and keeps humans responsible for consequential decisions.",
-        estimatedMinutes: 4,
-      },
-
-      {
-        id: 6,
-        title: "Workflow Challenge",
-        shortDescription:
-          "Design your own AI workflow.",
-        explanation:
-          "Create a complete workflow for a realistic problem and identify the AI tools, human checkpoints, verification steps, and final output.",
-        estimatedMinutes: 4,
-      },
+      section(1, "Workflow versus agent", "concept", "A workflow follows designed steps; an agent has more freedom to choose actions toward a goal.", "A deterministic workflow may run extract → classify → summarise. An agent can decide which tool to call next based on observations. More autonomy also creates more ways to fail.", "A fixed invoice pipeline is a workflow; a research agent that decides which sources to inspect is more agentic.", "Label one automation you use as fixed workflow or agentic behaviour.", "What most clearly increases agentic behaviour?", ["A longer prompt", "Greater freedom to choose actions based on state or goals", "More colours", "A larger button"], 1, "Agency comes from action selection, not visual complexity."),
+      section(2, "Tools and permissions", "decision", "An AI agent can only be as safe as the tools and permissions it receives.", "Give each tool the minimum capability required. Read-only access is safer than write access; scoped credentials are safer than broad credentials. Log tool calls where appropriate.", "A research agent may need web access but not permission to delete files or send email.", "List the minimum permissions an agent would need for a simple task.", "Which permission design is safest?", ["Full account access", "Least privilege with scoped tools", "Shared administrator credentials", "No access controls"], 1, "Least privilege limits what an erroneous or compromised action can do."),
+      section(3, "State and memory", "concept", "Memory should preserve useful state without becoming uncontrolled data accumulation.", "A system may keep task state, preferences, prior results, or conversation context. Decide what should persist, for how long, and who can access it.", "A study assistant may remember preferred difficulty but should not store an authentication code.", "Identify one useful memory and one piece of information that should never be retained.", "What is a good memory design principle?", ["Store everything forever", "Persist only useful information with appropriate controls", "Never store task state", "Store secrets for convenience"], 1, "Useful memory needs purpose, retention, and access boundaries."),
+      section(4, "Plan, act, observe", "practice", "Agentic systems often loop through planning, action, observation, and adjustment.", "A robust loop checks whether an action produced the expected state before deciding what to do next. Without observation and validation, an agent can continue from a false assumption.", "An agent edits a file, runs tests, reads the failure, then changes the implementation rather than assuming success.", "Add an explicit observation step after one automated action.", "Why is observation important in an agent loop?", ["It makes the interface prettier", "It provides evidence about the result before the next action", "It removes the need for tools", "It guarantees correctness"], 1, "Observation closes the loop between action and reality."),
+      section(5, "Failure handling", "decision", "Good agents have defined failure paths rather than improvising indefinitely.", "Set limits on retries, tool calls, time, cost, and permissions. Escalate ambiguous or high-risk states to a human. Preserve enough logs to understand what happened.", "After three failed API attempts, an agent should stop and report the error rather than retry forever.", "Choose one limit that should exist in an automated workflow.", "Which control helps prevent runaway behaviour?", ["Unlimited retries", "Bounded retries and escalation", "No logs", "No time limit"], 1, "Boundaries contain failures and make systems diagnosable."),
+      section(6, "Evaluate the system", "practice", "Agent evaluation must test the whole loop, not only the model's text.", "Evaluate tool selection, action correctness, state handling, failure recovery, security, latency, cost, and final outcomes. Use representative scenarios and adversarial cases.", "A customer-support agent should be tested on normal questions, ambiguous requests, missing data, permission errors, and escalation cases.", "Write two normal cases and two failure cases for an agent you would build.", "What should an agent evaluation include?", ["Only one happy-path prompt", "Normal and failure scenarios across the complete workflow", "Only response grammar", "Only speed"], 1, "System reliability depends on the entire interaction loop."),
+      section(7, "Human escalation", "concept", "Autonomy should decrease as uncertainty and consequence increase.", "A useful agent knows when not to act. Escalation rules can depend on confidence, missing evidence, policy boundaries, financial thresholds, or safety conditions.", "A purchasing agent can prepare an order but require human approval above a spending limit.", "Define one escalation condition for a hypothetical agent.", "When should an agent most clearly escalate?", ["When the task is routine and low-risk", "When evidence is insufficient or consequences exceed its authority", "Whenever it can act", "Never"], 1, "Escalation is a safety mechanism for uncertainty and authority boundaries."),
+      section(8, "Agent design challenge", "challenge", "Design a bounded agent instead of an uncontrolled autonomous loop.", "A strong design specifies goal, state, tools, permissions, observation, limits, evaluation, and escalation. The objective is controlled autonomy, not maximum autonomy.", "A research agent may search approved sources, extract evidence, draft a report, cite sources, stop after a tool budget, and request human review before publication.", "Select the design with the clearest controls.", "Which agent design is strongest?", ["Unlimited tools and automatic publishing", "Scoped tools, least privilege, observable actions, bounded retries, source records, and human approval for release", "One prompt with administrator access", "No evaluation because the model is capable"], 1, "Reliable agents combine autonomy with explicit boundaries, observability, and review."),
     ],
   },
-
-  /* =========================================
-     LESSON 8
-     FINAL CHALLENGE
-  ========================================== */
-
   {
     id: 8,
-
-    title: "CURIO Final Challenge",
-
-    subtitle:
-      "Demonstrate that you can use AI independently and responsibly.",
-
-    description:
-      "Bring together AI fundamentals, tool selection, prompting, verification, safety, practical use, and workflows in one final challenge.",
-
+    title: "AI Independence",
+    subtitle: "Use everything you learned to make better decisions with AI.",
+    description: "The final lesson turns CURIO's habits into a practical operating system for everyday AI use.",
     difficulty: "Advanced",
-
-    estimatedMinutes: 25,
-
-    skills: [
-      "AI Independence",
-      "Prompting",
-      "Verification",
-      "Safety",
-      "Problem Solving",
-    ],
-
-    objectives: [
-      "Choose an appropriate AI tool.",
-      "Write an effective prompt.",
-      "Evaluate the AI response.",
-      "Identify information requiring verification.",
-      "Protect sensitive information.",
-      "Apply AI to a realistic problem.",
-      "Demonstrate independent AI judgment.",
-    ],
-
+    estimatedMinutes: 28,
+    skills: ["Judgement", "Verification", "AI independence"],
+    objectives: ["Choose when to use AI and when not to.", "Build a complete AI decision process.", "Balance speed, quality, privacy, and risk.", "Explain and defend an AI-assisted decision."],
     prerequisiteLessonId: 7,
-
-    requiresCompletion: true,
-
     sections: [
-      {
-        id: 1,
-        title: "Understand the Problem",
-        shortDescription:
-          "Identify what the task actually requires.",
-        explanation:
-          "Before using AI, clearly define the problem, desired outcome, constraints, and information required.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 2,
-        title: "Choose the Tool",
-        shortDescription:
-          "Select the appropriate AI capability.",
-        explanation:
-          "Choose an AI tool based on the task, required information, output type, privacy considerations, and verification needs.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 3,
-        title: "Write the Prompt",
-        shortDescription:
-          "Create a complete task prompt.",
-        explanation:
-          "Construct a prompt using an appropriate goal, context, task, format, audience, and constraints.",
-        estimatedMinutes: 4,
-      },
-
-      {
-        id: 4,
-        title: "Evaluate the Answer",
-        shortDescription:
-          "Critically inspect the AI output.",
-        explanation:
-          "Examine whether the response actually answers the task, contains unsupported claims, misses important context, or requires additional information.",
-        estimatedMinutes: 4,
-      },
-
-      {
-        id: 5,
-        title: "Verify Important Information",
-        shortDescription:
-          "Check claims before relying on them.",
-        explanation:
-          "Identify important claims and verify them using appropriate reliable sources before using them for consequential decisions.",
-        estimatedMinutes: 4,
-      },
-
-      {
-        id: 6,
-        title: "Apply Safely",
-        shortDescription:
-          "Use the result responsibly.",
-        explanation:
-          "Review privacy, accuracy, potential risks, and human responsibility before applying the AI-generated result.",
-        estimatedMinutes: 3,
-      },
-
-      {
-        id: 7,
-        title: "Final Assessment",
-        shortDescription:
-          "Demonstrate independent AI literacy.",
-        explanation:
-          "Complete the final assessment covering AI fundamentals, prompting, tool selection, verification, safety, practical application, and workflows.",
-        estimatedMinutes: 4,
-      },
+      section(1, "Know when not to use AI", "decision", "AI is optional. A good user can decide that a normal method is better.", "If a task is faster manually, requires confidential information you cannot safely share, or needs a level of accountability the tool cannot provide, avoid unnecessary AI use.", "For a 10-second calculation, a calculator may be simpler and more reliable than a multi-step chatbot interaction.", "Identify one task where you would deliberately not use AI.", "When is avoiding AI a sensible choice?", ["Never", "When another method is safer, faster, or more appropriate", "Only when AI is unavailable", "Only for creative tasks"], 1, "Good judgement includes selecting the simplest reliable method."),
+      section(2, "Define the decision", "concept", "AI should serve a decision or outcome, not become the outcome itself.", "Clarify what you are trying to accomplish and what evidence would change your decision. This prevents endless prompting without a useful endpoint.", "Instead of 'research laptops', define 'choose a laptop under a budget for programming and battery life'.", "Write the decision you want to make in one sentence.", "What makes an AI task well-defined?", ["It can continue forever", "There is a clear outcome and decision criterion", "It contains many adjectives", "It uses the longest prompt"], 1, "A defined outcome gives the workflow a stopping condition."),
+      section(3, "Balance speed and quality", "decision", "The fastest workflow is not always the best workflow.", "Choose the level of effort that fits the consequence. For low-risk tasks, speed may dominate. For high-risk decisions, verification and human review deserve more time.", "A quick draft email can be lightly reviewed; a financial recommendation needs stronger evidence and checking.", "For one task, decide whether speed, quality, or risk reduction is the primary constraint.", "How should verification effort be chosen?", ["Always maximise it", "Match it to the consequence and uncertainty", "Never verify", "Use the same process for every task"], 1, "Risk-based effort avoids both careless use and unnecessary overhead."),
+      section(4, "Build your personal checklist", "practice", "A short checklist makes good habits repeatable.", "A practical checklist can ask: What is the goal? What context matters? Is information current? Is any data sensitive? What evidence is required? What will I verify? Who approves the final result?", "Before submitting an AI-assisted report, confirm sources, dates, numbers, privacy, and final interpretation.", "Create a five-item checklist for your most important AI workflow.", "Which checklist item is most important for a high-impact claim?", ["Does the answer sound confident?", "What source supports the claim and is it current?", "Does it contain emojis?", "Is the prompt long?"], 1, "Evidence and freshness matter more than confidence or presentation."),
+      section(5, "Explain your reasoning", "concept", "AI independence means you can explain why you accepted, changed, or rejected an output.", "If you cannot explain the basis of an important decision, you may be outsourcing judgement rather than using AI as a tool. Keep enough evidence and reasoning to audit the result.", "A manager can explain which data supported a recommendation instead of saying 'the AI told me'.", "For one AI-assisted result, write down why you trust it and what you checked.", "What is a sign of healthy AI independence?", ["Blindly following the output", "Being able to explain and defend the final decision", "Using AI for every step", "Never questioning the result"], 1, "Independent judgement means the user remains accountable for the decision."),
+      section(6, "Teach the workflow", "practice", "A workflow is stronger when another person can understand and reproduce it.", "Document inputs, tools, important instructions, sources, checks, and approval points. Reproducibility makes a workflow easier to audit, improve, and hand over.", "A team prompt library can include the purpose, expected inputs, output schema, verification rules, and examples.", "Write the minimum documentation someone else would need to repeat your workflow.", "Why document an AI workflow?", ["To make it look complex", "To make it auditable, reproducible, and improvable", "To avoid all human judgement", "Only for marketing"], 1, "Documentation turns individual know-how into a controlled process."),
+      section(7, "Continuous improvement", "practice", "Treat AI workflows as systems that can be measured and improved.", "Collect failures, user feedback, and performance metrics. Update prompts, sources, tools, permissions, and checks when the evidence shows a problem. Improvement should be targeted rather than cosmetic.", "If users repeatedly correct the same type of summary error, change the extraction step or verification rule instead of merely changing the wording of the interface.", "Record one failure mode and one concrete change that could reduce it.", "What should drive workflow improvement?", ["Aesthetic trends", "Observed failures, outcomes, and user feedback", "Prompt length alone", "Random changes"], 1, "Evidence from actual use is the strongest basis for targeted improvement."),
+      section(8, "CURIO independence challenge", "challenge", "Make the final decision: use AI, verify it, or choose another method.", "This final challenge combines the CURIO approach: define the outcome, choose the simplest suitable method, minimise data, use clear instructions, verify consequential claims, and retain human control.", "For a current, high-impact task, a strong approach may be: define the decision → retrieve authoritative information → use AI to organise it → independently verify key claims → document the reasoning → decide.", "Choose the response that demonstrates complete AI independence.", "Which approach best represents CURIO's final principle?", ["Use AI for everything because it is faster", "Avoid AI completely", "Choose AI only where it adds value, give it relevant context, protect data, verify important outputs, and own the final decision", "Trust the most confident answer"], 2, "AI independence is not maximum AI use or zero AI use; it is deliberate, evidence-based control."),
     ],
   },
 ];
 
-/* =========================================
-   HELPER FUNCTIONS
-========================================= */
-
-export function getLessonById(
-  lessonId: number
-): LessonData | undefined {
-  return lessons.find(
-    (lesson) => lesson.id === lessonId
-  );
-}
-
-export function getLessonSections(
-  lessonId: number
-): LessonSection[] {
-  return (
-    getLessonById(lessonId)?.sections ?? []
-  );
-}
-
-export function getTotalLessons(): number {
-  return lessons.length;
-}
-
-export function getCompletedLessonIds(
-  completedLessonIds: number[]
-): number[] {
-  return lessons
-    .filter((lesson) =>
-      completedLessonIds.includes(lesson.id)
-    )
-    .map((lesson) => lesson.id);
-}
-
-export function isLessonUnlocked(
-  lessonId: number,
-  completedLessonIds: number[]
-): boolean {
-  const lesson =
-    getLessonById(lessonId);
-
-  if (!lesson) {
-    return false;
-  }
-
-  if (
-    lesson.prerequisiteLessonId === null
-  ) {
-    return true;
-  }
-
-  return completedLessonIds.includes(
-    lesson.prerequisiteLessonId
-  );
-}
+export const getLesson = (lessonId: number): LessonData | undefined =>
+  lessons.find((lesson) => lesson.id === lessonId);

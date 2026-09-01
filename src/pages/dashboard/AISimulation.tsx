@@ -443,13 +443,6 @@ const buildDimensions = (
     "outputFormat",
   ];
 
-  /*
-    IMPORTANT: Some backend/Edge Function versions return 0
-    for dimension fields that they did not actually calculate.
-    A zero here is therefore treated as "not supplied", not as
-    a real prompt-quality score. We fall back to the local
-    evidence-based score in that case.
-  */
   const nestedDimensions =
     aiAnalysis.dimensions &&
     typeof aiAnalysis.dimensions === "object"
@@ -458,7 +451,6 @@ const buildDimensions = (
 
   return keys.map((key) => {
     const directValue = numericScore(aiAnalysis[key]);
-
     const nestedValue =
       nestedDimensions &&
       nestedDimensions[key] &&
@@ -468,7 +460,6 @@ const buildDimensions = (
           )
         : null;
 
-    /* Treat 0 as an omitted dimension from the backend. */
     const supplied =
       directValue !== null && directValue > 0
         ? directValue
@@ -476,24 +467,55 @@ const buildDimensions = (
           ? nestedValue
           : null;
 
+    /*
+      The structural score is the primary signal because it is
+      derived from the actual wording the learner submitted.
+      A backend score is blended lightly when available. This
+      prevents a generic backend response such as 90/100 for
+      every dimension from making every prompt look identical.
+    */
     const score = clamp(
       supplied === null
         ? local[key]
-        : supplied,
+        : local[key] * 0.85 + supplied * 0.15,
     );
 
-    const reason =
-      score >= 70
-        ? dimensionInfo[key].strongReason
-        : key === "clarity"
-          ? "The request is understandable, but some wording can still be interpreted in more than one way."
-          : key === "context"
-            ? "The AI has limited background information and may need to make assumptions."
-            : key === "specificity"
-              ? "The task remains broad or leaves important requirements unspecified."
-              : key === "goal"
-                ? "The task is present, but the desired end result is not fully defined."
-                : "The AI is mostly free to choose how the answer should be presented.";
+    const evidence = uniqueStrings(local.evidence[key]).slice(0, 3);
+
+    const reasonByKey: Record<PromptDimensionKey, string> = {
+      clarity:
+        score >= 85
+          ? "The request gives the model a clear action and enough wording to interpret the task consistently."
+          : score >= 70
+            ? "The main instruction is understandable, but one or more parts could still be made more direct."
+            : "The task can be understood, but the instruction leaves too much room for interpretation.",
+      context:
+        score >= 85
+          ? "The prompt provides enough audience, situation, purpose, or background to reduce unnecessary assumptions."
+          : score >= 70
+            ? "Some useful context is present, but the model may still need to infer the audience or situation."
+            : "Very little situational information is provided, so the model has to make important assumptions.",
+      specificity:
+        score >= 85
+          ? "The request narrows the task with concrete scope, requirements, examples, limits, or criteria."
+          : score >= 70
+            ? "The task has useful boundaries, but at least one important requirement remains open-ended."
+            : "The task remains broad and does not give enough concrete boundaries for a consistent result.",
+      goal:
+        score >= 85
+          ? "The desired outcome is explicit and the model can tell what a successful result should accomplish."
+          : score >= 70
+            ? "The task is visible, but the intended outcome or success condition could be stated more explicitly."
+            : "The prompt asks for work, but the final outcome or reason for the work is not clearly defined.",
+      outputFormat:
+        score >= 85
+          ? "The prompt gives the model a clear presentation structure or useful response constraints."
+          : score >= 70
+            ? "The model has some guidance about presentation, but the final structure could be more explicit."
+            : "The model is largely free to decide the structure, length, and presentation of the answer.",
+    };
+
+    const reason = reasonByKey[key];
 
     return {
       key,
@@ -502,9 +524,7 @@ const buildDimensions = (
       status: dimensionStatus(score),
       reason,
       action: dimensionInfo[key].action,
-      evidence: uniqueStrings(
-        local.evidence[key],
-      ).slice(0, 3),
+      evidence,
     };
   });
 };
@@ -552,25 +572,30 @@ const buildStrengths = (
   dimensions: PromptDimension[],
   serviceStrengths: unknown,
 ) => {
-  const fromService = Array.isArray(serviceStrengths)
-    ? serviceStrengths.filter(
-        (item): item is string =>
-          typeof item === "string" &&
-          item.trim().length > 0,
-      )
-    : [];
-
   const fromStructure = dimensions
     .filter((dimension) => dimension.score >= 70)
     .sort((a, b) => b.score - a.score)
-    .map(
-      (dimension) =>
-        `${dimension.label}: ${dimension.reason}`,
-    );
+    .flatMap((dimension) => {
+      if (dimension.evidence.length > 0) {
+        return dimension.evidence.map(
+          (item) => `${dimension.label}: ${item}`,
+        );
+      }
 
+      return [`${dimension.label}: ${dimension.reason}`];
+    });
+
+  const fromService = Array.isArray(serviceStrengths)
+    ? serviceStrengths.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0,
+      )
+    : [];
+
+  /* Prefer evidence from the submitted prompt over generic AI praise. */
   return uniqueStrings([
-    ...fromService,
     ...fromStructure,
+    ...fromService,
   ]).slice(0, 4);
 };
 
@@ -580,10 +605,13 @@ const buildMissing = (
   [...dimensions]
     .filter((dimension) => dimension.score < 70)
     .sort((a, b) => a.score - b.score)
-    .map(
-      (dimension) =>
-        `${dimension.label}: ${dimension.action}`,
-    )
+    .map((dimension) => {
+      const detail = dimension.evidence.length > 0
+        ? `Evidence: ${dimension.evidence[0]}`
+        : dimension.reason;
+
+      return `${dimension.label}: ${detail} Improve it by ${dimension.action.toLowerCase()}`;
+    })
     .slice(0, 4);
 
 const buildSuggestions = (
@@ -595,19 +623,40 @@ const buildSuggestions = (
     .sort((a, b) => a.score - b.score)
     .slice(0, 3);
 
-  const suggestions = weakest.map(
-    (dimension, index) =>
-      `${index === 0 ? "Priority" : "Next"} — ${dimension.action}`,
-  );
+  const lower = prompt.toLowerCase();
+  const suggestions = weakest.map((dimension, index) => {
+    let instruction = "Improve the prompt with a concrete requirement";
 
-  if (
-    wordCount(prompt) < 12 &&
-    !suggestions.some((item) =>
-      /background|audience|context/i.test(item),
-    )
-  ) {
+    switch (dimension.key) {
+      case "clarity":
+        instruction =
+          "Replace broad wording with one direct action and state exactly what the AI should do";
+        break;
+      case "context":
+        instruction =
+          "Add the minimum useful context: who the answer is for, the situation, or why you need it";
+        break;
+      case "specificity":
+        instruction =
+          "Add concrete boundaries such as scope, examples, constraints, quantity, time period, or success criteria";
+        break;
+      case "goal":
+        instruction =
+          "State the outcome you want and what you will use the result to accomplish";
+        break;
+      case "outputFormat":
+        instruction =
+          "Tell the AI how the answer should be structured, including sections, bullets, table, steps, length, or another useful format";
+        break;
+    }
+
+    return `${index === 0 ? "Priority" : "Next step"}: ${instruction}.`;
+  });
+
+  /* Add a targeted suggestion only when the wording supports it. */
+  if (wordCount(prompt) < 12 && !lower.includes("audience")) {
     suggestions.push(
-      "Add one sentence explaining who the answer is for or why you need it.",
+      "Add one short sentence describing the audience or situation so the response does not rely on assumptions.",
     );
   }
 
@@ -1218,7 +1267,7 @@ function AISimulation() {
       const overallScore = clamp(
         serviceScore === null
           ? dimensionAverage
-          : serviceScore,
+          : dimensionAverage * 0.85 + serviceScore * 0.15,
       );
 
       const weakest = [...dimensions].sort(
@@ -1447,8 +1496,8 @@ function AISimulation() {
     return (
       <div className="ai-simulation-page">
         <div className="ai-simulation-locked">
-          <div className="ai-simulation-lock-icon">
-            🔒
+          <div className="ai-simulation-lock-icon" aria-hidden="true">
+            LOCKED
           </div>
 
           <span className="ai-simulation-eyebrow">
@@ -1477,15 +1526,7 @@ function AISimulation() {
             <span>→</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              navigate("/dashboard")
-            }
-            className="ai-simulation-secondary-button"
-          >
-            Back to Dashboard
-          </button>
+
         </div>
       </div>
     );
@@ -1505,16 +1546,6 @@ function AISimulation() {
 
       <header className="ai-simulation-header">
         <div>
-          <button
-            type="button"
-            className="ai-simulation-back-button"
-            onClick={() =>
-              navigate("/dashboard")
-            }
-          >
-            ← Dashboard
-          </button>
-
           <span className="ai-simulation-eyebrow">
             CURIO • AI SIMULATION
           </span>
@@ -1536,7 +1567,7 @@ function AISimulation() {
         </div>
 
         <div className="ai-simulation-header-badge">
-          <span>🧠</span>
+          <span>AI</span>
 
           <div>
             <strong>
@@ -1577,8 +1608,8 @@ function AISimulation() {
               </p>
             </div>
 
-            <div className="ai-simulation-prompt-icon">
-              💬
+            <div className="ai-simulation-prompt-icon" aria-hidden="true">
+              PROMPT
             </div>
           </div>
 
@@ -1608,7 +1639,7 @@ function AISimulation() {
 
           {errorMessage && (
             <div className="ai-simulation-error">
-              <span>⚠️</span>
+              <span aria-hidden="true">!</span>
 
               <p>{errorMessage}</p>
             </div>
@@ -1628,8 +1659,8 @@ function AISimulation() {
             >
               <div className="ai-simulation-mediator-icon">
                 {mediatorStatus === "blocked"
-                  ? "🛡️"
-                  : "⚠️"}
+                  ? "SAFE"
+                  : "REVIEW"}
               </div>
 
               <div className="ai-simulation-mediator-content">
@@ -1894,8 +1925,8 @@ function AISimulation() {
 
             {analysis.feedback && (
               <div className="ai-simulation-feedback-card">
-                <div className="ai-simulation-result-icon">
-                  💡
+                <div className="ai-simulation-result-icon" aria-hidden="true">
+                  TIP
                 </div>
 
                 <div>
@@ -2084,7 +2115,7 @@ function AISimulation() {
                   <div className="ai-simulation-improved-prompt">
                     <div className="ai-simulation-code-header">
                       <span>
-                        ✨ CURIO SUGGESTED PROMPT
+                        CURIO SUGGESTED PROMPT
                       </span>
                     </div>
 
@@ -2126,8 +2157,8 @@ function AISimulation() {
                 </div>
 
                 <div className="ai-simulation-response">
-                  <div className="ai-simulation-response-avatar">
-                    ✨
+                  <div className="ai-simulation-response-avatar" aria-hidden="true">
+                    AI
                   </div>
 
                   <div>

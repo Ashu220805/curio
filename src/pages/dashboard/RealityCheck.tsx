@@ -39,14 +39,14 @@ const REALITY_CHECK_ID = 2;
 const TOTAL_SECTIONS = 8;
 
 const SECTIONS: Section[] = [
-  { id: "pause", number: "01", title: "Pause before reacting", shortTitle: "Pause", icon: "⏸️" },
-  { id: "verify", number: "02", title: "Verify the source", shortTitle: "Verify", icon: "🔎" },
-  { id: "context", number: "03", title: "Check the context", shortTitle: "Context", icon: "🧩" },
-  { id: "evidence", number: "04", title: "Find the evidence", shortTitle: "Evidence", icon: "📌" },
-  { id: "manipulation", number: "05", title: "Spot manipulation", shortTitle: "Manipulation", icon: "✂️" },
-  { id: "ai-content", number: "06", title: "AI-generated content", shortTitle: "AI Content", icon: "🤖" },
-  { id: "compare", number: "07", title: "Compare information", shortTitle: "Compare", icon: "⚖️" },
-  { id: "decide", number: "08", title: "Decide using evidence", shortTitle: "Decide", icon: "🧠" },
+  { id: "pause", number: "01", title: "Pause before reacting", shortTitle: "Pause", icon: "01" },
+  { id: "verify", number: "02", title: "Verify the source", shortTitle: "Verify", icon: "02" },
+  { id: "context", number: "03", title: "Check the context", shortTitle: "Context", icon: "03" },
+  { id: "evidence", number: "04", title: "Find the evidence", shortTitle: "Evidence", icon: "04" },
+  { id: "manipulation", number: "05", title: "Spot manipulation", shortTitle: "Manipulation", icon: "05" },
+  { id: "ai-content", number: "06", title: "AI-generated content", shortTitle: "AI Content", icon: "06" },
+  { id: "compare", number: "07", title: "Compare information", shortTitle: "Compare", icon: "07" },
+  { id: "decide", number: "08", title: "Decide using evidence", shortTitle: "Decide", icon: "08" },
 ];
 
 const PAGE_CHOICES: Record<Exclude<SectionId, "decide">, Choice[]> = {
@@ -114,7 +114,7 @@ const PAGE_CONTENT: Record<
     label: "01 · PAUSE",
     title: "Don't react yet.",
     lead: "The first skill of digital reality literacy is surprisingly simple: pause.",
-    icon: "⏸️",
+    icon: "01",
     principle: "A dramatic headline, shocking image or emotional message can make you react immediately. Give yourself a moment before you like, share, comment or believe it.",
     points: [
       { icon: "01", title: "Notice the reaction", text: "Strong emotion can make a claim feel urgent before you have checked it." },
@@ -135,7 +135,7 @@ const PAGE_CONTENT: Record<
     label: "02 · VERIFY",
     title: "Find out where the information came from.",
     lead: "Before trusting a claim, examine its source.",
-    icon: "🔎",
+    icon: "02",
     principle: "Ask: “Who is saying this?” Identify the person, organisation or publication behind the information and check whether the claim can actually be verified.",
     points: [
       { icon: "01", title: "Identify the source", text: "Find the person, organisation or publication responsible for the claim." },
@@ -156,7 +156,7 @@ const PAGE_CONTENT: Record<
     label: "03 · CONTEXT",
     title: "Ask what might be missing.",
     lead: "Information can be technically real and still be misleading when its context is removed.",
-    icon: "🧩",
+    icon: "03",
     principle: "A cropped image, shortened quote, old video or isolated statistic can create a very different impression from the complete information.",
     points: [
       { icon: "01", title: "Look beyond the crop", text: "Check what happened before and after the visible part of an image, video or quote." },
@@ -177,7 +177,7 @@ const PAGE_CONTENT: Record<
     label: "04 · EVIDENCE",
     title: "Don't just ask “Is it true?” Ask “What supports it?”",
     lead: "Good reality checking is based on evidence rather than confidence.",
-    icon: "📌",
+    icon: "04",
     principle: "Confidence is not evidence. A person can sound completely certain and still be wrong.",
     points: [
       { icon: "01", title: "Separate claim from proof", text: "A statement tells you what someone believes happened; it does not prove that it happened." },
@@ -198,7 +198,7 @@ const PAGE_CONTENT: Record<
     label: "05 · MANIPULATION",
     title: "Real does not always mean reliable.",
     lead: "A genuine photo or video can still be edited, cropped, rearranged or presented in a misleading way.",
-    icon: "✂️",
+    icon: "05",
     principle: "Don't only ask “Is this real?” Also ask “Is this being presented accurately?”",
     points: [
       { icon: "01", title: "Cropping", text: "Removing surrounding information can change what a scene appears to mean." },
@@ -219,7 +219,7 @@ const PAGE_CONTENT: Record<
     label: "06 · AI CONTENT",
     title: "AI-generated content can look convincing.",
     lead: "Images, videos, voices and text can now be generated or modified using AI.",
-    icon: "🤖",
+    icon: "06",
     principle: "The fact that something looks, sounds or reads convincingly does not automatically prove that it is accurate.",
     points: [
       { icon: "01", title: "Images", text: "Synthetic or edited images can appear realistic and detailed." },
@@ -241,7 +241,7 @@ const PAGE_CONTENT: Record<
     label: "07 · COMPARE",
     title: "One source is rarely the whole picture.",
     lead: "When something matters, compare information instead of stopping at the first answer.",
-    icon: "⚖️",
+    icon: "07",
     principle: "Compare, don't just collect. Examine what different sources say and where their evidence comes from.",
     points: [
       { icon: "01", title: "Find the claim", text: "Reduce the post to one precise statement you can actually check." },

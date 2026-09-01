@@ -29,7 +29,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 1,
     title: "AI Foundations Lab",
     subtitle: "Think beyond definitions",
-    icon: "🧠",
+    icon: "AI",
     difficulty: "Basic",
     questions: [
       {
@@ -613,7 +613,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 5,
     title: "AI Safety Challenge",
     subtitle: "Make smart decisions with AI",
-    icon: "🛡️",
+    icon: "SAFETY",
     difficulty: "Moderate",
     questions: [
       {
@@ -759,7 +759,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 6,
     title: "Real-World AI Case Lab",
     subtitle: "Solve realistic problems with AI",
-    icon: "🧩",
+    icon: "VERIFY",
     difficulty: "Moderate",
     questions: [
       {
@@ -1274,7 +1274,7 @@ const Practice: React.FC = () => {
 
   const question = selectedSession.questions[currentQuestion] ?? selectedSession.questions[0];
 
-  const correctCount = answers.reduce((total: number, answer, index) => {
+  const correctCount = answers.reduce<number>((total, answer, index) => {
     if (
       answer !== null &&
       answer === selectedSession.questions[index].answer
@@ -1318,8 +1318,9 @@ const Practice: React.FC = () => {
       setSelectedAnswer(answers[nextQuestion]);
       return;
     }
-    const score = answers.reduce<number>((total, answer, index) => {
-      if (answer !== null && answer === selectedSession.questions[index].answer) {
+    const score: number = answers.reduce<number>((total, answer, index) => {
+      const question = selectedSession.questions[index];
+      if (question && answer !== null && answer === question.answer) {
         return total + 1;
       }
       return total;
