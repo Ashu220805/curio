@@ -1630,7 +1630,7 @@ function AISimulation() {
               </span>
 
               <span>
-                💡 Be specific about your goal.
+                Note Be specific about your goal.
               </span>
             </div>
           </div>
@@ -1952,7 +1952,7 @@ function AISimulation() {
             <div className="ai-simulation-analysis-grid">
               <div className="ai-simulation-analysis-card">
                 <div className="ai-simulation-analysis-title">
-                  <span>✓</span>
+                  <span>OK</span>
 
                   <h3>
                     What's working

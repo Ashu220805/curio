@@ -106,7 +106,7 @@ function PreferenceCard({
         className="onboarding-selection"
         aria-hidden="true"
       >
-        {selected ? "✓" : ""}
+        {selected ? "OK" : ""}
       </span>
 
     </button>
@@ -661,7 +661,7 @@ function Onboarding() {
                 />
 
                 <PreferenceCard
-                  icon="✦"
+                  icon="CURIO"
                   title="Practice first"
                   description="Learn by doing and experimenting."
                   selected={preferences.practice_first}
@@ -957,7 +957,7 @@ function Onboarding() {
               <div className="onboarding-preview">
 
                 <div className="onboarding-preview-icon">
-                  ✦
+                  CURIO
                 </div>
 
                 <div>

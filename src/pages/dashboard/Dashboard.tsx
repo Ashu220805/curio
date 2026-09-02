@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase.ts";
 import { lessons } from "../../data/lessons.ts";
 import { useAllLessonProgress } from "../../hooks/useLessonProgress.ts";
+import LearningOrbit from "../../components/visuals/LearningOrbit.tsx";
 import "./Dashboard.css";
 
 function guestMode() {
@@ -15,8 +16,8 @@ function Dashboard() {
   const { progress, loading, reload } = useAllLessonProgress();
   const [userName, setUserName] = useState(isGuest ? "Guest" : "Learner");
   const [userEmail, setUserEmail] = useState(isGuest ? "Guest session" : "");
-  const [calmMode, setCalmMode] = useState(false);
-  const [textScale, setTextScale] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
@@ -108,8 +109,18 @@ function Dashboard() {
     navigate(`/learn/lesson/${id}`);
   };
 
+  const searchResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+    return cards.filter((lesson) => [lesson.title, lesson.subtitle, lesson.description, ...lesson.skills].join(" ").toLowerCase().includes(query)).slice(0, 6);
+  }, [cards, searchQuery]);
+
+  const submitSearch = () => {
+    if (searchResults[0]) openLesson(searchResults[0].id);
+  };
+
   return (
-    <div className={`dashboard-page ${calmMode ? "is-calm" : ""}`} style={{ "--dashboard-scale": textScale } as React.CSSProperties}>
+    <div className="dashboard-page">
       <aside className="dashboard-sidebar">
         <div className="dashboard-brand">
           <img src="/curio-symbol.png" alt="CURIO" />
@@ -136,11 +147,14 @@ function Dashboard() {
       </aside>
 
       <div className="dashboard-main">
+        <div className="dashboard-orbit-background" aria-hidden="true"><LearningOrbit compact decorative /></div>
         <header className="dashboard-header">
-          <div className="dashboard-search"><span aria-hidden="true">⌕</span><input placeholder="Search lessons, topics or AI tools" aria-label="Search CURIO" /></div>
+          <div className="dashboard-search">
+            <span aria-hidden="true">Search</span>
+            <input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setSearchOpen(false); }} placeholder="Search lessons, skills or concepts" aria-label="Search CURIO" />
+            {searchOpen && searchQuery.trim() && <div className="dashboard-search-results">{searchResults.length ? searchResults.map((lesson) => <button key={lesson.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { openLesson(lesson.id); setSearchOpen(false); }}><span>Lesson {lesson.id}</span><strong>{lesson.title}</strong><small>{lesson.skills.slice(0, 2).join(" · ")}</small></button>) : <p>No matching lesson or skill.</p>}</div>}
+          </div>
           <div className="dashboard-tools">
-            <button type="button" onClick={() => setCalmMode((value) => !value)} aria-pressed={calmMode}>{calmMode ? "Calm on" : "Calm mode"}</button>
-            <div className="dashboard-text-control"><button type="button" onClick={() => setTextScale((v) => Math.max(.9, +(v - .1).toFixed(1)))} disabled={textScale <= .9}>A−</button><span>{Math.round(textScale * 100)}%</span><button type="button" onClick={() => setTextScale((v) => Math.min(1.3, +(v + .1).toFixed(1)))} disabled={textScale >= 1.3}>A+</button></div>
             <button type="button" className="dashboard-profile-button" onClick={() => setProfileOpen((v) => !v)} aria-expanded={profileOpen}>
               <span className="dashboard-avatar">{userName.slice(0, 1).toUpperCase()}</span>
               <span><strong>{userName}</strong><small>{isGuest ? "Guest" : "Learner"}</small></span>

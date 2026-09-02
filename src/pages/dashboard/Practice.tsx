@@ -175,7 +175,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 2,
     title: "Prompt Engineering Arena",
     subtitle: "Turn vague requests into useful instructions",
-    icon: "🎯",
+    icon: "Goal",
     difficulty: "Basic",
     questions: [
       {
@@ -321,7 +321,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 3,
     title: "AI Tool Detective",
     subtitle: "Choose the right tool for the right job",
-    icon: "🔎",
+    icon: "Verify",
     difficulty: "Moderate",
     questions: [
       {
@@ -467,7 +467,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 4,
     title: "Fact Check Mission",
     subtitle: "Catch mistakes before they become facts",
-    icon: "🕵️",
+    icon: "Investigate️",
     difficulty: "Moderate",
     questions: [
       {
@@ -905,7 +905,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 7,
     title: "Prompt Doctor",
     subtitle: "Diagnose weak AI requests",
-    icon: "🩺",
+    icon: "Check",
     difficulty: "Hard",
     questions: [
       {
@@ -1051,7 +1051,7 @@ const PRACTICE_SESSIONS: PracticeSession[] = [
     id: 8,
     title: "AI Master Challenge",
     subtitle: "Mixed real-world decision making",
-    icon: "🏆",
+    icon: "Achievement",
     difficulty: "Hard",
     questions: [
       {
@@ -1379,7 +1379,7 @@ const Practice: React.FC = () => {
 
         <div className="practice-brand">
           <div className="practice-brand-icon">
-            ✨
+            CURIO
           </div>
 
           <div>
@@ -1391,7 +1391,7 @@ const Practice: React.FC = () => {
         <div className="practice-search-wrapper">
 
           <span className="practice-search-icon">
-            🔍
+            Search
           </span>
 
           <input
@@ -1468,19 +1468,19 @@ const Practice: React.FC = () => {
             <div className="practice-orbit orbit-two" />
 
             <div className="practice-big-icon">
-              🧠
+              Think
             </div>
 
             <div className="floating-practice-card card-one">
-              🎯 Prompt
+              Goal Prompt
             </div>
 
             <div className="floating-practice-card card-two">
-              🛡️ Safety
+              Safety Safety
             </div>
 
             <div className="floating-practice-card card-three">
-              🔎 Verify
+              Verify Verify
             </div>
 
           </div>
@@ -1586,7 +1586,7 @@ const Practice: React.FC = () => {
 
                 {filteredSessions.length === 0 && (
                   <div className="no-sessions">
-                    <span>🔍</span>
+                    <span>Search</span>
                     <strong>No practice found</strong>
                     <p>
                       Try another topic or difficulty.
@@ -1727,7 +1727,7 @@ const Practice: React.FC = () => {
                           </span>
 
                           <span className="answer-status">
-                            {isCorrect && "✓"}
+                            {isCorrect && "OK"}
                             {isWrong && "×"}
                           </span>
 
@@ -1742,7 +1742,7 @@ const Practice: React.FC = () => {
                   <div className="explanation-box">
 
                     <div className="explanation-icon">
-                      💡
+                      Note
                     </div>
 
                     <div>
@@ -1803,12 +1803,12 @@ const Practice: React.FC = () => {
 
             <div className="result-icon">
               {percentage === 100
-                ? "🏆"
+                ? "Achievement"
                 : percentage >= 75
-                ? "🎉"
+                ? "Complete"
                 : percentage >= 50
-                ? "💪"
-                : "🌱"}
+                ? "Keep going"
+                : "Progress"}
             </div>
 
             <span className="result-label">

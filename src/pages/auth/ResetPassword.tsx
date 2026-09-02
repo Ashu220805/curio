@@ -509,7 +509,7 @@ function ResetPassword() {
                 aria-live="polite"
               >
                 <span className="reset-password-message-icon">
-                  ✓
+                  OK
                 </span>
 
                 <span>{success}</span>
@@ -683,7 +683,7 @@ function ResetPassword() {
                             aria-hidden="true"
                           >
                             {rule.passed
-                              ? "✓"
+                              ? "OK"
                               : "○"}
                           </span>
 

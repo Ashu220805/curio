@@ -579,7 +579,7 @@ function RealityCheck() {
                   ].join(" ")}
                 >
                   <span className="reality-nav-number">
-                    {done ? "✓" : !unlocked ? "🔒" : section.number}
+                    {done ? "OK" : !unlocked ? "Locked" : section.number}
                   </span>
 
                   <span className="reality-nav-copy">
@@ -592,7 +592,7 @@ function RealityCheck() {
           </div>
 
           <div className="reality-sidebar-tip">
-            <span>🛡️</span>
+            <span>Safety</span>
             <strong>Think before you share.</strong>
             <p>
               The safest reality-check habit is to pause when something
@@ -603,7 +603,7 @@ function RealityCheck() {
 
         <section className="reality-main">
           <section className="reality-hero">
-            <span className="reality-kicker">🛡 DIGITAL REALITY LITERACY</span>
+            <span className="reality-kicker">Safety DIGITAL REALITY LITERACY</span>
 
             <h1>
               Seeing is no
@@ -618,7 +618,7 @@ function RealityCheck() {
             </p>
 
             <div className="reality-hero-principle">
-              <span>🧠</span>
+              <span>Think</span>
               <div>
                 <strong>Reality Check is not about distrusting everything.</strong>
                 <p>
@@ -799,7 +799,7 @@ function RealityLearningPage({
                 ].join(" ")}
                 onClick={() => onAnswer(choice.value)}
               >
-                <span>{selected ? "✓" : "○"}</span>
+                <span>{selected ? "OK" : "○"}</span>
                 {choice.label}
               </button>
             );
@@ -808,7 +808,7 @@ function RealityLearningPage({
 
         {answer && (
           <div className={correct ? "reality-feedback success" : "reality-feedback warning"}>
-            <strong>{correct ? "✓ Correct" : "Not quite yet"}</strong>
+            <strong>{correct ? "OK Correct" : "Not quite yet"}</strong>
             <p>{correct ? content.correctMessage : content.wrongMessage}</p>
           </div>
         )}
@@ -926,7 +926,7 @@ function FinalChallenge({
       ) : (
         <div className="reality-result">
           <div className={`reality-result-icon ${passed ? "success" : "fail"}`}>
-            {passed ? "✓" : "↻"}
+            {passed ? "OK" : "↻"}
           </div>
 
           <span className="reality-result-label">YOUR RESULT</span>
@@ -943,7 +943,7 @@ function FinalChallenge({
 
               return (
                 <div key={question.question} className={correct ? "correct" : "wrong"}>
-                  <strong>{correct ? "✓ Correct" : "✕ Review"}</strong>
+                  <strong>{correct ? "OK Correct" : "X Review"}</strong>
                   <p>{question.explanation}</p>
                 </div>
               );
@@ -957,7 +957,7 @@ function FinalChallenge({
           ) : (
             <>
               <div className="reality-completion-card">
-                <span>✓</span>
+                <span>OK</span>
                 <div>
                   <strong>Reality Check passed!</strong>
                   <p>
@@ -974,7 +974,7 @@ function FinalChallenge({
                   disabled={saving}
                   onClick={onComplete}
                 >
-                  {saving ? "Saving completion…" : "Complete Reality Check ✓"}
+                  {saving ? "Saving completion…" : "Complete Reality Check OK"}
                 </button>
               ) : (
                 <button

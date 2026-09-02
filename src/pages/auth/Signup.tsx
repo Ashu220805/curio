@@ -722,7 +722,7 @@ function SignUp() {
                   className="input-icon"
                   aria-hidden="true"
                 >
-                  ✉
+                  Email
                 </span>
 
                 <input
@@ -759,7 +759,7 @@ function SignUp() {
                   className="input-icon"
                   aria-hidden="true"
                 >
-                  🎂
+                  Age
                 </span>
 
                 <input
@@ -797,7 +797,7 @@ function SignUp() {
                   className="input-icon"
                   aria-hidden="true"
                 >
-                  👤
+                  Profile
                 </span>
 
                 <select
@@ -872,7 +872,7 @@ function SignUp() {
                   className="input-icon"
                   aria-hidden="true"
                 >
-                  🎓
+                  Learning
                 </span>
 
                 <select
@@ -966,7 +966,7 @@ function SignUp() {
                   className="input-icon"
                   aria-hidden="true"
                 >
-                  🤖
+                  AI
                 </span>
 
                 <select
@@ -1025,7 +1025,7 @@ function SignUp() {
                   className="input-icon"
                   aria-hidden="true"
                 >
-                  🎯
+                  Goal
                 </span>
 
                 <select
@@ -1099,7 +1099,7 @@ function SignUp() {
           <div className="signup-profile-note">
 
             <span aria-hidden="true">
-              💡
+              Note
             </span>
 
             <p>
@@ -1134,7 +1134,7 @@ function SignUp() {
                 className="input-icon password-lock-icon"
                 aria-hidden="true"
               >
-                🔒
+                Locked
               </span>
 
               <input
@@ -1238,7 +1238,7 @@ function SignUp() {
                     >
 
                       {check.passed
-                        ? "✓"
+                        ? "OK"
                         : "○"}
 
                       {" "}
@@ -1273,7 +1273,7 @@ function SignUp() {
                 className="input-icon password-lock-icon"
                 aria-hidden="true"
               >
-                🔒
+                Locked
               </span>
 
               <input
@@ -1335,7 +1335,7 @@ function SignUp() {
               >
 
                 {password === confirmPassword
-                  ? "✓ Passwords match"
+                  ? "OK Passwords match"
                   : "Passwords do not match"}
 
               </div>

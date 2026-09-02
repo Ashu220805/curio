@@ -305,7 +305,7 @@ function Guest() {
               className="guest-feature-icon"
               aria-hidden="true"
             >
-              ✦
+              CURIO
             </div>
 
             <h2>

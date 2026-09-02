@@ -483,7 +483,7 @@ function Login() {
                 role="status"
               >
                 <span className="login-message-icon">
-                  ✓
+                  OK
                 </span>
 
                 <span>{success}</span>
@@ -629,7 +629,7 @@ function Login() {
                 />
 
                 <span className="login-checkbox-box">
-                  ✓
+                  OK
                 </span>
 
                 <span>
