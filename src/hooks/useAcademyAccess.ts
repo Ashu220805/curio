@@ -1,61 +1,121 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../lib/supabase.ts";
+import { supabase } from "../lib/supabase";
 
-export type AcademyAccessStatus = "loading" | "anonymous" | "inactive" | "active" | "unavailable" | "development_preview";
+export type AcademyAccessStatus =
+  | "loading"
+  | "guest"
+  | "free"
+  | "active"
+  | "error";
 
-type EntitlementRow = { access_status: string | null; expires_at: string | null };
-
-function isCurrentlyActive(row: EntitlementRow | null): boolean {
-  if (!row || row.access_status !== "active") return false;
-  if (!row.expires_at) return true;
-  return new Date(row.expires_at).getTime() > Date.now();
+export interface AcademyMembership {
+  id: string;
+  user_id: string;
+  status: string;
+  plan_name: string;
+  amount: number;
+  currency: string;
+  payment_provider: string | null;
+  provider_order_id: string | null;
+  provider_payment_id: string | null;
+  activated_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-/**
- * Paid access is database-backed. Browser progress, URL parameters and
- * localStorage are never accepted as proof of payment.
- *
- * VITE_ACADEMY_DEV_PREVIEW=true is only a local/development preview escape
- * hatch so the complete UI can be inspected before payment infrastructure is
- * connected. Do not set it in production.
- */
 export function useAcademyAccess() {
-  const [status, setStatus] = useState<AcademyAccessStatus>("loading");
-  const [isMember, setIsMember] = useState(false);
+  const [accessStatus, setAccessStatus] =
+    useState<AcademyAccessStatus>("loading");
 
-  const reload = useCallback(async () => {
-    if (import.meta.env.DEV && import.meta.env.VITE_ACADEMY_DEV_PREVIEW === "true") {
-      setIsMember(true);
-      setStatus("development_preview");
-      return;
+  const [membership, setMembership] =
+    useState<AcademyMembership | null>(null);
+
+  const refreshAccess = useCallback(async () => {
+    try {
+      setAccessStatus("loading");
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error("Unable to read authenticated user:", userError);
+        setAccessStatus("error");
+        return;
+      }
+
+      if (!user) {
+        setMembership(null);
+        setAccessStatus("guest");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("academy_memberships")
+        .select(`
+          id,
+          user_id,
+          status,
+          plan_name,
+          amount,
+          currency,
+          payment_provider,
+          provider_order_id,
+          provider_payment_id,
+          activated_at,
+          expires_at,
+          created_at,
+          updated_at
+        `)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (error) {
+        console.error("Unable to load Academy membership:", error);
+        setMembership(null);
+        setAccessStatus("error");
+        return;
+      }
+
+      if (!data) {
+        setMembership(null);
+        setAccessStatus("free");
+        return;
+      }
+
+      const now = new Date();
+
+      if (
+        data.expires_at &&
+        new Date(data.expires_at) < now
+      ) {
+        setMembership(data);
+        setAccessStatus("free");
+        return;
+      }
+
+      setMembership(data);
+      setAccessStatus("active");
+    } catch (error) {
+      console.error("Unexpected Academy access error:", error);
+
+      setMembership(null);
+      setAccessStatus("error");
     }
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      setIsMember(false);
-      setStatus("anonymous");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("academy_entitlements")
-      .select("access_status, expires_at")
-      .eq("user_id", user.id)
-      .eq("product", "curio_ai_ml_academy")
-      .maybeSingle();
-
-    if (error) {
-      setIsMember(false);
-      setStatus("unavailable");
-      return;
-    }
-
-    const active = isCurrentlyActive((data ?? null) as EntitlementRow | null);
-    setIsMember(active);
-    setStatus(active ? "active" : "inactive");
   }, []);
 
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => {
+    void refreshAccess();
+  }, [refreshAccess]);
 
-  return { isMember, status, loading: status === "loading", reload };
+  return {
+    accessStatus,
+    membership,
+    hasAcademyAccess: accessStatus === "active",
+    isLoading: accessStatus === "loading",
+    refreshAccess,
+  };
 }
