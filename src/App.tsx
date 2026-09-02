@@ -71,6 +71,22 @@ const AISimulation = lazy(
     ),
 );
 
+const Academy = lazy(
+  () => import("./pages/public/Academy.tsx"),
+);
+
+const ConceptLibrary = lazy(
+  () => import("./pages/public/ConceptLibrary.tsx"),
+);
+
+const CodeLab = lazy(
+  () => import("./pages/public/CodeLab.tsx"),
+);
+
+const AcademyCheckout = lazy(
+  () => import("./pages/public/AcademyCheckout.tsx"),
+);
+
 // =========================================================
 // LESSONS
 // =========================================================
@@ -172,6 +188,8 @@ function GlobalBackButton() {
     "/guest",
     // These pages already provide their own navigation.
     "/dashboard",
+    "/academy",
+    "/academy/checkout",
   ];
 
   if (hiddenPaths.includes(location.pathname)) {
@@ -333,6 +351,26 @@ function App() {
           {/* =================================================
               AUTHENTICATION
           ================================================= */}
+
+          <Route
+            path="/academy"
+            element={<Academy />}
+          />
+
+          <Route
+            path="/academy/checkout"
+            element={<AcademyCheckout />}
+          />
+
+          <Route
+            path="/concepts"
+            element={<ConceptLibrary />}
+          />
+
+          <Route
+            path="/code-lab"
+            element={<CodeLab />}
+          />
 
           <Route
             path="/login"

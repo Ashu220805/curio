@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase.ts";
 import { lessons } from "../../data/lessons.ts";
+import { allAcademyTopics } from "../../data/academy.ts";
+import { concepts } from "../../data/concepts.ts";
 import { useAllLessonProgress } from "../../hooks/useLessonProgress.ts";
+import { useAcademyAccess } from "../../hooks/useAcademyAccess.ts";
 import LearningOrbit from "../../components/visuals/LearningOrbit.tsx";
 import "./Dashboard.css";
 
@@ -14,6 +17,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const isGuest = guestMode();
   const { progress, loading, reload } = useAllLessonProgress();
+  const { isMember: academyMember, status: academyStatus } = useAcademyAccess();
   const [userName, setUserName] = useState(isGuest ? "Guest" : "Learner");
   const [userEmail, setUserEmail] = useState(isGuest ? "Guest session" : "");
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,14 +113,24 @@ function Dashboard() {
     navigate(`/learn/lesson/${id}`);
   };
 
-  const searchResults = useMemo(() => {
+  type SearchResult = { id: string; kind: "lesson" | "academy" | "concept"; title: string; meta: string; path: string; lessonId?: number };
+
+  const searchResults = useMemo<SearchResult[]>(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return [];
-    return cards.filter((lesson) => [lesson.title, lesson.subtitle, lesson.description, ...lesson.skills].join(" ").toLowerCase().includes(query)).slice(0, 6);
+    const lessonResults = cards.filter((lesson) => [lesson.title, lesson.subtitle, lesson.description, ...lesson.skills].join(" ").toLowerCase().includes(query)).map((lesson) => ({ id: `lesson-${lesson.id}`, kind: "lesson" as const, title: lesson.title, meta: `Lesson ${lesson.id} · ${lesson.skills.slice(0, 2).join(" · ")}`, path: `/learn/lesson/${lesson.id}`, lessonId: lesson.id }));
+    const academyResults = allAcademyTopics.filter((topic) => [topic.title, topic.summary, topic.trackTitle, ...topic.concepts].join(" ").toLowerCase().includes(query)).map((topic) => ({ id: `academy-${topic.id}`, kind: "academy" as const, title: topic.title, meta: `${topic.trackNumber} · ${topic.trackTitle}`, path: `/academy?lesson=${topic.lessonOrder}` }));
+    const conceptResults = concepts.filter((concept) => [concept.term, concept.simple, concept.definition, concept.category, ...concept.related].join(" ").toLowerCase().includes(query)).map((concept) => ({ id: `concept-${concept.id}`, kind: "concept" as const, title: concept.term, meta: `Concept · ${concept.category}`, path: `/concepts?q=${encodeURIComponent(concept.term)}` }));
+    return [...lessonResults, ...academyResults, ...conceptResults].slice(0, 8);
   }, [cards, searchQuery]);
 
+  const openSearchResult = (result: SearchResult) => {
+    if (result.kind === "lesson" && result.lessonId) { openLesson(result.lessonId); return; }
+    navigate(result.path);
+  };
+
   const submitSearch = () => {
-    if (searchResults[0]) openLesson(searchResults[0].id);
+    if (searchResults[0]) openSearchResult(searchResults[0]);
   };
 
   return (
@@ -132,7 +146,10 @@ function Dashboard() {
           <Link to="/learn"><span>02</span>Learn AI</Link>
           <Link to="/ai-simulation"><span>03</span>AI Simulation</Link>
           <Link to="/reality-check"><span>04</span>AI Literacy</Link>
-          <button type="button" className={!practiceUnlocked ? "is-locked" : ""} onClick={() => practiceUnlocked ? navigate("/practice") : navigate("/learn")}><span>05</span>Practice</button>
+          <Link to="/academy"><span>05</span>AI / ML Academy</Link>
+          <Link to="/concepts"><span>06</span>Concept Library</Link>
+          <Link to="/code-lab"><span>07</span>Code Lab</Link>
+          <button type="button" className={!practiceUnlocked ? "is-locked" : ""} onClick={() => practiceUnlocked ? navigate("/practice") : navigate("/learn")}><span>08</span>Practice</button>
         </nav>
 
         <div className="dashboard-side-footer">
@@ -152,17 +169,18 @@ function Dashboard() {
           <div className="dashboard-search">
             <span aria-hidden="true">Search</span>
             <input value={searchQuery} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearchQuery(e.target.value); setSearchOpen(true); }} onKeyDown={(e) => { if (e.key === "Enter") submitSearch(); if (e.key === "Escape") setSearchOpen(false); }} placeholder="Search lessons, skills or concepts" aria-label="Search CURIO" />
-            {searchOpen && searchQuery.trim() && <div className="dashboard-search-results">{searchResults.length ? searchResults.map((lesson) => <button key={lesson.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { openLesson(lesson.id); setSearchOpen(false); }}><span>Lesson {lesson.id}</span><strong>{lesson.title}</strong><small>{lesson.skills.slice(0, 2).join(" · ")}</small></button>) : <p>No matching lesson or skill.</p>}</div>}
+            {searchOpen && searchQuery.trim() && <div className="dashboard-search-results">{searchResults.length ? searchResults.map((result) => <button key={result.id} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => { openSearchResult(result); setSearchOpen(false); }}><span>{result.kind}</span><strong>{result.title}</strong><small>{result.meta}</small></button>) : <p>No matching lesson, concept or academy topic.</p>}</div>}
           </div>
           <div className="dashboard-tools">
             <button type="button" className="dashboard-profile-button" onClick={() => setProfileOpen((v) => !v)} aria-expanded={profileOpen}>
               <span className="dashboard-avatar">{userName.slice(0, 1).toUpperCase()}</span>
-              <span><strong>{userName}</strong><small>{isGuest ? "Guest" : "Learner"}</small></span>
+              <span><strong>{userName}</strong><small>{isGuest ? "Guest" : academyMember ? "Academy PRO" : "Learner · Preview"}</small></span>
             </button>
           </div>
           {profileOpen && (
             <div className="dashboard-profile-panel">
               <div><strong>{userName}</strong><span>{userEmail}</span></div>
+              {!isGuest && <div className="dashboard-membership-status"><span>ACADEMY MEMBERSHIP</span><strong>{academyMember ? "PRO · Active" : "Preview · Not purchased"}</strong><small>Status: {academyStatus}</small>{!academyMember && <Link to="/academy/checkout">Unlock Academy PRO · ₹1</Link>}</div>}
               {!isGuest && <button type="button" onClick={() => setPasswordOpen((v) => !v)}>Change password</button>}
               {passwordOpen && !isGuest && <div className="dashboard-password">
                 <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" autoComplete="new-password" />
@@ -206,6 +224,9 @@ function Dashboard() {
               <Link to="/learn"><strong>Learn AI</strong><span>Build the next concept</span><b>→</b></Link>
               <button type="button" onClick={() => practiceUnlocked ? navigate("/practice") : navigate("/learn")}><strong>Practice</strong><span>{practiceUnlocked ? "Test what you know" : `Complete all lessons · ${completedLessons}/${lessons.length}`}</span><b>→</b></button>
               <Link to="/reality-check"><strong>AI Literacy</strong><span>Verify, question, and think critically</span><b>→</b></Link>
+              <Link to="/academy"><strong>AI / ML Academy</strong><span>Study foundations, ML, deep learning, LLMs and systems</span><b>→</b></Link>
+              <Link to="/concepts"><strong>Concept Library</strong><span>Definitions, misconceptions and concept connections</span><b>→</b></Link>
+              <Link to="/code-lab"><strong>Code Lab</strong><span>Python, NumPy, ML and PyTorch explained line by line</span><b>→</b></Link>
             </div>
           </section>
         </main>

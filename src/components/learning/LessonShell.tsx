@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getLesson } from "../../data/lessons.ts";
 import { useLessonProgress } from "../../hooks/useLessonProgress.ts";
+import { lessonResources } from "../../data/lessonResources.ts";
 import "./LessonShell.css";
 
 interface LessonShellProps { lessonId: number; }
@@ -52,6 +53,14 @@ function LessonShell({ lessonId }: LessonShellProps) {
     action: { eyebrow: "TRY THIS", title: "Make it yours", body: section.action },
     check: { eyebrow: "CHECK", title: "Test the connection", body: section.checkQuestion },
   };
+  const misconception = section.kind === "decision"
+    ? "A plausible recommendation is not automatically the right decision; the context and consequences still matter."
+    : section.kind === "practice"
+      ? "Repeating a technique is not the same as understanding why it works or when it should be used."
+      : section.kind === "challenge"
+        ? "A correct answer in one example does not prove the idea transfers unchanged to every situation."
+        : "Fluent or familiar wording can create an illusion of understanding; test the idea with an example and a recall attempt.";
+  const resources = lessonResources[lesson.id] ?? [];
 
   const handleCheck = () => { if (selectedOption !== null) setChecked(true); };
   const handleNext = async () => {
@@ -94,17 +103,18 @@ function LessonShell({ lessonId }: LessonShellProps) {
             <div className="lesson-card-kicker">LEARN</div><h3>Core idea</h3><p>{section.explanation}</p>
             <div className="lesson-example"><span>Example</span><p>{section.example}</p></div>
             <div className="lesson-action-card"><span>Try it yourself</span><p>{section.action}</p></div>
+            <div className="lesson-misconception"><span>COMMON CONFUSION TO AVOID</span><p>{misconception}</p></div>
           </article>}
 
           {learningMode === "map" && <article className="lesson-map-card">
             <div className="lesson-map-heading"><div><span>CONCEPT CONNECTIONS</span><h3>Read the map from the core idea outward.</h3><p>Each node stays separate and readable. Select a node to focus on that connection.</p></div><span className="lesson-map-hint">Select a node</span></div>
             <div className="lesson-map-stage">
-              <svg className="lesson-map-lines" viewBox="0 0 1000 560" preserveAspectRatio="none" aria-hidden="true"><line x1="500" y1="280" x2="220" y2="140" /><line x1="500" y1="280" x2="790" y2="140" /><line x1="500" y1="280" x2="220" y2="440" /><line x1="500" y1="280" x2="790" y2="440" /></svg>
+              <svg className="lesson-map-lines" viewBox="0 0 1000 620" preserveAspectRatio="none" aria-hidden="true"><line x1="500" y1="310" x2="220" y2="145" /><line x1="500" y1="310" x2="780" y2="145" /><line x1="500" y1="310" x2="220" y2="475" /><line x1="500" y1="310" x2="780" y2="475" /></svg>
               <div className="lesson-map-grid">
-                <button type="button" onClick={() => setSelectedMapNode("core")} className={`lesson-map-node node-core ${selectedMapNode === "core" ? "is-selected" : ""}`}><span>CORE</span><strong>{section.title}</strong><small>{section.summary}</small></button>
-                <button type="button" onClick={() => setSelectedMapNode("example")} className={`lesson-map-node node-example ${selectedMapNode === "example" ? "is-selected" : ""}`}><span>EXAMPLE</span><strong>See it in use</strong><small>{section.example}</small></button>
-                <button type="button" onClick={() => setSelectedMapNode("action")} className={`lesson-map-node node-action ${selectedMapNode === "action" ? "is-selected" : ""}`}><span>TRY</span><strong>Make it yours</strong><small>{section.action}</small></button>
-                <button type="button" onClick={() => setSelectedMapNode("check")} className={`lesson-map-node node-check ${selectedMapNode === "check" ? "is-selected" : ""}`}><span>CHECK</span><strong>Test the idea</strong><small>{section.checkQuestion}</small></button>
+                <button type="button" onClick={() => setSelectedMapNode("core")} className={`lesson-map-node node-core node-position-core ${selectedMapNode === "core" ? "is-selected" : ""}`}><span>CORE</span><strong>{section.title}</strong><small>{section.summary}</small></button>
+                <button type="button" onClick={() => setSelectedMapNode("example")} className={`lesson-map-node node-example node-position-example ${selectedMapNode === "example" ? "is-selected" : ""}`}><span>EXAMPLE</span><strong>See it in use</strong><small>{section.example}</small></button>
+                <button type="button" onClick={() => setSelectedMapNode("action")} className={`lesson-map-node node-action node-position-action ${selectedMapNode === "action" ? "is-selected" : ""}`}><span>TRY</span><strong>Make it yours</strong><small>{section.action}</small></button>
+                <button type="button" onClick={() => setSelectedMapNode("check")} className={`lesson-map-node node-check node-position-check ${selectedMapNode === "check" ? "is-selected" : ""}`}><span>CHECK</span><strong>Test the idea</strong><small>{section.checkQuestion}</small></button>
               </div>
             </div>
             <div className="lesson-map-focus"><span>{mapNodes[selectedMapNode].eyebrow}</span><h4>{mapNodes[selectedMapNode].title}</h4><p>{mapNodes[selectedMapNode].body}</p></div>
@@ -121,6 +131,8 @@ function LessonShell({ lessonId }: LessonShellProps) {
           </article>
 
           <section className="lesson-reflection-card"><div><span>CONFIDENCE CHECK</span><h3>How confident are you with this idea now?</h3></div><div className="lesson-confidence-options">{["Not sure yet", "Getting there", "I can explain it"].map((label, index) => <button key={label} type="button" className={confidence === index ? "is-selected" : ""} onClick={() => setConfidence(index)}>{label}</button>)}</div></section>
+
+          {resources.length > 0 && <section className="lesson-resources-card"><div><span>LEARN FURTHER</span><h3>References for this lesson</h3><p>Use these sources to verify, deepen, and extend what you learned.</p></div><div>{resources.map((resource) => <a key={resource.url} href={resource.url} target="_blank" rel="noreferrer"><small>{resource.source}</small><strong>{resource.label}</strong><b>Open ↗</b></a>)}</div></section>}
 
           {(error || savingNotice) && <div className={`lesson-save-message ${error ? "is-error" : ""}`} role="status">{error ?? savingNotice}</div>}
           <div className="lesson-footer-actions"><button type="button" className="lesson-secondary-button" onClick={() => setSectionIndex((index) => Math.max(0, index - 1))} disabled={sectionIndex === 0}>Previous</button><div className="lesson-footer-status"><span>Section {sectionIndex + 1} of {totalSections}</span><span>{saving ? "Saving…" : "Progress saves automatically"}</span></div><button type="button" className="lesson-primary-button" onClick={handleNext} disabled={saving || (isLast && selectedOption !== section.answer)}>{isLast ? (completed ? "Completed" : "Complete lesson") : "Continue"}<span aria-hidden="true">→</span></button></div>

@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /learn/
+Disallow: /practice
+Disallow: /reality-check
+Disallow: /ai-simulation
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+Disallow: /onboarding
+
+Sitemap: https://curio-jet.vercel.app/sitemap.xml

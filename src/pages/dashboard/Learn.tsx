@@ -160,6 +160,27 @@ function Learn() {
           })}
         </div>
       </section>
+
+      <section className="learn-deeper-section">
+        <div className="learn-section-heading">
+          <div>
+            <span className="learn-kicker">GO DEEPER</span>
+            <h2>Move from AI literacy to AI engineering</h2>
+          </div>
+          <p>Keep the eight CURIO lessons focused. Use the Academy, Concept Library and Code Lab as separate deeper learning areas.</p>
+        </div>
+        <div className="learn-deeper-grid">
+          <button type="button" onClick={() => navigate("/academy")}>
+            <span>01 · ACADEMY</span><strong>AI / ML study map</strong><p>Foundations, Python, data, ML, deep learning, LLMs and production systems.</p>
+          </button>
+          <button type="button" onClick={() => navigate("/concepts")}>
+            <span>02 · CONCEPTS</span><strong>Connected definitions</strong><p>Simple explanations, technical definitions, misconceptions, examples and related ideas.</p>
+          </button>
+          <button type="button" onClick={() => navigate("/code-lab")}>
+            <span>03 · CODE LAB</span><strong>Read code line by line</strong><p>Python, NumPy, supervised learning and PyTorch training patterns.</p>
+          </button>
+        </div>
+      </section>
     </main>
   );
 }
