@@ -87,11 +87,11 @@ export default function Academy() {
     return academyModules.map((m) => ({ ...m, lessons: m.lessons.filter((l) => !q || l.title.toLowerCase().includes(q) || l.concepts.some((c) => c.term.toLowerCase().includes(q))) })).filter((m) => m.lessons.length > 0);
   }, [search]);
 
-  const openLesson = (order: number) => { if (canOpen(order)) navigate(`/academy?lesson=${order}`); };
+  const openLesson = (order: number) => { if (canOpen(order)) navigate(`/academy/lesson/${order}`); };
   const complete = () => {
     setCompleted((old) => old.includes(lesson.order) ? old : [...old, lesson.order]);
     const next = academyLessons.find((x) => x.order === lesson.order + 1);
-    if (next) setTimeout(() => navigate(`/academy?lesson=${next.order}`), 450);
+    if (next) setTimeout(() => navigate(`/academy/lesson/${next.order}`), 450);
   };
 
   const tabs: { id: Section; label: string }[] = [

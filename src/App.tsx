@@ -87,6 +87,10 @@ const AcademyCheckout = lazy(
   () => import("./pages/public/AcademyCheckout.tsx"),
 );
 
+const AcademyLesson = lazy(
+  () => import("./pages/public/AcademyLesson.tsx"),
+);
+
 // =========================================================
 // LESSONS
 // =========================================================
@@ -360,6 +364,11 @@ function App() {
           <Route
             path="/academy/checkout"
             element={<AcademyCheckout />}
+          />
+
+          <Route
+            path="/academy/lesson/:order"
+            element={<AcademyLesson />}
           />
 
           <Route
