@@ -163,9 +163,7 @@ export async function runAISimulation(
     );
   }
 
-  const object =
-    result as Record<string, unknown>;
-
+  const object = result as unknown as Record<string, unknown>;
   /*
     Response
   */
