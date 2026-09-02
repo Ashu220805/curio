@@ -270,8 +270,7 @@ Deno.serve(
        * Read request body.
        */
       const body =
-        await req.json()
-          as VerifyPaymentBody;
+        (await req.json()) as VerifyPaymentBody;
 
       const paymentId =
         body

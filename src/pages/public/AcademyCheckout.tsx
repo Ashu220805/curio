@@ -108,7 +108,7 @@ export default function AcademyCheckout() {
         /*
          * Small delay gives React state time to update.
          */
-        window.setTimeout(
+        globalThis.setTimeout(
           () => {
             navigate(
               "/academy",

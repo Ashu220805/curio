@@ -113,8 +113,7 @@ export async function startAcademyCheckout(): Promise<CheckoutResult> {
    */
   return new Promise<CheckoutResult>(
     (resolve, reject) => {
-      const RazorpayConstructor =
-        window.Razorpay;
+      const RazorpayConstructor = globalThis.Razorpay;
 
       if (!RazorpayConstructor) {
         reject(

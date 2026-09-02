@@ -51,7 +51,7 @@ export function loadRazorpayScript(): Promise<boolean> {
       return;
     }
 
-    if (window.Razorpay) {
+    if (globalThis.Razorpay) {
       resolve(true);
       return;
     }
@@ -66,7 +66,7 @@ export function loadRazorpayScript(): Promise<boolean> {
 
     if (existingScript) {
       const checkExistingScript = () => {
-        resolve(Boolean(window.Razorpay));
+        resolve(Boolean(globalThis.Razorpay));
       };
 
       existingScript.addEventListener(
@@ -91,7 +91,7 @@ export function loadRazorpayScript(): Promise<boolean> {
     script.async = true;
 
     script.onload = () => {
-      resolve(Boolean(window.Razorpay));
+      resolve(Boolean(globalThis.Razorpay));
     };
 
     script.onerror = () => {
