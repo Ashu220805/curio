@@ -3,3 +3,6 @@ verify_jwt = true
 
 [functions.payment-webhook]
 verify_jwt = false
+
+[functions.ai-simulation]
+verify_jwt = true
