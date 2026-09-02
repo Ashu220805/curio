@@ -46,12 +46,12 @@ export const SECURITY_LIMITS = {
     Maximum number of requests allowed inside the
     client-side time window.
   */
-  MAX_REQUESTS_PER_WINDOW: 10,
+  MAX_REQUESTS_PER_window: 10,
 
   /*
     Client-side rate-limit window.
   */
-  RATE_LIMIT_WINDOW_MS: 60 * 1000,
+  RATE_LIMIT_window_MS: 60 * 1000,
 } as const;
 
 /* =========================================================
@@ -92,9 +92,9 @@ export function normalizePrompt(
     return "";
   }
 
-  // eslint-disable-next-line no-control-regex -- Intentional removal of null character
   return prompt
-    .replace(/[\x00]/g, "")
+    .split(String.fromCharCode(0))
+    .join("")
     .trim();
 }
 
@@ -678,7 +678,7 @@ export function checkClientRateLimit(): RateLimitResult {
     state.timestamps.filter(
       (timestamp) =>
         now - timestamp <
-        SECURITY_LIMITS.RATE_LIMIT_WINDOW_MS,
+        SECURITY_LIMITS.RATE_LIMIT_window_MS,
     );
 
   /*
@@ -687,7 +687,7 @@ export function checkClientRateLimit(): RateLimitResult {
 
   if (
     recent.length >=
-    SECURITY_LIMITS.MAX_REQUESTS_PER_WINDOW
+    SECURITY_LIMITS.MAX_REQUESTS_PER_window
   ) {
     saveRateLimitState({
       timestamps: recent,
@@ -737,7 +737,7 @@ export function checkClientRateLimit(): RateLimitResult {
       remainingRequests:
         Math.max(
           0,
-          SECURITY_LIMITS.MAX_REQUESTS_PER_WINDOW -
+          SECURITY_LIMITS.MAX_REQUESTS_PER_window -
             recent.length,
         ),
     };
@@ -760,7 +760,7 @@ export function checkClientRateLimit(): RateLimitResult {
     remainingRequests:
       Math.max(
         0,
-        SECURITY_LIMITS.MAX_REQUESTS_PER_WINDOW -
+        SECURITY_LIMITS.MAX_REQUESTS_PER_window -
           recent.length,
       ),
   };

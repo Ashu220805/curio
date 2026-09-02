@@ -87,10 +87,10 @@ const MAX_ANALYSIS_STRING_LENGTH =
   rate limiter. The database-backed rate limiter
   will provide the persistent protection layer.
 */
-const RATE_LIMIT_WINDOW_MS =
+const RATE_LIMIT_globalThis_MS =
   60 * 1000;
 
-const MAX_REQUESTS_PER_WINDOW = 10;
+const MAX_REQUESTS_PER_globalThis = 10;
 
 /* =========================================================
    SERVER RATE LIMIT STORAGE
@@ -100,7 +100,7 @@ const requestHistory = new Map<
   string,
   {
     count: number;
-    windowStart: number;
+    globalThisStart: number;
   }
 >();
 
@@ -202,7 +202,7 @@ function checkRateLimit(
   if (!previous) {
     requestHistory.set(userId, {
       count: 1,
-      windowStart: now,
+      globalThisStart: now,
     });
 
     return {
@@ -212,18 +212,18 @@ function checkRateLimit(
   }
 
   const elapsed =
-    now - previous.windowStart;
+    now - previous.globalThisStart;
 
   /*
-    Start a new window.
+    Start a new globalThis.
   */
   if (
     elapsed >=
-    RATE_LIMIT_WINDOW_MS
+    RATE_LIMIT_globalThis_MS
   ) {
     requestHistory.set(userId, {
       count: 1,
-      windowStart: now,
+      globalThisStart: now,
     });
 
     return {
@@ -237,10 +237,10 @@ function checkRateLimit(
   */
   if (
     previous.count >=
-    MAX_REQUESTS_PER_WINDOW
+    MAX_REQUESTS_PER_globalThis
   ) {
     const remaining =
-      RATE_LIMIT_WINDOW_MS -
+      RATE_LIMIT_globalThis_MS -
       elapsed;
 
     return {

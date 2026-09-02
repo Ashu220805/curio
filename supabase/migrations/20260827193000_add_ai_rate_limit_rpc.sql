@@ -31,7 +31,7 @@ begin
 
   /*
   ================================================
-  CREATE OR RESET USER WINDOW
+  CREATE OR RESET USER window
   ================================================
   */
 

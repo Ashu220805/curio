@@ -603,10 +603,10 @@ export async function saveLessonProgress(
     if (success) {
 
       if (
-        typeof globalThis !==
+        typeof window !==
         "undefined"
       ) {
-        globalThis.dispatchEvent(
+        window.dispatchEvent(
           new CustomEvent(
             "curio:lesson-progress-updated",
             {
@@ -626,7 +626,7 @@ export async function saveLessonProgress(
         if (
           guestProgress.completed
         ) {
-          globalThis.dispatchEvent(
+          window.dispatchEvent(
             new CustomEvent(
               "curio:lesson-completed",
               {
@@ -786,10 +786,10 @@ export async function saveLessonProgress(
   }
 
   if (
-    typeof globalThis !==
+    typeof window !==
     "undefined"
   ) {
-    globalThis.dispatchEvent(
+    window.dispatchEvent(
       new CustomEvent(
         "curio:lesson-progress-updated",
         {
@@ -813,7 +813,7 @@ export async function saveLessonProgress(
     );
 
     if (finalCompleted) {
-      globalThis.dispatchEvent(
+      window.dispatchEvent(
         new CustomEvent(
           "curio:lesson-completed",
           {

@@ -17,7 +17,10 @@ function Dashboard() {
   const navigate = useNavigate();
   const isGuest = guestMode();
   const { progress, loading, reload } = useAllLessonProgress();
-  const { isMember: academyMember, status: academyStatus } = useAcademyAccess();
+const {
+  hasAcademyAccess: academyMember,
+  accessStatus: academyStatus,
+} = useAcademyAccess();
   const [userName, setUserName] = useState(isGuest ? "Guest" : "Learner");
   const [userEmail, setUserEmail] = useState(isGuest ? "Guest session" : "");
   const [searchQuery, setSearchQuery] = useState("");

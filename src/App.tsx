@@ -199,7 +199,7 @@ function GlobalBackButton() {
   const handleBack = () => {
     // Only go back when React Router has a same-tab history entry.
     // Otherwise a direct visit must stay inside CURIO.
-    const historyState = globalThis.history.state as
+    const historyState = window.history.state as
       | { idx?: unknown }
       | null;
 

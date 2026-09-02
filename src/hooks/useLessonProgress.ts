@@ -564,24 +564,24 @@ export function useAllLessonProgress() {
         void reload();
       };
 
-    globalThis.addEventListener(
+    window.addEventListener(
       "curio:lesson-progress-updated",
       handleProgressUpdate
     );
 
-    globalThis.addEventListener(
+    window.addEventListener(
       "curio:lesson-completed",
       handleProgressUpdate
     );
 
     return () => {
 
-      globalThis.removeEventListener(
+      window.removeEventListener(
         "curio:lesson-progress-updated",
         handleProgressUpdate
       );
 
-      globalThis.removeEventListener(
+      window.removeEventListener(
         "curio:lesson-completed",
         handleProgressUpdate
       );
