@@ -1,54 +1,30 @@
-import { useState } from "react";
+import {
+  useState,
+} from "react";
+
 import {
   Link,
   useNavigate,
 } from "react-router-dom";
 
-import { useDocumentMeta } from "../../hooks/useDocumentMeta.ts";
-import { useAuth } from "../../hooks/useAuth.ts";
-import { useAcademyAccess } from "../../hooks/useAcademyAccess.ts";
+import {
+  useDocumentMeta,
+} from "../../hooks/useDocumentMeta.ts";
 
 import {
-  loadRazorpayScript,
-  type RazorpayPaymentResponse,
-} from "../../lib/razorpay.ts";
+  useAuth,
+} from "../../hooks/useAuth.ts";
 
-import { startAcademyCheckout } from "../../lib/academyCheckout.ts";
+import {
+  useAcademyAccess,
+} from "../../hooks/useAcademyAccess.ts";
+
+import {
+  startAcademyCheckout,
+} from "../../lib/academyCheckout.ts";
 
 import "./Academy.css";
 import "./AcademyCheckout.css";
-
-interface AcademyCheckoutResponse {
-  success: boolean;
-  keyId: string;
-  orderId: string;
-  amount: number;
-  currency: string;
-  userId: string;
-}
-
-function isCheckoutResponse(
-  value: unknown,
-): value is AcademyCheckoutResponse {
-  if (
-    typeof value !== "object" ||
-    value === null
-  ) {
-    return false;
-  }
-
-  const data =
-    value as Record<string, unknown>;
-
-  return (
-    data.success === true &&
-    typeof data.keyId === "string" &&
-    typeof data.orderId === "string" &&
-    typeof data.amount === "number" &&
-    typeof data.currency === "string" &&
-    typeof data.userId === "string"
-  );
-}
 
 export default function AcademyCheckout() {
   useDocumentMeta(
@@ -56,199 +32,123 @@ export default function AcademyCheckout() {
     "Secure CURIO Academy membership checkout.",
   );
 
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const {
     user,
     loading: authLoading,
-  } = useAuth();
+  } =
+    useAuth();
 
   const {
     accessStatus,
-    membership,
     hasAcademyAccess,
-    isLoading: membershipLoading,
+    isLoading,
     refreshAccess,
-  } = useAcademyAccess();
+  } =
+    useAcademyAccess();
 
-  const [starting, setStarting] =
+  const [
+    starting,
+    setStarting,
+  ] =
     useState(false);
 
-  const [message, setMessage] =
+  const [
+    message,
+    setMessage,
+  ] =
     useState("");
+
+  const [
+    successMessage,
+    setSuccessMessage,
+  ] =
+    useState("");
+
+  const beginCheckout =
+    async () => {
+      setMessage("");
+      setSuccessMessage("");
+
+      if (!user) {
+        setMessage(
+          "Please sign in before purchasing Academy access.",
+        );
+
+        return;
+      }
+
+      if (hasAcademyAccess) {
+        navigate(
+          "/academy",
+          {
+            replace: true,
+          },
+        );
+
+        return;
+      }
+
+      setStarting(true);
+
+      try {
+        await startAcademyCheckout();
+
+        setSuccessMessage(
+          "Payment verified successfully. Activating your CURIO Academy PRO access…",
+        );
+
+        /*
+         * Reload membership from Supabase.
+         */
+        await refreshAccess();
+
+        /*
+         * Small delay gives React state time to update.
+         */
+        window.setTimeout(
+          () => {
+            navigate(
+              "/academy",
+              {
+                replace: true,
+              },
+            );
+          },
+          900,
+        );
+      } catch (
+        error
+      ) {
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : "Payment could not be completed.",
+        );
+      } finally {
+        setStarting(false);
+      }
+    };
 
   const statusLabel =
     authLoading ||
-    membershipLoading
-      ? "Checking account"
+    isLoading
+      ? "Checking your account…"
       : hasAcademyAccess
         ? "PRO membership active"
         : user
-          ? "Ready for secure checkout"
+          ? "Ready for secure payment"
           : "Sign in required";
 
-  const beginCheckout = async () => {
-    setMessage("");
-
-    if (!user) {
-      setMessage(
-        "Please sign in before purchasing Academy access.",
-      );
-      return;
-    }
-
-    if (hasAcademyAccess) {
-      navigate("/academy");
-      return;
-    }
-
-    setStarting(true);
-
-    try {
-      const razorpayLoaded =
-        await loadRazorpayScript();
-
-      if (!razorpayLoaded) {
-        throw new Error(
-          "Unable to load the payment service. Please check your connection and try again.",
-        );
-      }
-
-      if (!globalThis.Razorpay) {
-        throw new Error(
-          "Razorpay Checkout could not be initialized.",
-        );
-      }
-
-      const result =
-        await startAcademyCheckout();
-
-      if (
-        !isCheckoutResponse(
-          result,
-        )
-      ) {
-        throw new Error(
-          "The payment service returned an invalid checkout order.",
-        );
-      }
-
-      const checkoutData =
-        result;
-
-      const razorpay =
-        new globalThis.Razorpay({
-          key:
-            checkoutData.keyId,
-
-          amount:
-            checkoutData.amount,
-
-          currency:
-            checkoutData.currency,
-
-          name:
-            "CURIO",
-
-          description:
-            "CURIO AI / ML Academy PRO Membership",
-
-          order_id:
-            checkoutData.orderId,
-
-          prefill: {
-            email:
-              user.email ?? "",
-          },
-
-          theme: {
-            color:
-              "#5b6cff",
-          },
-
-          handler: async (
-            response: RazorpayPaymentResponse,
-          ) => {
-            if (
-              !response
-                .razorpay_payment_id
-            ) {
-              setMessage(
-                "Payment verification information was not returned.",
-              );
-
-              setStarting(false);
-
-              return;
-            }
-
-            setMessage(
-              "Payment received. Verifying your Academy membership...",
-            );
-
-            let attempts = 0;
-
-            const maximumAttempts = 10;
-
-            const verifyAccess =
-              async (): Promise<void> => {
-                attempts += 1;
-
-                await refreshAccess();
-
-                if (
-                  attempts >=
-                  maximumAttempts
-                ) {
-                  setStarting(false);
-
-                  setMessage(
-                    "Payment was received. Membership verification may take a few moments. Please refresh the page shortly.",
-                  );
-
-                  return;
-                }
-
-                globalThis.setTimeout(
-                  () => {
-                    void verifyAccess();
-                  },
-                  2000,
-                );
-              };
-
-            await verifyAccess();
-          },
-
-          modal: {
-            ondismiss: () => {
-              setStarting(false);
-
-              setMessage(
-                "Payment was cancelled. Academy access has not been activated.",
-              );
-            },
-          },
-        });
-
-      razorpay.open();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Checkout could not be started.";
-
-      setMessage(
-        errorMessage,
-      );
-
-      setStarting(false);
-    }
-  };
-
   return (
-    <main className="checkout-page">
-      <header className="academy-topbar">
+    <main
+      className="checkout-page"
+    >
+      <header
+        className="academy-topbar"
+      >
         <Link
           to="/academy"
           className="academy-brand"
@@ -267,15 +167,20 @@ export default function AcademyCheckout() {
           </small>
         </Link>
 
-        <div className="academy-header-center">
+        <div
+          className="academy-header-center"
+        >
           <span>
             Secure membership access
           </span>
 
-          <div className="academy-progress">
+          <div
+            className="academy-progress"
+          >
             <i
               style={{
-                width: "100%",
+                width:
+                  "100%",
               }}
             />
           </div>
@@ -285,43 +190,58 @@ export default function AcademyCheckout() {
           </small>
         </div>
 
-        <nav className="academy-nav">
-          <Link to="/academy">
+        <nav
+          className="academy-nav"
+        >
+          <Link
+            to="/academy"
+          >
             Back to Academy
           </Link>
 
           {user && (
-            <Link to="/dashboard">
+            <Link
+              to="/dashboard"
+            >
               Dashboard
             </Link>
           )}
         </nav>
       </header>
 
-      <section className="checkout-layout">
-        <div className="checkout-copy">
-          <span className="academy-kicker">
+      <section
+        className="checkout-layout"
+      >
+        <div
+          className="checkout-copy"
+        >
+          <span
+            className="academy-kicker"
+          >
             CURIO ACADEMY · PRO MEMBERSHIP
           </span>
 
           <h1>
             One Academy.
-            <br />
             One structured path.
-            <br />
             ₹1 to test the full experience.
           </h1>
 
           <p>
-            The current ₹1 price is an integration
-            and product-flow test. Academy access is
-            activated only after trusted server-side
-            payment confirmation.
+            The current ₹1 price is being used
+            for payment integration testing.
+            Academy access is activated only
+            after Razorpay payment verification
+            succeeds on the server.
           </p>
 
-          <div className="checkout-includes">
+          <div
+            className="checkout-includes"
+          >
             <article>
-              <b>01</b>
+              <b>
+                01
+              </b>
 
               <div>
                 <strong>
@@ -329,54 +249,70 @@ export default function AcademyCheckout() {
                 </strong>
 
                 <span>
-                  Python, mathematics, data science,
-                  machine learning, deep learning,
-                  neural networks, LLMs, generative AI
-                  and production systems.
+                  Python, mathematics,
+                  data, machine learning,
+                  deep learning, LLMs,
+                  generative AI and
+                  production systems.
                 </span>
               </div>
             </article>
 
             <article>
-              <b>02</b>
+              <b>
+                02
+              </b>
 
               <div>
                 <strong>
-                  Teaching inside CURIO
+                  Teaching, not redirects
                 </strong>
 
                 <span>
-                  Definitions, distinctions, diagrams,
-                  code walkthroughs, examples, common
-                  mistakes, recall and practice.
+                  Definitions,
+                  distinctions,
+                  diagrams,
+                  code walkthroughs,
+                  common mistakes,
+                  recall and practice
+                  inside CURIO.
                 </span>
               </div>
             </article>
 
             <article>
-              <b>03</b>
+              <b>
+                03
+              </b>
 
               <div>
                 <strong>
-                  Account-based access
+                  Server-backed access
                 </strong>
 
                 <span>
-                  Your CURIO account identifies the
-                  learner and verified payment records
-                  control Academy access.
+                  Supabase Auth identifies
+                  the learner and Razorpay
+                  payment verification controls
+                  the membership entitlement.
                 </span>
               </div>
             </article>
           </div>
         </div>
 
-        <aside className="checkout-card">
-          <span className="section-label">
+        <aside
+          className="checkout-card"
+        >
+          <span
+            className="section-label"
+          >
             CURRENT OFFER
           </span>
 
-          <div className="checkout-price">
+          <div
+            className="checkout-price"
+          >
             <span>
               ₹
             </span>
@@ -390,43 +326,40 @@ export default function AcademyCheckout() {
             </small>
           </div>
 
-          <div className="checkout-status">
+          <p
+            className="checkout-status"
+          >
             <b>
               {statusLabel}
             </b>
 
             <span>
-              Access status:{" "}
+              Access status:
+              {" "}
               {accessStatus}
             </span>
-
-            {membership && (
-              <span>
-                Plan:{" "}
-                {
-                  membership.plan_name
-                }
-              </span>
-            )}
-          </div>
+          </p>
 
           <ul>
             <li>
               {hasAcademyAccess
-                ? "Full Academy access is active"
-                : "Unlock the complete Academy curriculum"}
+                ? "Full Academy already active"
+                : "Unlock all Academy modules"}
             </li>
 
             <li>
-              Structured lessons and concept maps
+              Full serial lessons
+              and concept maps
             </li>
 
             <li>
-              Code walkthroughs and practice checkpoints
+              Code walkthroughs
+              and practice checkpoints
             </li>
 
             <li>
-              Membership connected to your CURIO account
+              Membership linked
+              to your CURIO account
             </li>
           </ul>
 
@@ -435,14 +368,14 @@ export default function AcademyCheckout() {
               className="checkout-primary"
               to="/academy"
             >
-              Open full Academy
+              Open full Academy →
             </Link>
           ) : !user ? (
             <Link
               className="checkout-primary"
               to="/login"
             >
-              Sign in to continue
+              Sign in to continue →
             </Link>
           ) : (
             <button
@@ -451,15 +384,15 @@ export default function AcademyCheckout() {
               disabled={
                 starting ||
                 authLoading ||
-                membershipLoading
+                isLoading
               }
               onClick={() => {
                 void beginCheckout();
               }}
             >
               {starting
-                ? "Preparing secure payment..."
-                : "Continue to secure ₹1 payment"}
+                ? "Processing payment…"
+                : "Continue to secure ₹1 payment →"}
             </button>
           )}
 
@@ -472,76 +405,100 @@ export default function AcademyCheckout() {
             </p>
           )}
 
-          <small className="checkout-fineprint">
-            Payment success in the browser alone does
-            not activate membership. CURIO waits for
-            trusted server-side confirmation.
+          {successMessage && (
+            <p
+              className="checkout-success"
+              role="status"
+            >
+              {successMessage}
+            </p>
+          )}
+
+          <small
+            className="checkout-fineprint"
+          >
+            Payment success inside the browser
+            does not automatically unlock access.
+            CURIO verifies the Razorpay payment
+            on the server before activating
+            your Academy membership.
           </small>
         </aside>
       </section>
 
-      <section className="checkout-security checkout-security-wide">
+      <section
+        className="checkout-security checkout-security-wide"
+      >
         <div>
-          <span className="section-label">
+          <span
+            className="section-label"
+          >
             PAYMENT & ACCESS ARCHITECTURE
           </span>
 
           <h2>
-            Membership access should always be
-            verifiable.
+            Who paid,
+            what they bought
+            and why access is active
+            should always be auditable.
           </h2>
 
           <p>
-            A frontend button, local storage value or
-            modified URL must never be able to turn a
-            user into a paid Academy member.
+            A frontend button,
+            local storage value
+            or URL parameter cannot
+            make a user a paid member.
           </p>
         </div>
 
-        <div className="security-grid">
+        <div
+          className="security-grid"
+        >
           <article>
             <strong>
               1. Supabase Auth
             </strong>
 
             <p>
-              The signed-in learner provides a stable
-              CURIO account identity.
+              The signed-in user
+              provides the stable
+              CURIO user ID.
             </p>
           </article>
 
           <article>
             <strong>
-              2. Edge Function
+              2. Order Creation
             </strong>
 
             <p>
-              The backend creates the Razorpay order
-              while payment secrets remain outside the
-              browser.
+              A Supabase Edge Function
+              creates the Razorpay order
+              using server-side credentials.
             </p>
           </article>
 
           <article>
             <strong>
-              3. Signed webhook
+              3. Payment Verification
             </strong>
 
             <p>
-              Razorpay confirms successful payment to
-              the server.
+              Razorpay payment ID,
+              order ID and signature
+              are verified on the server.
             </p>
           </article>
 
           <article>
             <strong>
-              4. Academy entitlement
+              4. Membership Activation
             </strong>
 
             <p>
-              Verified payment updates the membership
-              record used by CURIO to grant Academy
-              access.
+              Only verified payments
+              create active Academy access
+              inside the membership table.
             </p>
           </article>
         </div>

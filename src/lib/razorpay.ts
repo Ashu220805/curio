@@ -4,20 +4,6 @@ export interface RazorpayPaymentResponse {
   razorpay_signature: string;
 }
 
-export interface RazorpayPrefill {
-  name?: string;
-  email?: string;
-  contact?: string;
-}
-
-export interface RazorpayModalOptions {
-  ondismiss?: () => void;
-}
-
-export interface RazorpayTheme {
-  color?: string;
-}
-
 export interface RazorpayOptions {
   key: string;
   amount: number;
@@ -26,15 +12,22 @@ export interface RazorpayOptions {
   description: string;
   order_id: string;
 
-  prefill?: RazorpayPrefill;
+  prefill?: {
+    name?: string;
+    email?: string;
+  };
 
   handler: (
     response: RazorpayPaymentResponse,
   ) => void | Promise<void>;
 
-  modal?: RazorpayModalOptions;
+  modal?: {
+    ondismiss?: () => void;
+  };
 
-  theme?: RazorpayTheme;
+  theme?: {
+    color?: string;
+  };
 }
 
 export interface RazorpayInstance {
@@ -49,92 +42,62 @@ declare global {
   interface Window {
     Razorpay?: RazorpayConstructor;
   }
-
-  var Razorpay: RazorpayConstructor | undefined;
 }
 
-const RAZORPAY_SCRIPT_URL =
-  "https://checkout.razorpay.com/v1/checkout.js";
-
-let razorpayScriptPromise: Promise<boolean> | null = null;
-
 export function loadRazorpayScript(): Promise<boolean> {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return Promise.resolve(false);
-  }
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(false);
+      return;
+    }
 
-  if (globalThis.Razorpay || globalThis.Razorpay) {
-    return Promise.resolve(true);
-  }
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
 
-  if (razorpayScriptPromise) {
-    return razorpayScriptPromise;
-  }
+    const scriptUrl =
+      "https://checkout.razorpay.com/v1/checkout.js";
 
-  razorpayScriptPromise = new Promise<boolean>((resolve) => {
     const existingScript =
       document.querySelector<HTMLScriptElement>(
-        `script[src="${RAZORPAY_SCRIPT_URL}"]`,
+        `script[src="${scriptUrl}"]`,
       );
 
     if (existingScript) {
-      const checkRazorpay = () => {
-        resolve(Boolean(globalThis.Razorpay || globalThis.Razorpay));
+      const checkExistingScript = () => {
+        resolve(Boolean(window.Razorpay));
       };
 
       existingScript.addEventListener(
         "load",
-        checkRazorpay,
+        checkExistingScript,
         { once: true },
       );
 
       existingScript.addEventListener(
         "error",
-        () => {
-          razorpayScriptPromise = null;
-          resolve(false);
-        },
+        () => resolve(false),
         { once: true },
       );
 
       return;
     }
 
-    const script = document.createElement("script");
+    const script =
+      document.createElement("script");
 
-    script.src = RAZORPAY_SCRIPT_URL;
+    script.src = scriptUrl;
     script.async = true;
-    script.defer = true;
 
     script.onload = () => {
-      const loaded = Boolean(
-        globalThis.Razorpay || globalThis.Razorpay,
-      );
-
-      if (!loaded) {
-        razorpayScriptPromise = null;
-      }
-
-      resolve(loaded);
+      resolve(Boolean(window.Razorpay));
     };
 
     script.onerror = () => {
-      razorpayScriptPromise = null;
       resolve(false);
     };
 
     document.head.appendChild(script);
   });
-
-  return razorpayScriptPromise;
-}
-
-export function getRazorpayConstructor():
-  | RazorpayConstructor
-  | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return globalThis.Razorpay ?? globalThis.Razorpay ?? null;
 }
