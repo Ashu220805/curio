@@ -1,5 +1,3 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -8,9 +6,9 @@ const corsHeaders = {
 };
 
 interface VerifyPaymentRequest {
-  razorpay_payment_id?: string;
-  razorpay_order_id?: string;
-  razorpay_signature?: string;
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
 }
 
 interface RazorpayPayment {
@@ -19,8 +17,7 @@ interface RazorpayPayment {
   amount: number;
   currency: string;
   status: string;
-  captured?: boolean;
-  notes?: Record<string, string>;
+  notes?: Record<string, unknown>;
 }
 
 function jsonResponse(
@@ -40,58 +37,21 @@ function jsonResponse(
 }
 
 /*
- * Convert a Uint8Array into a plain ArrayBuffer.
+ * Convert Uint8Array safely to ArrayBuffer.
  *
- * This avoids the Deno TypeScript error:
- * Uint8Array<ArrayBufferLike> is not assignable to BufferSource
+ * This avoids TypeScript BufferSource errors in Deno.
  */
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  const buffer = new ArrayBuffer(bytes.byteLength);
-
-  new Uint8Array(buffer).set(bytes);
-
-  return buffer;
+function toArrayBuffer(
+  value: Uint8Array,
+): ArrayBuffer {
+  return value.buffer.slice(
+    value.byteOffset,
+    value.byteOffset + value.byteLength,
+  ) as ArrayBuffer;
 }
 
 /*
- * Convert binary data to lowercase hexadecimal.
- */
-function bytesToHex(bytes: Uint8Array): string {
-  let result = "";
-
-  for (const byte of bytes) {
-    result += byte.toString(16).padStart(2, "0");
-  }
-
-  return result;
-}
-
-/*
- * Constant-time string comparison.
- *
- * Used for comparing Razorpay signatures safely.
- */
-function secureCompare(
-  first: string,
-  second: string,
-): boolean {
-  if (first.length !== second.length) {
-    return false;
-  }
-
-  let difference = 0;
-
-  for (let index = 0; index < first.length; index += 1) {
-    difference |=
-      first.charCodeAt(index) ^
-      second.charCodeAt(index);
-  }
-
-  return difference === 0;
-}
-
-/*
- * Generate Razorpay HMAC SHA256 signature.
+ * Verify Razorpay HMAC SHA256 signature.
  *
  * Razorpay signature formula:
  *
@@ -100,95 +60,196 @@ function secureCompare(
  *   RAZORPAY_KEY_SECRET
  * )
  */
-async function generateRazorpaySignature(
+async function verifyRazorpaySignature(
   orderId: string,
   paymentId: string,
-  keySecret: string,
-): Promise<string> {
+  signature: string,
+  secret: string,
+): Promise<boolean> {
   const encoder = new TextEncoder();
 
-  const secretBytes = encoder.encode(keySecret);
+  const secretBytes = encoder.encode(secret);
 
-  const cryptoKey =
-    await crypto.subtle.importKey(
-      "raw",
-      toArrayBuffer(secretBytes),
-      {
-        name: "HMAC",
-        hash: "SHA-256",
-      },
-      false,
-      ["sign"],
-    );
+  const secretBuffer = toArrayBuffer(secretBytes);
 
-  const payload =
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    secretBuffer,
+    {
+      name: "HMAC",
+      hash: "SHA-256",
+    },
+    false,
+    ["sign"],
+  );
+
+  const message =
     `${orderId}|${paymentId}`;
 
-  const payloadBytes =
-    encoder.encode(payload);
+  const messageBytes =
+    encoder.encode(message);
+
+  const messageBuffer =
+    toArrayBuffer(messageBytes);
 
   const signatureBuffer =
     await crypto.subtle.sign(
       "HMAC",
       cryptoKey,
-      toArrayBuffer(payloadBytes),
+      messageBuffer,
     );
 
-  return bytesToHex(
-    new Uint8Array(signatureBuffer),
-  );
+  const calculatedSignature =
+    Array.from(
+      new Uint8Array(signatureBuffer),
+    )
+      .map((byte) =>
+        byte
+          .toString(16)
+          .padStart(2, "0")
+      )
+      .join("");
+
+  return calculatedSignature === signature;
 }
 
 /*
- * Retrieve the payment directly from Razorpay.
- *
- * This provides an additional server-side verification layer.
+ * Read and validate the request body without using
+ * unsafe TypeScript assertions.
  */
-async function getRazorpayPayment(
-  paymentId: string,
-  keyId: string,
-  keySecret: string,
-): Promise<RazorpayPayment> {
-  const credentials =
-    btoa(
-      `${keyId}:${keySecret}`,
-    );
-
-  const response =
-    await fetch(
-      `https://api.razorpay.com/v1/payments/${paymentId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization:
-            `Basic ${credentials}`,
-          "Content-Type":
-            "application/json",
-        },
-      },
-    );
-
-  if (!response.ok) {
-    const errorText =
-      await response.text();
-
-    throw new Error(
-      `Unable to verify payment with Razorpay: ${errorText}`,
-    );
+function parseVerifyPaymentRequest(
+  value: unknown,
+): VerifyPaymentRequest | null {
+  if (
+    typeof value !== "object" ||
+    value === null
+  ) {
+    return null;
   }
 
-  const payment =
-    await response.json() as RazorpayPayment;
+  const record =
+    value as Record<string, unknown>;
 
-  return payment;
+  const paymentId =
+    record["razorpay_payment_id"];
+
+  const orderId =
+    record["razorpay_order_id"];
+
+  const signature =
+    record["razorpay_signature"];
+
+  if (
+    typeof paymentId !== "string" ||
+    paymentId.length === 0
+  ) {
+    return null;
+  }
+
+  if (
+    typeof orderId !== "string" ||
+    orderId.length === 0
+  ) {
+    return null;
+  }
+
+  if (
+    typeof signature !== "string" ||
+    signature.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    razorpay_payment_id:
+      paymentId,
+
+    razorpay_order_id:
+      orderId,
+
+    razorpay_signature:
+      signature,
+  };
+}
+
+/*
+ * Read Razorpay payment response safely.
+ */
+function parseRazorpayPayment(
+  value: unknown,
+): RazorpayPayment | null {
+  if (
+    typeof value !== "object" ||
+    value === null
+  ) {
+    return null;
+  }
+
+  const record =
+    value as Record<string, unknown>;
+
+  const id =
+    record["id"];
+
+  const orderId =
+    record["order_id"];
+
+  const amount =
+    record["amount"];
+
+  const currency =
+    record["currency"];
+
+  const status =
+    record["status"];
+
+  const notesValue =
+    record["notes"];
+
+  let notes:
+    | Record<string, unknown>
+    | undefined;
+
+  if (
+    typeof notesValue === "object" &&
+    notesValue !== null
+  ) {
+    notes =
+      notesValue as Record<
+        string,
+        unknown
+      >;
+  }
+
+  if (
+    typeof id !== "string" ||
+    typeof orderId !== "string" ||
+    typeof amount !== "number" ||
+    typeof currency !== "string" ||
+    typeof status !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    order_id:
+      orderId,
+    amount,
+    currency,
+    status,
+    notes,
+  };
 }
 
 Deno.serve(
-  async (request: Request): Promise<Response> => {
+  async (req: Request): Promise<Response> => {
     /*
-     * Handle CORS preflight.
+     * CORS preflight.
      */
-    if (request.method === "OPTIONS") {
+    if (
+      req.method === "OPTIONS"
+    ) {
       return new Response(
         "ok",
         {
@@ -198,10 +259,9 @@ Deno.serve(
       );
     }
 
-    /*
-     * Only POST requests are allowed.
-     */
-    if (request.method !== "POST") {
+    if (
+      req.method !== "POST"
+    ) {
       return jsonResponse(
         {
           success: false,
@@ -213,9 +273,6 @@ Deno.serve(
     }
 
     try {
-      /*
-       * Environment variables.
-       */
       const supabaseUrl =
         Deno.env.get(
           "SUPABASE_URL",
@@ -244,86 +301,113 @@ Deno.serve(
       if (
         !supabaseUrl ||
         !supabaseAnonKey ||
-        !supabaseServiceRoleKey
-      ) {
-        throw new Error(
-          "Supabase environment variables are missing.",
-        );
-      }
-
-      if (
+        !supabaseServiceRoleKey ||
         !razorpayKeyId ||
         !razorpayKeySecret
       ) {
-        throw new Error(
-          "Razorpay environment variables are missing.",
-        );
-      }
-
-      /*
-       * Read Authorization header.
-       */
-      const authorization =
-        request.headers.get(
-          "Authorization",
+        console.error(
+          "Missing required environment variables.",
         );
 
-      if (!authorization) {
         return jsonResponse(
           {
             success: false,
             message:
-              "Missing authorization token.",
+              "Payment verification service is not configured correctly.",
+          },
+          500,
+        );
+      }
+
+      /*
+       * Verify Authorization header.
+       */
+      const authorization =
+        req.headers.get(
+          "Authorization",
+        );
+
+      if (
+        !authorization
+      ) {
+        return jsonResponse(
+          {
+            success: false,
+            message:
+              "You must be signed in.",
           },
           401,
         );
       }
 
       /*
-       * Client authenticated with the user's JWT.
+       * Identify current Supabase user.
        */
-      const authClient =
-        createClient(
-          supabaseUrl,
-          supabaseAnonKey,
+      const userResponse =
+        await fetch(
+          `${supabaseUrl}/auth/v1/user`,
           {
-            global: {
-              headers: {
-                Authorization:
-                  authorization,
-              },
-            },
-            auth: {
-              persistSession:
-                false,
-              autoRefreshToken:
-                false,
+            headers: {
+              Authorization:
+                authorization,
+
+              apikey:
+                supabaseAnonKey,
             },
           },
         );
 
-      /*
-       * Get the currently authenticated user.
-       */
-      const {
-        data:
-          {
-            user,
-          },
-        error:
-          userError,
-      } =
-        await authClient.auth.getUser();
-
       if (
-        userError ||
-        !user
+        !userResponse.ok
       ) {
         return jsonResponse(
           {
             success: false,
             message:
-              "Invalid or expired user session.",
+              "Invalid user session.",
+          },
+          401,
+        );
+      }
+
+      const userData:
+        unknown =
+          await userResponse.json();
+
+      if (
+        typeof userData !==
+          "object" ||
+        userData === null
+      ) {
+        return jsonResponse(
+          {
+            success: false,
+            message:
+              "Unable to identify user.",
+          },
+          401,
+        );
+      }
+
+      const userRecord =
+        userData as Record<
+          string,
+          unknown
+        >;
+
+      const userId =
+        userRecord["id"];
+
+      if (
+        typeof userId !==
+          "string" ||
+        userId.length === 0
+      ) {
+        return jsonResponse(
+          {
+            success: false,
+            message:
+              "Unable to identify user.",
           },
           401,
         );
@@ -332,435 +416,333 @@ Deno.serve(
       /*
        * Parse request body.
        */
-      const body =
-        await request.json() as VerifyPaymentRequest;
+      let requestBody:
+        unknown;
 
-      const paymentId =
-        body
-          .razorpay_payment_id
-          ?.trim();
+      try {
+        requestBody =
+          await req.json();
+      } catch {
+        return jsonResponse(
+          {
+            success: false,
+            message:
+              "Invalid request body.",
+          },
+          400,
+        );
+      }
 
-      const orderId =
-        body
-          .razorpay_order_id
-          ?.trim();
-
-      const razorpaySignature =
-        body
-          .razorpay_signature
-          ?.trim();
+      const paymentRequest =
+        parseVerifyPaymentRequest(
+          requestBody,
+        );
 
       if (
-        !paymentId ||
-        !orderId ||
-        !razorpaySignature
+        !paymentRequest
       ) {
         return jsonResponse(
           {
             success: false,
             message:
-              "Payment verification information is incomplete.",
+              "Payment information is incomplete.",
           },
           400,
         );
       }
 
+      const {
+        razorpay_payment_id:
+          paymentId,
+
+        razorpay_order_id:
+          orderId,
+
+        razorpay_signature:
+          signature,
+      } =
+        paymentRequest;
+
       /*
-       * Verify the Razorpay signature.
+       * Verify the Razorpay signature first.
        */
-      const expectedSignature =
-        await generateRazorpaySignature(
+      const signatureValid =
+        await verifyRazorpaySignature(
           orderId,
           paymentId,
+          signature,
           razorpayKeySecret,
         );
 
-      const signatureValid =
-        secureCompare(
-          expectedSignature,
-          razorpaySignature,
+      if (
+        !signatureValid
+      ) {
+        console.error(
+          "Invalid Razorpay signature.",
         );
 
-      if (!signatureValid) {
         return jsonResponse(
           {
             success: false,
+            membershipActive:
+              false,
             message:
-              "Invalid Razorpay payment signature.",
+              "Payment signature verification failed.",
           },
           400,
         );
       }
 
       /*
-       * Verify the payment directly with Razorpay.
+       * Fetch the payment directly from Razorpay.
+       *
+       * This ensures that we don't trust only
+       * browser-provided information.
        */
-      const razorpayPayment =
-        await getRazorpayPayment(
-          paymentId,
-          razorpayKeyId,
-          razorpayKeySecret,
+      const razorpayAuthorization =
+        "Basic " +
+        btoa(
+          `${razorpayKeyId}:${razorpayKeySecret}`,
         );
 
+      const paymentResponse =
+        await fetch(
+          `https://api.razorpay.com/v1/payments/${paymentId}`,
+          {
+            headers: {
+              Authorization:
+                razorpayAuthorization,
+            },
+          },
+        );
+
+      const razorpayData:
+        unknown =
+          await paymentResponse.json();
+
+      if (
+        !paymentResponse.ok
+      ) {
+        console.error(
+          "Unable to fetch Razorpay payment:",
+          razorpayData,
+        );
+
+        return jsonResponse(
+          {
+            success: false,
+            membershipActive:
+              false,
+            message:
+              "Unable to verify payment with Razorpay.",
+          },
+          400,
+        );
+      }
+
+      const razorpayPayment =
+        parseRazorpayPayment(
+          razorpayData,
+        );
+
+      if (
+        !razorpayPayment
+      ) {
+        return jsonResponse(
+          {
+            success: false,
+            membershipActive:
+              false,
+            message:
+              "Invalid payment information returned by Razorpay.",
+          },
+          400,
+        );
+      }
+
       /*
-       * Payment ID must match.
+       * Critical consistency checks.
        */
       if (
         razorpayPayment.id !==
-        paymentId
+          paymentId
       ) {
         return jsonResponse(
           {
             success: false,
+            membershipActive:
+              false,
             message:
-              "Razorpay payment ID does not match.",
+              "Payment ID verification failed.",
           },
           400,
         );
       }
 
-      /*
-       * Order ID must match.
-       */
       if (
         razorpayPayment.order_id !==
-        orderId
+          orderId
       ) {
         return jsonResponse(
           {
             success: false,
+            membershipActive:
+              false,
             message:
-              "Razorpay order ID does not match.",
+              "Payment order verification failed.",
           },
           400,
         );
       }
 
       /*
-       * Payment must be captured.
-       *
-       * Razorpay may return:
-       * status = "captured"
-       * or captured = true
-       */
-      const paymentCaptured =
-        razorpayPayment.status ===
-          "captured" ||
-        razorpayPayment.captured ===
-          true;
-
-      if (!paymentCaptured) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              `Payment is not captured yet. Current status: ${razorpayPayment.status}`,
-          },
-          400,
-        );
-      }
-
-      /*
-       * Validate payment amount.
-       *
-       * ₹1 = 100 paise.
+       * Razorpay successful payment status.
        */
       if (
-        razorpayPayment.amount !==
-        100
+        razorpayPayment.status !==
+          "captured" &&
+        razorpayPayment.status !==
+          "authorized"
       ) {
         return jsonResponse(
           {
             success: false,
+            membershipActive:
+              false,
             message:
-              "Payment amount does not match the Academy membership price.",
+              `Payment is not successful. Current status: ${razorpayPayment.status}`,
           },
           400,
         );
       }
 
       /*
-       * Validate currency.
-       */
-      if (
-        razorpayPayment.currency
-          .toUpperCase() !==
-        "INR"
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Payment currency does not match the Academy membership.",
-          },
-          400,
-        );
-      }
-
-      /*
-       * IMPORTANT:
-       * Validate the user ID stored in the Razorpay payment notes.
+       * Validate the user ID stored in Razorpay notes.
        *
-       * The create-academy-checkout function should have stored:
-       *
-       * user_id: user.id
+       * This prevents one user from submitting another
+       * user's payment ID.
        */
       const paymentUserId =
-        razorpayPayment.notes
-          ?.user_id;
+        razorpayPayment
+          .notes?.["user_id"];
 
       if (
-        paymentUserId &&
         paymentUserId !==
-          user.id
+          userId
       ) {
+        console.error(
+          "Payment user does not match authenticated user.",
+          {
+            authenticatedUser:
+              userId,
+
+            paymentUser:
+              paymentUserId,
+          },
+        );
+
         return jsonResponse(
           {
             success: false,
+            membershipActive:
+              false,
             message:
-              "This payment belongs to another user account.",
+              "Payment does not belong to the current user.",
           },
           403,
         );
       }
 
       /*
-       * Use service role for membership database operations.
+       * Activate Academy membership.
        *
-       * Service role bypasses RLS.
+       * The user_id column must have a UNIQUE constraint.
        *
-       * NEVER expose this key in frontend code.
+       * This UPSERT ensures repeated verification does not
+       * create duplicate memberships.
        */
-      const adminClient =
-        createClient(
-          supabaseUrl,
-          supabaseServiceRoleKey,
+      const membershipPayload = {
+        user_id:
+          userId,
+
+        status:
+          "active",
+
+        plan_name:
+          "AI/ML Academy",
+
+        amount:
+          razorpayPayment.amount,
+
+        currency:
+          razorpayPayment.currency,
+
+        payment_provider:
+          "razorpay",
+
+        provider_order_id:
+          orderId,
+
+        provider_payment_id:
+          paymentId,
+
+        activated_at:
+          new Date().toISOString(),
+
+        updated_at:
+          new Date().toISOString(),
+      };
+
+      const membershipResponse =
+        await fetch(
+          `${supabaseUrl}/rest/v1/academy_memberships?on_conflict=user_id`,
           {
-            auth: {
-              persistSession:
-                false,
-              autoRefreshToken:
-                false,
+            method:
+              "POST",
+
+            headers: {
+              Authorization:
+                `Bearer ${supabaseServiceRoleKey}`,
+
+              apikey:
+                supabaseServiceRoleKey,
+
+              "Content-Type":
+                "application/json",
+
+              Prefer:
+                "resolution=merge-duplicates,return=representation",
             },
+
+            body:
+              JSON.stringify([
+                membershipPayload,
+              ]),
           },
         );
 
-      /*
-       * Check whether this payment was already processed.
-       *
-       * This prevents duplicate membership records if the
-       * browser calls verification more than once.
-       */
-      const {
-        data:
-          existingMembership,
-        error:
-          existingError,
-      } =
-        await adminClient
-          .from(
-            "academy_memberships",
-          )
-          .select(
-            "id, user_id, status",
-          )
-          .eq(
-            "provider_payment_id",
-            paymentId,
-          )
-          .maybeSingle();
+      const membershipData:
+        unknown =
+          await membershipResponse
+            .json();
 
-      if (existingError) {
-        throw new Error(
-          `Unable to check existing membership: ${existingError.message}`,
+      if (
+        !membershipResponse.ok
+      ) {
+        console.error(
+          "Membership activation failed:",
+          membershipData,
         );
-      }
-
-      /*
-       * Payment was already processed.
-       */
-      if (existingMembership) {
-        if (
-          existingMembership.user_id !==
-          user.id
-        ) {
-          return jsonResponse(
-            {
-              success: false,
-              message:
-                "This payment has already been linked to another account.",
-            },
-            403,
-          );
-        }
-
-        /*
-         * Make sure existing membership is active.
-         */
-        if (
-          existingMembership.status !==
-          "active"
-        ) {
-          const {
-            error:
-              reactivateError,
-          } =
-            await adminClient
-              .from(
-                "academy_memberships",
-              )
-              .update(
-                {
-                  status:
-                    "active",
-                  activated_at:
-                    new Date()
-                      .toISOString(),
-                  updated_at:
-                    new Date()
-                      .toISOString(),
-                },
-              )
-              .eq(
-                "id",
-                existingMembership.id,
-              );
-
-          if (
-            reactivateError
-          ) {
-            throw new Error(
-              `Unable to activate existing membership: ${reactivateError.message}`,
-            );
-          }
-        }
 
         return jsonResponse(
           {
-            success: true,
-            membershipActive: true,
-            alreadyProcessed: true,
+            success: false,
+            membershipActive:
+              false,
             message:
-              "Academy membership is already active.",
+              "Payment was verified but Academy membership could not be activated.",
           },
-        );
-      }
-
-      /*
-       * Check whether this user already has an active membership.
-       */
-      const {
-        data:
-          activeMembership,
-        error:
-          activeMembershipError,
-      } =
-        await adminClient
-          .from(
-            "academy_memberships",
-          )
-          .select(
-            "id",
-          )
-          .eq(
-            "user_id",
-            user.id,
-          )
-          .eq(
-            "status",
-            "active",
-          )
-          .maybeSingle();
-
-      if (
-        activeMembershipError
-      ) {
-        throw new Error(
-          `Unable to check user membership: ${activeMembershipError.message}`,
-        );
-      }
-
-      /*
-       * If user already has active membership,
-       * do not create another one.
-       */
-      if (
-        activeMembership
-      ) {
-        return jsonResponse(
-          {
-            success: true,
-            membershipActive: true,
-            alreadyProcessed: true,
-            message:
-              "Academy membership is already active.",
-          },
-        );
-      }
-
-      /*
-       * Create the membership.
-       *
-       * amount is stored in paise because Razorpay uses
-       * the smallest currency unit.
-       */
-      const now =
-        new Date()
-          .toISOString();
-
-      const {
-        error:
-          insertError,
-      } =
-        await adminClient
-          .from(
-            "academy_memberships",
-          )
-          .insert(
-            {
-              user_id:
-                user.id,
-
-              status:
-                "active",
-
-              plan_name:
-                "academy_pro",
-
-              amount:
-                razorpayPayment.amount,
-
-              currency:
-                razorpayPayment.currency,
-
-              payment_provider:
-                "razorpay",
-
-              provider_order_id:
-                orderId,
-
-              provider_payment_id:
-                paymentId,
-
-              activated_at:
-                now,
-
-              expires_at:
-                null,
-
-              created_at:
-                now,
-
-              updated_at:
-                now,
-            },
-          );
-
-      if (
-        insertError
-      ) {
-        throw new Error(
-          `Unable to activate Academy membership: ${insertError.message}`,
+          500,
         );
       }
 
@@ -770,10 +752,20 @@ Deno.serve(
       return jsonResponse(
         {
           success: true,
-          membershipActive: true,
+
+          membershipActive:
+            true,
+
           message:
-            "Payment verified and Academy membership activated successfully.",
+            "Payment verified and Academy access activated.",
+
+          paymentId:
+            paymentId,
+
+          orderId:
+            orderId,
         },
+        200,
       );
     } catch (
       error
@@ -783,16 +775,17 @@ Deno.serve(
         error,
       );
 
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Payment verification failed.";
-
       return jsonResponse(
         {
           success: false,
-          membershipActive: false,
-          message,
+
+          membershipActive:
+            false,
+
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unexpected payment verification error.",
         },
         500,
       );
