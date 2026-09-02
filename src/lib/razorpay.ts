@@ -63,7 +63,7 @@ export function loadRazorpayScript(): Promise<boolean> {
     return Promise.resolve(false);
   }
 
-  if (window.Razorpay || globalThis.Razorpay) {
+  if (globalThis.Razorpay || globalThis.Razorpay) {
     return Promise.resolve(true);
   }
 
@@ -79,7 +79,7 @@ export function loadRazorpayScript(): Promise<boolean> {
 
     if (existingScript) {
       const checkRazorpay = () => {
-        resolve(Boolean(window.Razorpay || globalThis.Razorpay));
+        resolve(Boolean(globalThis.Razorpay || globalThis.Razorpay));
       };
 
       existingScript.addEventListener(
@@ -108,7 +108,7 @@ export function loadRazorpayScript(): Promise<boolean> {
 
     script.onload = () => {
       const loaded = Boolean(
-        window.Razorpay || globalThis.Razorpay,
+        globalThis.Razorpay || globalThis.Razorpay,
       );
 
       if (!loaded) {
@@ -136,5 +136,5 @@ export function getRazorpayConstructor():
     return null;
   }
 
-  return window.Razorpay ?? globalThis.Razorpay ?? null;
+  return globalThis.Razorpay ?? globalThis.Razorpay ?? null;
 }

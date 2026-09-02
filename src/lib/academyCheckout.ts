@@ -1,8 +1,8 @@
-import { supabase } from "./supabase";
+import { supabase } from "./supabase.ts";
 import {
   loadRazorpayScript,
   type RazorpayPaymentResponse,
-} from "./razorpay";
+} from "./razorpay.ts";
 
 interface CheckoutResponse {
   success: boolean;
@@ -98,7 +98,7 @@ export async function startAcademyCheckout(): Promise<CheckoutResult> {
       description: "CURIO AI / ML Academy PRO Membership",
       order_id: data.orderId,
 
-      handler: async (
+      handler: (
         response: RazorpayPaymentResponse,
       ) => {
         resolve({
