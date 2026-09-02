@@ -1,4 +1,4 @@
-export type LessonDiagram = "flow" | "mindmap" | "regression" | "neural" | "data" | "transformer" | "mlops" | "tree";
+export type LessonDiagram = "flow" | "mindmap" | "regression" | "neural" | "data" | "transformer" | "mlops" | "tree" | "matrix" | "gradient" | "pipeline";
 
 export type CodeBlock = {
   language: string;
@@ -23,6 +23,17 @@ export type AcademyLesson = {
   code?: CodeBlock;
   practice: { prompt: string; checkpoints: string[] };
   prerequisites: string[];
+
+  /** CURIO deep-learning engine: optional so existing lesson data remains valid. */
+  intuition?: string[];
+  visualExplanation?: string[];
+  mathematics?: { introduction: string; formulas: { title: string; expression: string; explanation: string }[] };
+  derivation?: { introduction: string; steps: { title: string; expression: string; explanation: string }[] };
+  numerical?: { introduction: string; steps: { step: string; calculation: string; explanation: string }[] };
+  algorithm?: { introduction: string; steps: { step: number; title: string; description: string }[] };
+  debugging?: { symptom: string; possibleCause: string; howToCheck: string; fix: string }[];
+  realWorldApplications?: { title: string; description: string }[];
+  keyTakeaways?: string[];
 };
 
 export type AcademyModule = {
@@ -68,7 +79,16 @@ export const academyModules: AcademyModule[] = [
         diagram:"mindmap", mindMap:["AI","Automation","Machine learning","Deep learning","Generative AI","Inference","Evaluation"],
         commonErrors:["Treating fluent output as evidence of intelligence or correctness.","Calling every automated system machine learning.","Using a model where deterministic logic is safer and cheaper."],
         code:{language:"text",code:`Problem → Data/Rules → System → Output → Evaluation\n\nRule-based: if temperature > 38: alert()\nLearned: model.fit(features, labels)\nInference: model.predict(new_features)`,notes:["Rules are explicitly authored.","Learned models estimate parameters from examples.","Every system still needs evaluation."]},
-        practice:{prompt:"For spam filtering, a calculator, a chatbot and a face-recognition system, decide which are rule-based, learned, or mixed systems and justify each choice.",checkpoints:["Name the input and output.","State whether data is needed for learning.","Identify one possible failure mode."]}, prerequisites:[]
+        practice:{prompt:"For spam filtering, a calculator, a chatbot and a face-recognition system, decide which are rule-based, learned, or mixed systems and justify each choice.",checkpoints:["Name the input and output.","State whether data is needed for learning.","Identify one possible failure mode."]}, prerequisites:[],
+        intuition:["AI is the umbrella. Machine learning is one way to build AI systems, and deep learning is one family of machine-learning methods.","A rule-based system follows instructions written by people; a learned system adjusts parameters from examples.","Training changes the model using experience. Inference uses the trained model on new input."],
+        visualExplanation:["Start with a problem.","Decide whether explicit rules are sufficient or examples are needed.","Represent the input.","If learning is used, train parameters from data.","Run inference on new input.","Evaluate correctness, usefulness and failure modes."],
+        mathematics:{introduction:"A learned system can be written as a function with adjustable parameters.",formulas:[{title:"Prediction",expression:"ŷ = f(x; θ)",explanation:"The model f transforms input x using learned parameters θ."},{title:"Error",expression:"error = y - ŷ",explanation:"The difference between the observed target y and prediction ŷ."},{title:"Learning objective",expression:"θ* = arg minθ L(y, f(x; θ))",explanation:"Training searches for parameters that minimize a chosen loss."}]},
+        derivation:{introduction:"Learning follows a prediction-feedback-improvement loop.",steps:[{title:"Input",expression:"x",explanation:"Provide information about the problem."},{title:"Prediction",expression:"ŷ = f(x; θ)",explanation:"The current model produces an output."},{title:"Measure loss",expression:"L(y, ŷ)",explanation:"Compare prediction with the desired outcome."},{title:"Update",expression:"θ ← improve(θ)",explanation:"Optimization changes parameters to reduce future loss."}]},
+        numerical:{introduction:"A simple prediction-error example.",steps:[{step:"Actual value",calculation:"y = 50",explanation:"Observed target."},{step:"Prediction",calculation:"ŷ = 45",explanation:"Current model output."},{step:"Error",calculation:"50 - 45 = 5",explanation:"The prediction is five units below the target."},{step:"Squared loss",calculation:"5² = 25",explanation:"A common loss penalizes larger errors more strongly."}]},
+        algorithm:{introduction:"This pattern appears throughout supervised learning.",steps:[{step:1,title:"Collect examples",description:"Gather inputs and expected outcomes."},{step:2,title:"Initialize model",description:"Start with an initial parameter state."},{step:3,title:"Predict",description:"Run inputs through the model."},{step:4,title:"Measure loss",description:"Quantify prediction quality."},{step:5,title:"Update",description:"Adjust parameters using an optimization rule."},{step:6,title:"Validate",description:"Check performance on relevant unseen data."}]},
+        debugging:[{symptom:"Training score is high but new data fails.",possibleCause:"The model memorized training patterns rather than generalizing.",howToCheck:"Compare training and validation performance.",fix:"Use better validation, more data, regularization or a simpler model."},{symptom:"The system is fluent but wrong.",possibleCause:"Output quality was mistaken for correctness.",howToCheck:"Evaluate against ground truth or task-specific criteria.",fix:"Add reliable evaluation rather than trusting plausible output."}],
+        realWorldApplications:[{title:"Spam filtering",description:"A model learns patterns that distinguish unwanted from legitimate messages."},{title:"Face recognition",description:"A learned representation is used to compare visual patterns."},{title:"Chatbots",description:"Language models generate outputs using learned statistical parameters and must still be evaluated."}],
+        keyTakeaways:["AI is broader than machine learning.","Machine learning learns parameters from data rather than requiring every rule to be authored.","Deep learning uses multi-layer neural networks.","Training and inference are different stages.","Fluent output is not proof of correctness."]
       },
       {
         id:"orientation-2", order:2, module:"Computational Thinking and AI Foundations", title:"The complete learning workflow", duration:"35 min", level:"Foundation",

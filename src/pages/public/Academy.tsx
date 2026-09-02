@@ -258,15 +258,13 @@ function CodeStudy({
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(
-        lesson.code?.code ?? "",
-      );
+      if (!lesson.code) {
+  return;
+}
 
+await navigator.clipboard.writeText(lesson.code.code);
       setCopied(true);
-
-      globalThis.setTimeout(() => {
-        setCopied(false);
-      }, 1400);
+      globalThis.setTimeout(() => setCopied(false), 1400);
     } catch {
       setCopied(false);
     }
@@ -276,43 +274,121 @@ function CodeStudy({
     <section className="academy-panel academy-code-study">
       <div className="academy-panel-heading">
         <div>
-          <span className="section-label">
-            CODE WALKTHROUGH
-          </span>
-
-          <h3>
-            Understand what every line is responsible for.
-          </h3>
-
-          <p>
-            Do not treat code as a spell. Identify the
-            input, transformation, output and possible
-            failure.
-          </p>
+          <span className="section-label">CODING WALKTHROUGH</span>
+          <h3>Understand what every line is responsible for.</h3>
+          <p>Identify the input, transformation, output and possible failure before treating code as reusable.</p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            void copy();
-          }}
-        >
-          {copied ? "Copied" : "Copy code"}
-        </button>
+        <button type="button" onClick={() => void copy()}>{copied ? "Copied" : "Copy code"}</button>
       </div>
-
-      <pre>
-        <code>{lesson.code.code}</code>
-      </pre>
-
+      <pre><code>{lesson.code.code}</code></pre>
       <ol className="code-notes">
-        {lesson.code.notes.map((note) => (
-          <li key={note}>
-            {note}
-          </li>
-        ))}
+        {lesson.code.notes.map((note) => <li key={note}>{note}</li>)}
       </ol>
     </section>
+  );
+}
+
+function DeepLearningPath({ lesson }: { lesson: AcademyLesson }) {
+  const intuition = lesson.intuition ?? [
+    lesson.why,
+    `Connect the definitions above to the actual task: ${lesson.summary}`,
+  ];
+  const visual = lesson.visualExplanation ?? lesson.mindMap.slice(0, 6).map((item, index) =>
+    `${String(index + 1).padStart(2, "0")}. Follow the role of ${item} in the lesson's mental model.`
+  );
+  const mathematics = lesson.mathematics;
+  const derivation = lesson.derivation;
+  const numerical = lesson.numerical;
+  const algorithm = lesson.algorithm;
+  const debugging = lesson.debugging ?? lesson.commonErrors.map((error) => ({
+    symptom: error,
+    possibleCause: "A concept, assumption, implementation detail or evaluation step was misunderstood.",
+    howToCheck: "Reproduce the smallest possible example and inspect inputs, outputs and intermediate values.",
+    fix: "Return to the definition, state the assumption explicitly and test the corrected reasoning on a small case.",
+  }));
+  const applications = lesson.realWorldApplications ?? lesson.concepts.slice(0, 3).map((concept) => ({
+    title: concept.term,
+    description: `${concept.definition} In practice, this idea is useful only when it improves a clearly defined decision, prediction or generation task.`,
+  }));
+  const takeaways = lesson.keyTakeaways ?? lesson.concepts.slice(0, 4).map((concept) => `${concept.term}: ${concept.definition}`);
+
+  return (
+    <>
+      <section className="academy-panel deep-section">
+        <span className="section-label">01 · CONCEPT</span>
+        <h3>What exactly are we learning?</h3>
+        <p>{lesson.summary}</p>
+      </section>
+
+      <section className="academy-panel deep-section">
+        <span className="section-label">02 · INTUITION</span>
+        <h3>Build the mental model before the formula.</h3>
+        <ul className="deep-list">{intuition.map((item) => <li key={item}>{item}</li>)}</ul>
+      </section>
+
+      <section className="academy-panel deep-section">
+        <span className="section-label">03 · VISUAL</span>
+        <h3>Follow the system step by step.</h3>
+        <ol className="deep-list">{visual.map((item) => <li key={item}>{item}</li>)}</ol>
+      </section>
+
+      {mathematics && (
+        <section className="academy-panel deep-section">
+          <span className="section-label">04 · MATHEMATICS</span>
+          <h3>Translate the idea into notation.</h3>
+          <p>{mathematics.introduction}</p>
+          <div className="formula-grid">{mathematics.formulas.map((formula) => (
+            <article key={formula.title}><strong>{formula.title}</strong><code>{formula.expression}</code><p>{formula.explanation}</p></article>
+          ))}</div>
+        </section>
+      )}
+
+      {derivation && (
+        <section className="academy-panel deep-section">
+          <span className="section-label">05 · DERIVATION</span>
+          <h3>See where the result comes from.</h3>
+          <p>{derivation.introduction}</p>
+          <ol className="derivation-list">{derivation.steps.map((step) => <li key={step.title}><strong>{step.title}</strong><code>{step.expression}</code><p>{step.explanation}</p></li>)}</ol>
+        </section>
+      )}
+
+      {numerical && (
+        <section className="academy-panel deep-section">
+          <span className="section-label">06 · NUMERICAL</span>
+          <h3>Calculate one complete example.</h3>
+          <p>{numerical.introduction}</p>
+          <ol className="derivation-list">{numerical.steps.map((step) => <li key={step.step}><strong>{step.step}</strong><code>{step.calculation}</code><p>{step.explanation}</p></li>)}</ol>
+        </section>
+      )}
+
+      {algorithm && (
+        <section className="academy-panel deep-section">
+          <span className="section-label">07 · ALGORITHM</span>
+          <h3>Turn reasoning into a repeatable procedure.</h3>
+          <p>{algorithm.introduction}</p>
+          <ol className="algorithm-list">{algorithm.steps.map((step) => <li key={step.step}><b>{String(step.step).padStart(2, "0")}</b><div><strong>{step.title}</strong><p>{step.description}</p></div></li>)}</ol>
+        </section>
+      )}
+
+      <CodeStudy lesson={lesson} />
+
+      <section className="academy-panel deep-section">
+        <span className="section-label">09 · DEBUGGING</span>
+        <h3>Learn how this fails before it fails in your project.</h3>
+        <div className="debug-grid">{debugging.map((item, index) => <article key={`${item.symptom}-${index}`}><strong>Symptom</strong><p>{item.symptom}</p><strong>Possible cause</strong><p>{item.possibleCause}</p><strong>Check</strong><p>{item.howToCheck}</p><strong>Fix</strong><p>{item.fix}</p></article>)}</div>
+      </section>
+
+      <section className="academy-panel deep-section">
+        <span className="section-label">11 · REAL-WORLD APPLICATION</span>
+        <h3>Connect the lesson to an actual system.</h3>
+        <div className="application-grid">{applications.map((item) => <article key={item.title}><strong>{item.title}</strong><p>{item.description}</p></article>)}</div>
+      </section>
+
+      <section className="academy-panel deep-section takeaway-panel">
+        <span className="section-label">KEY TAKEAWAYS</span>
+        <ul className="deep-list">{takeaways.map((item) => <li key={item}>{item}</li>)}</ul>
+      </section>
+    </>
   );
 }
 
@@ -587,10 +663,7 @@ export default function Academy() {
           </h1>
 
           <p>
-            Every lesson follows the same teaching
-            sequence: definition, intuition,
-            distinction, diagram, worked code,
-            failure modes, recall and practice.
+            Every lesson follows CURIO's deep-learning sequence: concept → intuition → visual → mathematics → derivation → numerical → algorithm → coding → debugging → practice → real-world application.
           </p>
 
           <div className="academy-hero-points">
@@ -1030,37 +1103,7 @@ export default function Academy() {
                 )}
               </section>
 
-              <CodeStudy
-                lesson={lesson}
-              />
-
-              <section className="lesson-errors">
-                <span className="section-label">
-                  COMMON ERRORS AND MISCONCEPTIONS
-                </span>
-
-                {lesson.commonErrors.map(
-                  (
-                    error,
-                    index,
-                  ) => (
-                    <div key={error}>
-                      <b>
-                        {String(
-                          index + 1,
-                        ).padStart(
-                          2,
-                          "0",
-                        )}
-                      </b>
-
-                      <p>
-                        {error}
-                      </p>
-                    </div>
-                  ),
-                )}
-              </section>
+              <DeepLearningPath lesson={lesson} />
 
               <section className="learning-checkpoint">
                 <div>

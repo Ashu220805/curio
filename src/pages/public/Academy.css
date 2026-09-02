@@ -416,3 +416,23 @@
   .academy-lesson-footer span { display: none; }
   .pro-card-stats { grid-template-columns: 1fr; }
 }
+
+
+/* CURIO deep-learning engine: additive, so existing Academy styling remains intact. */
+.deep-section { display: grid; gap: 14px; }
+.deep-section h3 { margin: 0; }
+.deep-section p { margin: 0; }
+.deep-list { margin: 0; padding-left: 1.2rem; display: grid; gap: 10px; }
+.deep-list li { line-height: 1.65; }
+.formula-grid, .application-grid, .debug-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.formula-grid article, .application-grid article, .debug-grid article { border: 1px solid var(--academy-line, rgba(255,255,255,.12)); border-radius: 14px; padding: 16px; display: grid; gap: 8px; }
+.formula-grid code, .derivation-list code { display: block; padding: 10px; border-radius: 10px; overflow-x: auto; background: rgba(127,127,127,.08); font-size: .95rem; }
+.derivation-list, .algorithm-list { margin: 0; padding-left: 1.25rem; display: grid; gap: 14px; }
+.derivation-list li { padding-left: 6px; }
+.derivation-list strong, .derivation-list p { display: block; margin: 6px 0; }
+.algorithm-list { list-style: none; padding-left: 0; }
+.algorithm-list li { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: start; }
+.algorithm-list li > b { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--academy-line, rgba(255,255,255,.2)); }
+.debug-grid article strong { font-size: .78rem; letter-spacing: .08em; opacity: .75; text-transform: uppercase; }
+.takeaway-panel { border-left: 3px solid currentColor; }
+@media (max-width: 700px) { .formula-grid, .application-grid, .debug-grid { grid-template-columns: 1fr; } }
