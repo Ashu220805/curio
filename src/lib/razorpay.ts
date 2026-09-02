@@ -39,15 +39,23 @@ export interface RazorpayConstructor {
 }
 
 /*
- * Tell TypeScript that Razorpay Checkout
- * attaches itself to globalThis.
+ * Extend globalThis with Razorpay's browser SDK.
  */
 declare global {
   var Razorpay: RazorpayConstructor | undefined;
 }
 
+const RAZORPAY_SCRIPT_URL =
+  "https://checkout.razorpay.com/v1/checkout.js";
+
+/*
+ * Load the Razorpay Checkout SDK once.
+ */
 export function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
+    /*
+     * This library only works in the browser.
+     */
     if (typeof document === "undefined") {
       resolve(false);
       return;
@@ -61,35 +69,19 @@ export function loadRazorpayScript(): Promise<boolean> {
       return;
     }
 
-    const scriptUrl =
-      "https://checkout.razorpay.com/v1/checkout.js";
-
     /*
-     * Check whether the script was already
-     * added to the page.
+     * Check whether another call already added the script.
      */
     const existingScript =
       document.querySelector<HTMLScriptElement>(
-        `script[src="${scriptUrl}"]`,
+        `script[src="${RAZORPAY_SCRIPT_URL}"]`,
       );
 
     if (existingScript) {
-      /*
-       * Script may have loaded between the
-       * previous check and this point.
-       */
-      if (globalThis.Razorpay) {
-        resolve(true);
-        return;
-      }
-
       existingScript.addEventListener(
         "load",
         () => {
-          resolve(
-            typeof globalThis.Razorpay !==
-              "undefined",
-          );
+          resolve(Boolean(globalThis.Razorpay));
         },
         {
           once: true,
@@ -110,24 +102,28 @@ export function loadRazorpayScript(): Promise<boolean> {
     }
 
     /*
-     * Create Razorpay Checkout script.
+     * Create and load Razorpay Checkout.
      */
     const script =
       document.createElement("script");
 
-    script.src = scriptUrl;
-    script.async = true;
+    script.src =
+      RAZORPAY_SCRIPT_URL;
 
-    script.onload = () => {
-      resolve(
-        typeof globalThis.Razorpay !==
-          "undefined",
-      );
-    };
+    script.async =
+      true;
 
-    script.onerror = () => {
-      resolve(false);
-    };
+    script.onload =
+      () => {
+        resolve(
+          Boolean(globalThis.Razorpay),
+        );
+      };
+
+    script.onerror =
+      () => {
+        resolve(false);
+      };
 
     document.head.appendChild(script);
   });
