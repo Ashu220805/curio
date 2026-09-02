@@ -518,7 +518,13 @@ function RealityCheck() {
     <main className="reality-page">
       <header className="reality-header">
         <div className="reality-brand">
-          <div className="reality-logo">🧠</div>
+          <div className="reality-logo">
+  <img
+    src="/curio-symbol.png"
+    alt="Curio"
+    className="reality-logo-image"
+  />
+</div>
 
           <div>
             <strong>CURIO</strong>

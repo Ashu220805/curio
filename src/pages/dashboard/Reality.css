@@ -1,162 +1,1255 @@
 /* =========================================================
-   CURIO AI LITERACY / REALITY CHECK
-   ========================================================= */
+   CURIO — REALITY CHECK
+   Digital Reality Literacy
+========================================================= */
 
 .reality-page {
-  --r-bg: #f5f7fb;
+  --r-bg: #f4f6fa;
   --r-surface: #ffffff;
-  --r-text: #17233b;
-  --r-muted: #65738c;
-  --r-border: #dbe3ee;
-  --r-accent: #3157a6;
-  --r-accent-soft: #eef3fb;
+  --r-surface-soft: #f8fafc;
+  --r-text: #1c2940;
+  --r-muted: #68758a;
+  --r-border: #dce3ed;
+
+  --r-primary: #234f87;
+  --r-primary-dark: #193d6b;
+  --r-primary-soft: #edf3fb;
+
   --r-success: #277a5a;
   --r-warning: #98651c;
+
   min-height: 100vh;
   background: var(--r-bg);
   color: var(--r-text);
 }
 
+
+/* =========================================================
+   HEADER
+========================================================= */
+
 .reality-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+
   min-height: 78px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 24px;
-  padding: 0 32px;
-  background: #ffffff;
+  padding: 0 34px;
+
+  background: rgba(255, 255, 255, 0.97);
   border-bottom: 1px solid var(--r-border);
+
+  backdrop-filter: blur(12px);
 }
 
-.reality-brand { display: flex; align-items: center; gap: 11px; }
-.reality-logo { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; background: #1f3964; color: #fff; font-weight: 800; letter-spacing: .06em; }
-.reality-brand strong { display: block; font-size: 15px; letter-spacing: .06em; }
-.reality-brand span { display: block; margin-top: 3px; color: #7c889c; font-size: 10px; }
 
-.reality-header-progress { width: min(370px, 34vw); }
-.reality-header-progress > span { display: flex; justify-content: space-between; color: #6d7a91; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; }
-.reality-progress-track { height: 6px; margin-top: 8px; overflow: hidden; border-radius: 999px; background: #e7edf4; }
-.reality-progress-fill { height: 100%; border-radius: inherit; background: var(--r-accent); transition: width 250ms ease; }
-
-.reality-main { width: min(1200px, calc(100% - 48px)); margin: 0 auto; padding: 34px 0 60px; }
-.reality-shell { display: grid; grid-template-columns: 285px minmax(0, 1fr); gap: 24px; align-items: start; }
-.reality-sidebar { position: sticky; top: 24px; padding: 20px; border: 1px solid var(--r-border); border-radius: 12px; background: #ffffff; }
-.reality-sidebar-title { margin-bottom: 14px; color: #6e7b91; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .11em; }
-.reality-nav { display: grid; gap: 5px; }
-.reality-nav button { width: 100%; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 10px; align-items: center; padding: 9px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #65738b; text-align: left; cursor: pointer; }
-.reality-nav button:hover { background: #f5f7fb; color: var(--r-text); }
-.reality-nav button.active { border-color: #cfdced; background: var(--r-accent-soft); color: #294b83; }
-.reality-nav-copy { display: grid; gap: 2px; }
-.reality-nav-number { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 7px; background: #f1f4f8; color: #667791; font-size: 9px; font-weight: 800; }
-.reality-nav button.active .reality-nav-number { background: #dce7f7; color: #3157a6; }
-.reality-nav-copy strong { font-size: 11px; }
-.reality-nav-copy span { font-size: 9px; color: #8a95a6; }
-.reality-sidebar-tip { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--r-border); color: #6c7990; font-size: 11px; line-height: 1.6; }
-
-.reality-card { padding: 34px; border: 1px solid var(--r-border); border-radius: 13px; background: var(--r-surface); }
-.reality-card-label, .reality-practice-label, .reality-question-label, .reality-final-heading > span, .reality-result-label { color: #55709d; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
-.reality-card h2 { margin: 11px 0 8px; font-size: clamp(30px, 4vw, 46px); line-height: 1.1; letter-spacing: -.035em; }
-.reality-lead { max-width: 760px; margin: 0; color: var(--r-muted); font-size: 14px; line-height: 1.7; }
-
-.reality-principle-box { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 13px; align-items: start; margin-top: 26px; padding: 17px; border-left: 3px solid #8ea6ca; background: #f7f9fc; }
-.reality-principle-box > span { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #d8e0eb; border-radius: 8px; background: #ffffff; font-size: 15px; }
-.reality-principle-box p { margin: 0; color: #53637c; font-size: 13px; line-height: 1.7; }
-
-.reality-points { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin-top: 22px; }
-.reality-point { display: flex; gap: 10px; padding: 15px; border: 1px solid var(--r-border); border-radius: 9px; background: #ffffff; }
-.reality-point > span { width: 26px; height: 26px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 6px; background: #edf2f8; color: #536a8d; font-size: 9px; font-weight: 800; }
-.reality-point strong { font-size: 11px; }
-.reality-point p { margin: 5px 0 0; color: var(--r-muted); font-size: 10px; line-height: 1.55; }
-
-.reality-practice { margin-top: 24px; padding: 18px; border: 1px solid var(--r-border); border-radius: 9px; background: #fafbfd; }
-.reality-practice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 11px; }
-.reality-practice-grid strong { font-size: 11px; }
-.reality-practice-grid p { margin: 5px 0 0; color: var(--r-muted); font-size: 11px; line-height: 1.6; }
-
-.reality-question { margin-top: 25px; padding-top: 23px; border-top: 1px solid var(--r-border); }
-.reality-question h3 { margin: 8px 0 14px; font-size: 18px; }
-.reality-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.reality-choice { display: flex; align-items: flex-start; gap: 10px; padding: 13px; border: 1px solid var(--r-border); border-radius: 8px; background: #ffffff; color: #4e5e77; font-size: 11px; line-height: 1.5; text-align: left; cursor: pointer; }
-.reality-choice:hover { border-color: #b9c8dc; background: #f9fbfd; }
-.reality-choice.selected { border-color: #94aad0; background: #f1f5fb; color: #294b83; }
-.reality-feedback { margin-top: 12px; padding: 12px 14px; border-radius: 8px; font-size: 11px; }
-.reality-feedback.success { border: 1px solid #cde2d7; background: #f3faf6; color: var(--r-success); }
-.reality-feedback.warning { border: 1px solid #eadcc5; background: #fffaf1; color: var(--r-warning); }
-.reality-feedback p { margin: 4px 0 0; color: #66748a; line-height: 1.5; }
-
-.reality-primary-button { border: 1px solid var(--r-accent); background: var(--r-accent); color: #ffffff; }
-.reality-primary-button:hover:not(:disabled) { background: #294b8f; }
-.reality-secondary-button { border: 1px solid #c9d3e1; background: #ffffff; color: #41536f; }
-.reality-secondary-button:hover:not(:disabled) { background: #f6f8fb; }
-.reality-primary-button:disabled, .reality-secondary-button:disabled { opacity: .5; cursor: not-allowed; }
-
-.reality-bottom-navigation { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; margin-top: 14px; }
-.reality-position { display: grid; justify-items: center; gap: 3px; color: #6f7d93; font-size: 10px; }
-.reality-position strong { color: var(--r-text); }
-.reality-save-status { color: #7e8a9d; font-size: 10px; text-align: right; }
-
-.reality-loop { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 24px 0; }
-.reality-loop > div { padding: 13px; border: 1px solid var(--r-border); border-radius: 8px; background: #fafbfd; }
-.reality-loop span { color: #5a7197; font-size: 9px; font-weight: 800; }
-.reality-loop strong { display: block; margin-top: 6px; font-size: 10px; }
-.reality-loop p { margin: 4px 0 0; color: var(--r-muted); font-size: 9px; line-height: 1.5; }
-.reality-final-heading { margin-top: 25px; padding-top: 22px; border-top: 1px solid var(--r-border); }
-.reality-final-heading h3 { margin: 8px 0 5px; font-size: 18px; }
-.reality-final-heading p { margin: 0; color: var(--r-muted); font-size: 11px; }
-.reality-final-questions { display: grid; gap: 14px; margin-top: 18px; }
-.reality-final-question { padding: 15px; border: 1px solid var(--r-border); border-radius: 9px; }
-.reality-final-question-title { display: flex; gap: 10px; align-items: flex-start; }
-.reality-final-question-title > span { width: 25px; height: 25px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 6px; background: #edf2f8; color: #50678b; font-size: 9px; font-weight: 800; }
-.reality-final-question-title h4 { margin: 3px 0 0; font-size: 12px; line-height: 1.45; }
-.reality-final-options { display: grid; gap: 7px; margin-top: 12px; }
-.reality-final-options button { display: flex; align-items: flex-start; gap: 9px; padding: 10px; border: 1px solid #e0e6ef; border-radius: 7px; background: #ffffff; color: #5a6880; font-size: 10px; text-align: left; cursor: pointer; }
-.reality-final-options button:hover, .reality-final-options button.selected { border-color: #9db0ce; background: #f3f6fb; color: #294b83; }
-.reality-final-options button > span { font-weight: 800; }
-.reality-result { margin-top: 25px; padding-top: 22px; border-top: 1px solid var(--r-border); }
-.reality-result-icon { width: 44px; height: 44px; display: grid; place-items: center; margin-bottom: 12px; border-radius: 50%; background: #eef3f8; color: #536a8d; font-weight: 800; }
-.reality-result-icon.success { background: #edf7f1; color: var(--r-success); }
-.reality-result h3 { margin: 8px 0 4px; font-size: 24px; }
-.reality-result > p { margin: 0; color: var(--r-muted); font-size: 12px; }
-.reality-score-track { height: 7px; margin-top: 16px; overflow: hidden; border-radius: 999px; background: #e7edf4; }
-.reality-score-track > div { height: 100%; border-radius: inherit; background: var(--r-accent); }
-.reality-explanations { display: grid; gap: 8px; margin-top: 17px; }
-.reality-explanations > div { padding: 10px 12px; border: 1px solid var(--r-border); border-radius: 7px; background: #fafbfd; }
-.reality-explanations strong { font-size: 10px; }
-.reality-explanations p { margin: 4px 0 0; color: var(--r-muted); font-size: 10px; line-height: 1.5; }
-.reality-explanations .correct strong { color: var(--r-success); }
-.reality-explanations .wrong strong { color: var(--r-warning); }
-.reality-completion-card { display: flex; gap: 11px; margin-top: 15px; padding: 14px; border: 1px solid #cfe2d9; border-radius: 8px; background: #f5faf7; }
-.reality-completion-card > span { color: var(--r-success); font-weight: 800; }
-.reality-completion-card strong { font-size: 11px; }
-.reality-completion-card p { margin: 4px 0 0; color: var(--r-muted); font-size: 10px; line-height: 1.5; }
-
-.reality-loading-page { min-height: 70vh; display: grid; place-items: center; }
-.reality-loading-card { padding: 28px; border: 1px solid var(--r-border); border-radius: 11px; background: #ffffff; text-align: center; }
-.reality-spinner { width: 28px; height: 28px; margin: 0 auto 12px; border: 3px solid #dce4ef; border-top-color: var(--r-accent); border-radius: 50%; animation: reality-spin .7s linear infinite; }
-.reality-loading-card p { margin: 0; color: var(--r-muted); font-size: 12px; }
-.reality-error { padding: 12px; border: 1px solid #ead0d3; border-radius: 8px; background: #fff7f7; color: #9c414c; font-size: 12px; }
-
-@keyframes reality-spin { to { transform: rotate(360deg); } }
-
-@media (max-width: 900px) {
-  .reality-shell { grid-template-columns: 1fr; }
-  .reality-sidebar { position: static; }
-  .reality-nav { display: flex; overflow-x: auto; }
-  .reality-nav button { min-width: 150px; }
-  .reality-points, .reality-loop { grid-template-columns: 1fr 1fr; }
+.reality-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
+
+
+.reality-logo {
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 auto;
+
+  border-radius: 9px;
+
+  background: #203c65;
+  color: #ffffff;
+
+  font-size: 16px;
+}
+
+
+.reality-brand strong {
+  display: block;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+
+.reality-brand span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #778398;
+
+  font-size: 11px;
+}
+
+
+.reality-header-progress {
+  width: min(440px, 34vw);
+}
+
+
+.reality-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+}
+
+
+.reality-progress-meta span {
+  color: #637086;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+}
+
+
+.reality-progress-meta strong {
+  color: var(--r-text);
+
+  font-size: 14px;
+}
+
+
+.reality-progress-track {
+  height: 6px;
+
+  margin-top: 9px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: #e3e9f0;
+}
+
+
+.reality-progress-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: var(--r-primary);
+
+  transition: width 250ms ease;
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.reality-shell {
+  width: min(1400px, calc(100% - 48px));
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns: 300px minmax(0, 1fr);
+
+  gap: 28px;
+
+  align-items: start;
+
+  padding: 32px 0 70px;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.reality-sidebar {
+  position: sticky;
+  top: 102px;
+
+  padding: 18px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 12px;
+
+  background: var(--r-surface);
+}
+
+
+.reality-sidebar-title {
+  margin-bottom: 14px;
+
+  color: #718097;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+
+.reality-nav {
+  display: grid;
+
+  gap: 6px;
+}
+
+
+.reality-nav-item {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns: 34px minmax(0, 1fr);
+
+  gap: 11px;
+
+  align-items: center;
+
+  padding: 10px;
+
+  border: 1px solid transparent;
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: #66758b;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+
+.reality-nav-item:hover:not(:disabled) {
+  background: #f5f8fc;
+
+  color: var(--r-text);
+}
+
+
+.reality-nav-item.active {
+  border-color: #cbd9ec;
+
+  background: var(--r-primary-soft);
+
+  color: var(--r-primary);
+}
+
+
+.reality-nav-item.completed {
+  color: #3d705e;
+}
+
+
+.reality-nav-item.locked {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+
+.reality-nav-number {
+  width: 30px;
+  height: 30px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 8px;
+
+  background: #eef2f7;
+
+  color: #66758b;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+.reality-nav-item.active .reality-nav-number {
+  background: #dce8f7;
+
+  color: var(--r-primary);
+}
+
+
+.reality-nav-copy {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 3px;
+}
+
+
+.reality-nav-copy strong {
+  overflow: hidden;
+
+  font-size: 12px;
+  font-weight: 750;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.reality-nav-copy small {
+  overflow: hidden;
+
+  color: #8793a5;
+
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.reality-sidebar-tip {
+  margin-top: 18px;
+  padding-top: 16px;
+
+  border-top: 1px solid var(--r-border);
+
+  color: var(--r-muted);
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+
+.reality-sidebar-tip > span {
+  display: inline-block;
+
+  margin-bottom: 8px;
+}
+
+
+.reality-sidebar-tip strong {
+  display: block;
+
+  color: var(--r-text);
+
+  font-size: 12px;
+}
+
+
+.reality-sidebar-tip p {
+  margin: 6px 0 0;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
+
+.reality-main {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.reality-hero {
+  padding: 8px 0 30px;
+}
+
+
+.reality-kicker {
+  display: inline-flex;
+  align-items: center;
+
+  color: var(--r-primary);
+
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+
+.reality-hero h1 {
+  max-width: 760px;
+
+  margin: 14px 0 14px;
+
+  color: var(--r-text);
+
+  font-size: clamp(48px, 5vw, 72px);
+
+  line-height: 0.98;
+
+  letter-spacing: -0.055em;
+}
+
+
+.reality-hero h1 em {
+  color: var(--r-primary);
+
+  font-style: italic;
+}
+
+
+.reality-hero > p {
+  max-width: 900px;
+
+  margin: 0;
+
+  color: var(--r-muted);
+
+  font-size: 17px;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   HERO PRINCIPLE
+========================================================= */
+
+.reality-hero-principle {
+  display: grid;
+
+  grid-template-columns: 42px minmax(0, 1fr);
+
+  gap: 14px;
+
+  align-items: start;
+
+  max-width: 900px;
+
+  margin-top: 28px;
+
+  padding: 18px 0;
+}
+
+
+.reality-hero-principle > span {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 9px;
+
+  background: #edf3fb;
+
+  font-size: 16px;
+}
+
+
+.reality-hero-principle strong {
+  display: block;
+
+  color: var(--r-text);
+
+  font-size: 17px;
+}
+
+
+.reality-hero-principle p {
+  margin: 6px 0 0;
+
+  color: var(--r-muted);
+
+  font-size: 15px;
+
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   REALITY CHECK METHOD
+========================================================= */
+
+.reality-hero-method {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 12px;
+
+  max-width: 980px;
+
+  margin-top: 12px;
+}
+
+
+.reality-hero-method > div {
+  min-height: 104px;
+
+  display: grid;
+
+  grid-template-columns: auto 1fr;
+
+  column-gap: 8px;
+
+  align-content: start;
+
+  padding: 15px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 10px;
+
+  background: var(--r-surface);
+}
+
+
+.reality-hero-method > div > span {
+  grid-column: 1;
+
+  color: var(--r-primary);
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+
+.reality-hero-method > div > strong {
+  grid-column: 2;
+
+  color: var(--r-text);
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+.reality-hero-method > div > small {
+  grid-column: 1 / -1;
+
+  display: block;
+
+  margin-top: 10px;
+
+  color: var(--r-muted);
+
+  font-size: 11px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   STEP BAR
+========================================================= */
+
+.reality-step-bar {
+  margin-bottom: 18px;
+
+  padding: 15px 18px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 10px;
+
+  background: var(--r-surface);
+}
+
+
+.reality-step-bar > div {
+  display: flex;
+
+  align-items: baseline;
+
+  gap: 10px;
+}
+
+
+.reality-step-bar > div span {
+  color: var(--r-primary);
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+
+.reality-step-bar strong {
+  color: var(--r-text);
+
+  font-size: 15px;
+}
+
+
+.reality-step-bar > span {
+  color: var(--r-muted);
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   CONTENT CARD
+========================================================= */
+
+.reality-card {
+  padding: 36px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 13px;
+
+  background: var(--r-surface);
+}
+
+
+.reality-card-label,
+.reality-practice-label,
+.reality-question-label,
+.reality-final-heading > span,
+.reality-result-label {
+  color: #55709d;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+
+.reality-card h2 {
+  margin: 12px 0 10px;
+
+  font-size: clamp(32px, 4vw, 48px);
+
+  line-height: 1.08;
+
+  letter-spacing: -0.04em;
+}
+
+
+.reality-lead {
+  max-width: 800px;
+
+  margin: 0;
+
+  color: var(--r-muted);
+
+  font-size: 15px;
+
+  line-height: 1.75;
+}
+
+
+/* =========================================================
+   PRINCIPLE BOX
+========================================================= */
+
+.reality-principle-box {
+  display: grid;
+
+  grid-template-columns: 44px minmax(0, 1fr);
+
+  gap: 14px;
+
+  margin-top: 28px;
+
+  padding: 18px;
+
+  border-left: 3px solid #8ea6ca;
+
+  background: #f7f9fc;
+}
+
+
+.reality-principle-box > span {
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #d8e0eb;
+  border-radius: 8px;
+
+  background: #ffffff;
+}
+
+
+.reality-principle-box p {
+  margin: 0;
+
+  color: #53637c;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   POINTS
+========================================================= */
+
+.reality-points {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-top: 24px;
+}
+
+
+.reality-point {
+  display: flex;
+
+  gap: 10px;
+
+  padding: 15px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+
+.reality-point > span {
+  width: 28px;
+  height: 28px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 auto;
+
+  border-radius: 7px;
+
+  background: #edf2f8;
+
+  color: #536a8d;
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+.reality-point strong {
+  font-size: 12px;
+}
+
+
+.reality-point p {
+  margin: 5px 0 0;
+
+  color: var(--r-muted);
+
+  font-size: 11px;
+
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   PRACTICE
+========================================================= */
+
+.reality-practice {
+  margin-top: 26px;
+
+  padding: 20px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 10px;
+
+  background: #fafbfd;
+}
+
+
+.reality-practice-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+
+  margin-top: 12px;
+}
+
+
+.reality-practice-grid strong {
+  font-size: 12px;
+}
+
+
+.reality-practice-grid p {
+  margin: 5px 0 0;
+
+  color: var(--r-muted);
+
+  font-size: 12px;
+
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   QUESTIONS
+========================================================= */
+
+.reality-question {
+  margin-top: 28px;
+  padding-top: 24px;
+
+  border-top: 1px solid var(--r-border);
+}
+
+
+.reality-question h3 {
+  margin: 8px 0 15px;
+
+  font-size: 20px;
+}
+
+
+.reality-choice-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+
+.reality-choice {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 10px;
+
+  padding: 14px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #4e5e77;
+
+  font-size: 12px;
+
+  line-height: 1.55;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+
+.reality-choice:hover {
+  border-color: #b9c8dc;
+
+  background: #f9fbfd;
+}
+
+
+.reality-choice.selected {
+  border-color: #94aad0;
+
+  background: #f1f5fb;
+
+  color: var(--r-primary);
+}
+
+
+/* =========================================================
+   FEEDBACK
+========================================================= */
+
+.reality-feedback {
+  margin-top: 14px;
+
+  padding: 13px 15px;
+
+  border-radius: 8px;
+
+  font-size: 12px;
+}
+
+
+.reality-feedback.success {
+  border: 1px solid #cde2d7;
+
+  background: #f3faf6;
+
+  color: var(--r-success);
+}
+
+
+.reality-feedback.warning {
+  border: 1px solid #eadcc5;
+
+  background: #fffaf1;
+
+  color: var(--r-warning);
+}
+
+
+.reality-feedback p {
+  margin: 5px 0 0;
+
+  color: #66748a;
+
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.reality-primary-button,
+.reality-secondary-button {
+  min-height: 42px;
+
+  padding: 0 16px;
+
+  border-radius: 8px;
+
+  font-size: 12px;
+  font-weight: 750;
+
+  cursor: pointer;
+}
+
+
+.reality-primary-button {
+  border: 1px solid var(--r-primary);
+
+  background: var(--r-primary);
+
+  color: #ffffff;
+}
+
+
+.reality-primary-button:hover:not(:disabled) {
+  background: var(--r-primary-dark);
+}
+
+
+.reality-secondary-button {
+  border: 1px solid #c9d3e1;
+
+  background: #ffffff;
+
+  color: #41536f;
+}
+
+
+.reality-secondary-button:hover:not(:disabled) {
+  background: #f6f8fb;
+}
+
+
+.reality-primary-button:disabled,
+.reality-secondary-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   BOTTOM NAVIGATION
+========================================================= */
+
+.reality-bottom-navigation {
+  display: grid;
+
+  grid-template-columns: auto 1fr auto;
+
+  gap: 16px;
+
+  align-items: center;
+
+  margin-top: 16px;
+}
+
+
+.reality-position {
+  display: grid;
+
+  justify-items: center;
+
+  gap: 3px;
+
+  color: var(--r-muted);
+
+  font-size: 11px;
+}
+
+
+.reality-position strong {
+  color: var(--r-text);
+}
+
+
+.reality-save-status {
+  color: #7e8a9d;
+
+  font-size: 11px;
+
+  text-align: right;
+}
+
+
+/* =========================================================
+   LOADING / ERROR
+========================================================= */
+
+.reality-loading-page {
+  min-height: 70vh;
+
+  display: grid;
+
+  place-items: center;
+}
+
+
+.reality-loading-card {
+  padding: 30px;
+
+  border: 1px solid var(--r-border);
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  text-align: center;
+}
+
+
+.reality-spinner {
+  width: 30px;
+  height: 30px;
+
+  margin: 0 auto 14px;
+
+  border: 3px solid #dce4ef;
+  border-top-color: var(--r-primary);
+
+  border-radius: 50%;
+
+  animation: reality-spin 0.7s linear infinite;
+}
+
+
+.reality-loading-card p {
+  margin: 0;
+
+  color: var(--r-muted);
+}
+
+
+.reality-error {
+  width: min(1200px, calc(100% - 48px));
+
+  margin: 16px auto 0;
+
+  padding: 13px;
+
+  border: 1px solid #ead0d3;
+  border-radius: 8px;
+
+  background: #fff7f7;
+
+  color: #9c414c;
+
+  font-size: 12px;
+}
+
+
+@keyframes reality-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+  .reality-shell {
+    grid-template-columns: 250px minmax(0, 1fr);
+  }
+
+  .reality-hero-method {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reality-points {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* =========================================================
+   MOBILE / SMALL TABLET
+========================================================= */
+
+@media (max-width: 850px) {
+  .reality-header {
+    padding: 0 20px;
+  }
+
+  .reality-shell {
+    width: min(100% - 32px, 900px);
+
+    grid-template-columns: 1fr;
+
+    padding-top: 22px;
+  }
+
+  .reality-sidebar {
+    position: static;
+  }
+
+  .reality-nav {
+    display: flex;
+
+    overflow-x: auto;
+
+    padding-bottom: 4px;
+  }
+
+  .reality-nav-item {
+    min-width: 170px;
+  }
+
+  .reality-header-progress {
+    width: min(320px, 42vw);
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media (max-width: 640px) {
-  .reality-header { padding: 0 14px; }
-  .reality-header-progress { display: none; }
-  .reality-main { width: calc(100% - 24px); padding-top: 20px; }
-  .reality-card { padding: 24px 18px; }
-  .reality-points, .reality-practice-grid, .reality-choice-grid, .reality-loop { grid-template-columns: 1fr; }
-  .reality-bottom-navigation { grid-template-columns: 1fr; }
-  .reality-position { justify-items: start; }
-  .reality-save-status { text-align: left; }
+  .reality-header {
+    min-height: 68px;
+
+    padding: 0 16px;
+  }
+
+  .reality-brand span {
+    display: none;
+  }
+
+  .reality-header-progress {
+    width: 145px;
+  }
+
+  .reality-progress-meta span {
+    font-size: 9px;
+  }
+
+  .reality-progress-meta strong {
+    font-size: 12px;
+  }
+
+  .reality-hero h1 {
+    font-size: clamp(42px, 13vw, 58px);
+  }
+
+  .reality-hero > p {
+    font-size: 15px;
+  }
+
+  .reality-hero-method {
+    grid-template-columns: 1fr;
+  }
+
+  .reality-step-bar {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .reality-card {
+    padding: 22px;
+  }
+
+  .reality-points,
+  .reality-practice-grid,
+  .reality-choice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reality-bottom-navigation {
+    grid-template-columns: 1fr;
+
+    justify-items: stretch;
+  }
+
+  .reality-position,
+  .reality-save-status {
+    text-align: center;
+  }
+
+  .reality-save-status {
+    text-align: center;
+  }
+}
+.reality-logo {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  overflow: hidden;
+
+  border-radius: 10px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .reality-page * { transition: none !important; animation: none !important; }
+.reality-logo-image {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: contain;
 }
