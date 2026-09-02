@@ -1,4 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,16 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-interface VerifyPaymentBody {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-}
-
 function jsonResponse(
   body: Record<string, unknown>,
   status = 200,
-) {
+): Response {
   return new Response(
     JSON.stringify(body),
     {
@@ -30,30 +24,73 @@ function jsonResponse(
 }
 
 /*
- * Convert an ArrayBuffer into a hexadecimal string.
- *
- * Razorpay signatures use HMAC SHA256.
+ * Convert a string into bytes.
  */
-function arrayBufferToHex(
-  buffer: ArrayBuffer,
-): string {
+function textToBytes(value: string): Uint8Array {
+  return new TextEncoder().encode(value);
+}
+
+/*
+ * Convert ArrayBuffer into hexadecimal.
+ */
+function bufferToHex(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
 
   return Array.from(bytes)
-    .map((byte) =>
-      byte
-        .toString(16)
-        .padStart(2, "0")
-    )
+    .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 }
 
 /*
- * Timing-safe-ish string comparison.
+ * Verify Razorpay signature.
  *
- * Avoids a simple early-return comparison.
+ * Razorpay signature format:
+ *
+ * HMAC_SHA256(
+ *   razorpay_order_id + "|" + razorpay_payment_id,
+ *   RAZORPAY_KEY_SECRET
+ * )
  */
-function safeCompare(
+async function generateRazorpaySignature(
+  orderId: string,
+  paymentId: string,
+  razorpayKeySecret: string,
+): Promise<string> {
+  const secretBytes = textToBytes(razorpayKeySecret);
+  const secretBuffer = new ArrayBuffer(secretBytes.byteLength);
+  new Uint8Array(secretBuffer).set(secretBytes);
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    secretBuffer,
+    {
+      name: "HMAC",
+      hash: "SHA-256",
+    },
+    false,
+    ["sign"],
+  );
+
+  const payload = `${orderId}|${paymentId}`;
+
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    cryptoKey,
+    (() => {
+      const payloadBytes = textToBytes(payload);
+      const payloadBuffer = new ArrayBuffer(payloadBytes.byteLength);
+      new Uint8Array(payloadBuffer).set(payloadBytes);
+      return payloadBuffer;
+    })(),
+  );
+
+  return bufferToHex(signature);
+}
+
+/*
+ * Timing-safe string comparison.
+ */
+function secureCompare(
   first: string,
   second: string,
 ): boolean {
@@ -63,11 +100,7 @@ function safeCompare(
 
   let result = 0;
 
-  for (
-    let index = 0;
-    index < first.length;
-    index += 1
-  ) {
+  for (let index = 0; index < first.length; index += 1) {
     result |=
       first.charCodeAt(index) ^
       second.charCodeAt(index);
@@ -76,747 +109,546 @@ function safeCompare(
   return result === 0;
 }
 
-/*
- * Generate the Razorpay payment signature locally.
- *
- * Razorpay formula:
- *
- * HMAC_SHA256(
- *   razorpay_order_id + "|" + razorpay_payment_id,
- *   RAZORPAY_KEY_SECRET
- * )
- */
-async function createExpectedSignature(
-  orderId: string,
-  paymentId: string,
-  keySecret: string,
-): Promise<string> {
-  const encoder =
-    new TextEncoder();
+Deno.serve(async (req) => {
+  /*
+   * Handle CORS preflight.
+   */
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
+  }
 
-  const secretKey =
-    await crypto.subtle.importKey(
-      "raw",
-      encoder.encode(keySecret),
+  /*
+   * Only POST requests are allowed.
+   */
+  if (req.method !== "POST") {
+    return jsonResponse(
       {
-        name: "HMAC",
-        hash: "SHA-256",
+        success: false,
+        error: "Method not allowed.",
       },
-      false,
-      ["sign"],
+      405,
     );
+  }
 
-  const message =
-    `${orderId}|${paymentId}`;
-
-  const signature =
-    await crypto.subtle.sign(
-      "HMAC",
-      secretKey,
-      encoder.encode(message),
-    );
-
-  return arrayBufferToHex(
-    signature,
-  );
-}
-
-Deno.serve(
-  async (req) => {
+  try {
     /*
-     * CORS preflight.
+     * Environment variables.
      */
+    const supabaseUrl =
+      Deno.env.get("SUPABASE_URL");
+
+    const supabaseAnonKey =
+      Deno.env.get("SUPABASE_ANON_KEY");
+
+    const supabaseServiceRoleKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    const razorpayKeySecret =
+      Deno.env.get("RAZORPAY_KEY_SECRET");
+
     if (
-      req.method === "OPTIONS"
-    ) {
-      return new Response(
-        "ok",
-        {
-          headers:
-            corsHeaders,
-        },
-      );
-    }
-
-    /*
-     * Only POST is allowed.
-     */
-    if (
-      req.method !== "POST"
-    ) {
-      return jsonResponse(
-        {
-          success: false,
-          message:
-            "Method not allowed.",
-        },
-        405,
-      );
-    }
-
-    try {
-      /*
-       * Environment variables.
-       */
-      const supabaseUrl =
-        Deno.env.get(
-          "SUPABASE_URL",
-        );
-
-      const supabaseAnonKey =
-        Deno.env.get(
-          "SUPABASE_ANON_KEY",
-        );
-
-      const supabaseServiceRoleKey =
-        Deno.env.get(
-          "SUPABASE_SERVICE_ROLE_KEY",
-        );
-
-      const razorpayKeySecret =
-        Deno.env.get(
-          "RAZORPAY_KEY_SECRET",
-        );
-
-      if (
-        !supabaseUrl ||
-        !supabaseAnonKey ||
-        !supabaseServiceRoleKey ||
-        !razorpayKeySecret
-      ) {
-        console.error(
-          "Missing required environment variables.",
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Payment verification service is not configured correctly.",
-          },
-          500,
-        );
-      }
-
-      /*
-       * Require authenticated user.
-       */
-      const authorization =
-        req.headers.get(
-          "Authorization",
-        );
-
-      if (
-        !authorization
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "You must be signed in before verifying a payment.",
-          },
-          401,
-        );
-      }
-
-      /*
-       * Verify the Supabase user token.
-       */
-      const userResponse =
-        await fetch(
-          `${supabaseUrl}/auth/v1/user`,
-          {
-            headers: {
-              Authorization:
-                authorization,
-
-              apikey:
-                supabaseAnonKey,
-            },
-          },
-        );
-
-      if (
-        !userResponse.ok
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Invalid user session.",
-          },
-          401,
-        );
-      }
-
-      const user =
-        await userResponse.json();
-
-      if (
-        !user ||
-        typeof user.id !== "string"
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Unable to identify the signed-in user.",
-          },
-          401,
-        );
-      }
-
-      /*
-       * Read request body.
-       */
-      const body =
-        (await req.json()) as VerifyPaymentBody;
-
-      const paymentId =
-        body
-          ?.razorpay_payment_id
-          ?.trim();
-
-      const orderId =
-        body
-          ?.razorpay_order_id
-          ?.trim();
-
-      const signature =
-        body
-          ?.razorpay_signature
-          ?.trim();
-
-      if (
-        !paymentId ||
-        !orderId ||
-        !signature
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Payment ID, order ID and signature are required.",
-          },
-          400,
-        );
-      }
-
-      /*
-       * Verify that the order really belongs to CURIO.
-       *
-       * We query Razorpay directly using the server secret.
-       */
-      const razorpayKeyId =
-        Deno.env.get(
-          "RAZORPAY_KEY_ID",
-        );
-
-      if (
-        !razorpayKeyId
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Razorpay is not configured correctly.",
-          },
-          500,
-        );
-      }
-
-      const razorpayAuthorization =
-        "Basic " +
-        btoa(
-          `${razorpayKeyId}:${razorpayKeySecret}`,
-        );
-
-      /*
-       * Fetch the Razorpay order.
-       */
-      const orderResponse =
-        await fetch(
-          `https://api.razorpay.com/v1/orders/${encodeURIComponent(orderId)}`,
-          {
-            headers: {
-              Authorization:
-                razorpayAuthorization,
-            },
-          },
-        );
-
-      if (
-        !orderResponse.ok
-      ) {
-        console.error(
-          "Unable to retrieve Razorpay order.",
-          await orderResponse.text(),
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Unable to verify the Razorpay order.",
-          },
-          400,
-        );
-      }
-
-      const razorpayOrder =
-        await orderResponse.json();
-
-      /*
-       * IMPORTANT:
-       *
-       * Confirm the order metadata belongs
-       * to the currently logged-in CURIO user.
-       */
-      const orderUserId =
-        razorpayOrder
-          ?.notes
-          ?.user_id;
-
-      const product =
-        razorpayOrder
-          ?.notes
-          ?.product;
-
-      if (
-        orderUserId !== user.id
-      ) {
-        console.error(
-          "Order user mismatch.",
-          {
-            authenticatedUser:
-              user.id,
-
-            orderUserId,
-          },
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "This payment order does not belong to the current CURIO account.",
-          },
-          403,
-        );
-      }
-
-      if (
-        product !==
-        "curio_ai_ml_academy"
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "This Razorpay order is not a CURIO Academy order.",
-          },
-          400,
-        );
-      }
-
-      /*
-       * Verify Razorpay payment signature.
-       */
-      const expectedSignature =
-        await createExpectedSignature(
-          orderId,
-          paymentId,
-          razorpayKeySecret,
-        );
-
-      if (
-        !safeCompare(
-          expectedSignature,
-          signature,
-        )
-      ) {
-        console.error(
-          "Invalid Razorpay payment signature.",
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Payment signature verification failed.",
-          },
-          400,
-        );
-      }
-
-      /*
-       * Fetch payment from Razorpay.
-       *
-       * This ensures the payment ID exists
-       * and is associated with the order.
-       */
-      const paymentResponse =
-        await fetch(
-          `https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}`,
-          {
-            headers: {
-              Authorization:
-                razorpayAuthorization,
-            },
-          },
-        );
-
-      if (
-        !paymentResponse.ok
-      ) {
-        console.error(
-          "Unable to retrieve Razorpay payment.",
-          await paymentResponse.text(),
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Unable to verify the Razorpay payment.",
-          },
-          400,
-        );
-      }
-
-      const razorpayPayment =
-        await paymentResponse.json();
-
-      /*
-       * Ensure payment belongs to this order.
-       */
-      if (
-        razorpayPayment.order_id !==
-        orderId
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Payment does not belong to the supplied order.",
-          },
-          400,
-        );
-      }
-
-      /*
-       * Payment must be successful.
-       *
-       * Razorpay may report "authorized"
-       * before capture in some flows.
-       *
-       * For this current implementation,
-       * captured is the safest state.
-       */
-      if (
-        razorpayPayment.status !==
-        "captured"
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              `Payment is not captured yet. Current status: ${String(razorpayPayment.status)}`,
-          },
-          400,
-        );
-      }
-
-      /*
-       * Confirm ₹1 test amount.
-       *
-       * Razorpay stores money in paise.
-       *
-       * ₹1 = 100 paise.
-       */
-      if (
-        razorpayPayment.amount !==
-        100
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Unexpected payment amount.",
-          },
-          400,
-        );
-      }
-
-      if (
-        razorpayPayment.currency !==
-        "INR"
-      ) {
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Unexpected payment currency.",
-          },
-          400,
-        );
-      }
-
-      /*
-       * Create Supabase admin client.
-       *
-       * Service role is required because
-       * this is the trusted server that
-       * activates paid memberships.
-       */
-      const adminSupabase =
-        createClient(
-          supabaseUrl,
-          supabaseServiceRoleKey,
-          {
-            auth: {
-              autoRefreshToken:
-                false,
-
-              persistSession:
-                false,
-            },
-          },
-        );
-
-      /*
-       * Prevent duplicate payment activation.
-       */
-      const {
-        data:
-          existingMembership,
-        error:
-          existingMembershipError,
-      } =
-        await adminSupabase
-          .from(
-            "academy_memberships",
-          )
-          .select(
-            "id, status, provider_payment_id",
-          )
-          .eq(
-            "provider_payment_id",
-            paymentId,
-          )
-          .maybeSingle();
-
-      if (
-        existingMembershipError
-      ) {
-        console.error(
-          "Unable to check existing membership.",
-          existingMembershipError,
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Unable to check existing payment records.",
-          },
-          500,
-        );
-      }
-
-      /*
-       * Payment was already processed.
-       *
-       * Return success instead of creating
-       * another membership.
-       */
-      if (
-        existingMembership
-      ) {
-        return jsonResponse(
-          {
-            success: true,
-
-            membershipActive:
-              existingMembership.status ===
-              "active",
-
-            message:
-              existingMembership.status ===
-              "active"
-                ? "Academy membership is already active."
-                : "This payment has already been processed.",
-          },
-        );
-      }
-
-      /*
-       * Check whether the user already has
-       * an active Academy membership.
-       *
-       * This prevents accidental duplicate
-       * membership rows.
-       */
-      const {
-        data:
-          activeMembership,
-        error:
-          activeMembershipError,
-      } =
-        await adminSupabase
-          .from(
-            "academy_memberships",
-          )
-          .select(
-            "id, status",
-          )
-          .eq(
-            "user_id",
-            user.id,
-          )
-          .eq(
-            "status",
-            "active",
-          )
-          .maybeSingle();
-
-      if (
-        activeMembershipError
-      ) {
-        console.error(
-          "Unable to check active membership.",
-          activeMembershipError,
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Unable to check Academy membership.",
-          },
-          500,
-        );
-      }
-
-      /*
-       * User already has access.
-       *
-       * Do not create another membership.
-       */
-      if (
-        activeMembership
-      ) {
-        return jsonResponse(
-          {
-            success: true,
-
-            membershipActive:
-              true,
-
-            message:
-              "Academy membership is already active.",
-          },
-        );
-      }
-
-      /*
-       * Activate Academy membership.
-       */
-      const now =
-        new Date()
-          .toISOString();
-
-      const {
-        error:
-          insertMembershipError,
-      } =
-        await adminSupabase
-          .from(
-            "academy_memberships",
-          )
-          .insert({
-            user_id:
-              user.id,
-
-            status:
-              "active",
-
-            plan_name:
-              "academy_pro",
-
-            amount:
-              razorpayPayment.amount,
-
-            currency:
-              razorpayPayment.currency,
-
-            payment_provider:
-              "razorpay",
-
-            provider_order_id:
-              orderId,
-
-            provider_payment_id:
-              paymentId,
-
-            activated_at:
-              now,
-
-            expires_at:
-              null,
-          });
-
-      if (
-        insertMembershipError
-      ) {
-        console.error(
-          "Unable to activate membership.",
-          insertMembershipError,
-        );
-
-        return jsonResponse(
-          {
-            success: false,
-            message:
-              "Payment was verified but Academy access could not be saved.",
-          },
-          500,
-        );
-      }
-
-      /*
-       * SUCCESS
-       */
-      return jsonResponse(
-        {
-          success: true,
-
-          membershipActive:
-            true,
-
-          message:
-            "Payment verified and CURIO Academy PRO access activated.",
-        },
-      );
-    } catch (
-      error
+      !supabaseUrl ||
+      !supabaseAnonKey ||
+      !supabaseServiceRoleKey ||
+      !razorpayKeySecret
     ) {
       console.error(
-        "verify-academy-payment error:",
-        error,
+        "Missing required environment variables.",
       );
 
       return jsonResponse(
         {
           success: false,
-
-          message:
-            error instanceof Error
-              ? error.message
-              : "Unexpected payment verification error.",
+          error:
+            "Payment verification service is not configured correctly.",
         },
         500,
       );
     }
-  },
-);
+
+    /*
+     * Verify Authorization header.
+     */
+    const authorization =
+      req.headers.get("Authorization");
+
+    if (!authorization) {
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "You must be signed in before verifying payment.",
+        },
+        401,
+      );
+    }
+
+    /*
+     * Create a client using the user's JWT.
+     *
+     * This allows us to identify the current user.
+     */
+    const authClient = createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        global: {
+          headers: {
+            Authorization: authorization,
+          },
+        },
+      },
+    );
+
+    const {
+      data: {
+        user,
+      },
+      error: userError,
+    } = await authClient.auth.getUser();
+
+    if (userError || !user) {
+      console.error(
+        "Unable to verify authenticated user:",
+        userError,
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Your login session could not be verified.",
+        },
+        401,
+      );
+    }
+
+    /*
+     * Read payment information.
+     */
+    const body =
+      await req.json() as Record<string, unknown>;
+
+    const razorpayPaymentId =
+      typeof body.razorpay_payment_id === "string"
+        ? body.razorpay_payment_id
+        : "";
+
+    const razorpayOrderId =
+      typeof body.razorpay_order_id === "string"
+        ? body.razorpay_order_id
+        : "";
+
+    const razorpaySignature =
+      typeof body.razorpay_signature === "string"
+        ? body.razorpay_signature
+        : "";
+
+    if (
+      !razorpayPaymentId ||
+      !razorpayOrderId ||
+      !razorpaySignature
+    ) {
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Incomplete payment verification data.",
+        },
+        400,
+      );
+    }
+
+    /*
+     * Verify that Razorpay actually knows about this order.
+     *
+     * This prevents someone from manually submitting
+     * a fake order ID.
+     */
+    const razorpayKeyId =
+      Deno.env.get("RAZORPAY_KEY_ID");
+
+    if (!razorpayKeyId) {
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Razorpay configuration is incomplete.",
+        },
+        500,
+      );
+    }
+
+    const razorpayAuthorization =
+      "Basic " +
+      btoa(
+        `${razorpayKeyId}:${razorpayKeySecret}`,
+      );
+
+    /*
+     * Fetch payment directly from Razorpay.
+     */
+    const razorpayPaymentResponse =
+      await fetch(
+        `https://api.razorpay.com/v1/payments/${razorpayPaymentId}`,
+        {
+          headers: {
+            Authorization:
+              razorpayAuthorization,
+          },
+        },
+      );
+
+    const razorpayPayment =
+      await razorpayPaymentResponse.json();
+
+    if (!razorpayPaymentResponse.ok) {
+      console.error(
+        "Unable to fetch Razorpay payment:",
+        razorpayPayment,
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Unable to verify payment with Razorpay.",
+        },
+        400,
+      );
+    }
+
+    /*
+     * Ensure payment belongs to this order.
+     */
+    if (
+      razorpayPayment.order_id !==
+      razorpayOrderId
+    ) {
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Payment does not belong to the supplied order.",
+        },
+        400,
+      );
+    }
+
+    /*
+     * Verify payment status.
+     *
+     * captured is the preferred final state.
+     * authorized is accepted because capture
+     * may be automatic depending on Razorpay settings.
+     */
+    const paymentStatus =
+      typeof razorpayPayment.status === "string"
+        ? razorpayPayment.status
+        : "";
+
+    if (
+      paymentStatus !== "captured" &&
+      paymentStatus !== "authorized"
+    ) {
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Payment has not been successfully completed.",
+        },
+        400,
+      );
+    }
+
+    /*
+     * Verify Razorpay checkout signature.
+     */
+    const expectedSignature =
+      await generateRazorpaySignature(
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpayKeySecret,
+      );
+
+    const signatureIsValid =
+      secureCompare(
+        expectedSignature,
+        razorpaySignature,
+      );
+
+    if (!signatureIsValid) {
+      console.error(
+        "Invalid Razorpay payment signature.",
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Payment signature verification failed.",
+        },
+        400,
+      );
+    }
+
+    /*
+     * Verify expected amount.
+     *
+     * ₹1 = 100 paise.
+     */
+    const expectedAmount = 100;
+
+    if (
+      razorpayPayment.amount !==
+      expectedAmount
+    ) {
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Payment amount does not match the Academy membership price.",
+        },
+        400,
+      );
+    }
+
+    if (
+      razorpayPayment.currency !==
+      "INR"
+    ) {
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Payment currency is invalid.",
+        },
+        400,
+      );
+    }
+
+    /*
+     * Use the Service Role ONLY inside
+     * this Edge Function.
+     *
+     * Never expose this key in React.
+     */
+    const adminClient = createClient(
+      supabaseUrl,
+      supabaseServiceRoleKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      },
+    );
+
+    /*
+     * Check whether this payment has
+     * already been processed.
+     *
+     * This prevents duplicate memberships.
+     */
+    const {
+      data: existingMembership,
+      error: existingMembershipError,
+    } = await adminClient
+      .from("academy_memberships")
+      .select(
+        "id, status",
+      )
+      .eq(
+        "provider_payment_id",
+        razorpayPaymentId,
+      )
+      .maybeSingle();
+
+    if (existingMembershipError) {
+      console.error(
+        "Membership lookup error:",
+        existingMembershipError,
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Unable to verify existing membership records.",
+        },
+        500,
+      );
+    }
+
+    /*
+     * Payment was already processed.
+     */
+    if (existingMembership) {
+      return jsonResponse(
+        {
+          success: true,
+          alreadyVerified: true,
+          membershipId:
+            existingMembership.id,
+          message:
+            "This payment has already activated Academy access.",
+        },
+        200,
+      );
+    }
+
+    /*
+     * Check if user already has an active
+     * membership.
+     */
+    const {
+      data: activeMembership,
+      error: activeMembershipError,
+    } = await adminClient
+      .from("academy_memberships")
+      .select(
+        "id",
+      )
+      .eq(
+        "user_id",
+        user.id,
+      )
+      .eq(
+        "status",
+        "active",
+      )
+      .maybeSingle();
+
+    if (activeMembershipError) {
+      console.error(
+        "Active membership lookup error:",
+        activeMembershipError,
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Unable to check current Academy access.",
+        },
+        500,
+      );
+    }
+
+    /*
+     * Create or update membership.
+     *
+     * We insert a new auditable payment record.
+     */
+    const now =
+      new Date().toISOString();
+
+    const membershipPayload = {
+      user_id: user.id,
+      status: "active",
+      plan_name:
+        "CURIO AI / ML Academy PRO",
+      amount: expectedAmount,
+      currency: "INR",
+      payment_provider: "razorpay",
+      provider_order_id:
+        razorpayOrderId,
+      provider_payment_id:
+        razorpayPaymentId,
+      activated_at: now,
+      expires_at: null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    /*
+     * If the user already has an active
+     * membership, do not duplicate access.
+     *
+     * The payment still remains valid,
+     * but the current system returns
+     * the existing access.
+     */
+    if (activeMembership) {
+      return jsonResponse(
+        {
+          success: true,
+          alreadyMember: true,
+          membershipId:
+            activeMembership.id,
+          message:
+            "Academy access is already active for this account.",
+        },
+        200,
+      );
+    }
+
+    /*
+     * Insert verified membership.
+     */
+    const {
+      data: newMembership,
+      error: insertError,
+    } = await adminClient
+      .from("academy_memberships")
+      .insert(
+        membershipPayload,
+      )
+      .select(
+        "id, user_id, status, plan_name, activated_at",
+      )
+      .single();
+
+    if (insertError) {
+      console.error(
+        "Unable to activate membership:",
+        insertError,
+      );
+
+      return jsonResponse(
+        {
+          success: false,
+          error:
+            "Payment was verified, but Academy access could not be activated. Please contact support with your payment ID.",
+        },
+        500,
+      );
+    }
+
+    /*
+     * SUCCESS.
+     *
+     * Only after this point should
+     * the frontend unlock Academy PRO.
+     */
+    return jsonResponse(
+      {
+        success: true,
+        alreadyVerified: false,
+        membership:
+          newMembership,
+        message:
+          "Payment verified successfully. Academy PRO access is now active.",
+      },
+      200,
+    );
+  } catch (error) {
+    console.error(
+      "verify-academy-payment error:",
+      error,
+    );
+
+    return jsonResponse(
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unexpected payment verification error.",
+      },
+      500,
+    );
+  }
+});
