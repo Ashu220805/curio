@@ -3,6 +3,7 @@ import { supabase } from "./supabase.ts";
 import {
   loadRazorpayScript,
   type RazorpayPaymentResponse,
+  type RazorpayConstructor,
 } from "./razorpay.ts";
 
 interface CheckoutResponse {
@@ -26,22 +27,36 @@ export interface CheckoutResult {
   signature: string;
 }
 
+/*
+ * Get Razorpay safely.
+ *
+ * Do not directly use:
+ *
+ * globalThis.Razorpay
+ *
+ * unless Razorpay has been declared on the global type.
+ */
+function getRazorpayConstructor(): RazorpayConstructor | null {
+  const globalWithRazorpay = globalThis as typeof globalThis & {
+    Razorpay?: RazorpayConstructor;
+  };
+
+  return globalWithRazorpay.Razorpay ?? null;
+}
+
 export async function startAcademyCheckout(): Promise<CheckoutResult> {
   /*
-   * Prevent checkout if the user is not authenticated.
+   * STEP 1
+   * Get the authenticated Supabase session.
    */
+
   const {
-    data: {
-      session,
-    },
+    data: { session },
     error: sessionError,
-  } =
-    await supabase.auth.getSession();
+  } = await supabase.auth.getSession();
 
   if (sessionError) {
-    throw new Error(
-      sessionError.message,
-    );
+    throw new Error(sessionError.message);
   }
 
   if (!session) {
@@ -51,10 +66,11 @@ export async function startAcademyCheckout(): Promise<CheckoutResult> {
   }
 
   /*
-   * Load Razorpay only when payment begins.
+   * STEP 2
+   * Load Razorpay Checkout script.
    */
-  const razorpayLoaded =
-    await loadRazorpayScript();
+
+  const razorpayLoaded = await loadRazorpayScript();
 
   if (!razorpayLoaded) {
     throw new Error(
@@ -63,190 +79,337 @@ export async function startAcademyCheckout(): Promise<CheckoutResult> {
   }
 
   /*
-   * Create a secure Razorpay order on the server.
+   * STEP 3
+   * Create the Razorpay Order using the Supabase Edge Function.
+   *
+   * The frontend NEVER creates the order itself because
+   * RAZORPAY_KEY_SECRET must remain on the server.
    */
+
   const {
-    data,
-    error,
-  } =
-    await supabase.functions.invoke<CheckoutResponse>(
-      "create-academy-checkout",
-      {
-        headers: {
-          Authorization:
-            `Bearer ${session.access_token}`,
-        },
+    data: checkoutData,
+    error: checkoutError,
+  } = await supabase.functions.invoke<CheckoutResponse>(
+    "create-academy-checkout",
+    {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
       },
-    );
+    },
+  );
 
-  if (error) {
+  if (checkoutError) {
     throw new Error(
-      error.message ||
-        "Unable to create the payment order.",
+      checkoutError.message ||
+        "Unable to create the Razorpay payment order.",
     );
   }
 
-  if (!data) {
+  if (!checkoutData) {
     throw new Error(
-      "Payment service returned no order information.",
+      "Payment service returned no checkout information.",
     );
   }
+
+  /*
+   * STEP 4
+   * Validate the order returned by Supabase.
+   */
 
   if (
-    data.success !== true ||
-    typeof data.keyId !== "string" ||
-    data.keyId.length === 0 ||
-    typeof data.orderId !== "string" ||
-    data.orderId.length === 0 ||
-    typeof data.amount !== "number" ||
-    data.amount <= 0 ||
-    typeof data.currency !== "string" ||
-    data.currency.length === 0
+    checkoutData.success !== true ||
+    typeof checkoutData.keyId !== "string" ||
+    checkoutData.keyId.trim().length === 0 ||
+    typeof checkoutData.orderId !== "string" ||
+    checkoutData.orderId.trim().length === 0 ||
+    typeof checkoutData.amount !== "number" ||
+    !Number.isFinite(checkoutData.amount) ||
+    checkoutData.amount <= 0 ||
+    typeof checkoutData.currency !== "string" ||
+    checkoutData.currency.trim().length === 0
   ) {
+    console.error(
+      "Invalid checkout response:",
+      checkoutData,
+    );
+
     throw new Error(
       "The payment service returned an invalid checkout order.",
     );
   }
 
   /*
-   * Open Razorpay Checkout.
+   * STEP 5
+   * Get Razorpay constructor safely.
    */
+
+  const RazorpayConstructor =
+    getRazorpayConstructor();
+
+  if (!RazorpayConstructor) {
+    throw new Error(
+      "Razorpay Checkout is unavailable. Please refresh and try again.",
+    );
+  }
+
+  /*
+   * STEP 6
+   * Open Razorpay.
+   */
+
   return new Promise<CheckoutResult>(
     (resolve, reject) => {
-      const RazorpayConstructor = globalThis.Razorpay;
+      let settled = false;
+      let paymentHandlerStarted = false;
 
-      if (!RazorpayConstructor) {
-        reject(
-          new Error(
-            "Razorpay Checkout is unavailable.",
-          ),
-        );
+      /*
+       * Helper functions prevent resolving/rejecting
+       * the Promise multiple times.
+       */
 
-        return;
-      }
+      const resolveOnce = (
+        result: CheckoutResult,
+      ) => {
+        if (settled) {
+          return;
+        }
 
-      let completed = false;
+        settled = true;
 
-      const razorpay =
-        new RazorpayConstructor({
-          key: data.keyId,
+        resolve(result);
+      };
 
-          amount: data.amount,
+      const rejectOnce = (
+        error: Error,
+      ) => {
+        if (settled) {
+          return;
+        }
 
-          currency: data.currency,
+        settled = true;
 
-          name:
-            "CURIO Academy",
+        reject(error);
+      };
 
-          description:
-            "CURIO AI / ML Academy PRO Membership",
+      try {
+        const razorpay =
+          new RazorpayConstructor({
+            key: checkoutData.keyId,
 
-          order_id:
-            data.orderId,
+            amount: checkoutData.amount,
 
-          prefill: {
-            email:
-              session.user.email ?? "",
-          },
+            currency: checkoutData.currency,
 
-          handler: async (
-            response:
-              RazorpayPaymentResponse,
-          ) => {
-            completed = true;
+            name: "CURIO Academy",
 
-            try {
-              /*
-               * IMPORTANT:
-               * Razorpay success is NOT trusted by itself.
-               *
-               * Send the signature to Supabase for verification.
-               */
-              const {
-                data: verificationData,
-                error: verificationError,
-              } =
-                await supabase.functions.invoke<VerifyPaymentResponse>(
-                  "verify-academy-payment",
-                  {
-                    headers: {
-                      Authorization:
-                        `Bearer ${session.access_token}`,
+            description:
+              "CURIO AI / ML Academy PRO Membership",
+
+            order_id:
+              checkoutData.orderId,
+
+            prefill: {
+              email:
+                session.user.email ?? "",
+            },
+
+            /*
+             * Razorpay calls this after successful payment.
+             */
+
+            handler: async (
+              response: RazorpayPaymentResponse,
+            ) => {
+              paymentHandlerStarted = true;
+
+              try {
+                /*
+                 * Validate Razorpay response before sending
+                 * it to the verification Edge Function.
+                 */
+
+                if (
+                  !response ||
+                  typeof response.razorpay_payment_id !== "string" ||
+                  response.razorpay_payment_id.length === 0 ||
+                  typeof response.razorpay_order_id !== "string" ||
+                  response.razorpay_order_id.length === 0 ||
+                  typeof response.razorpay_signature !== "string" ||
+                  response.razorpay_signature.length === 0
+                ) {
+                  throw new Error(
+                    "Razorpay returned incomplete payment information.",
+                  );
+                }
+
+                /*
+                 * Security check:
+                 *
+                 * Make sure the order returned by Razorpay
+                 * is the same order created for this checkout.
+                 */
+
+                if (
+                  response.razorpay_order_id !==
+                  checkoutData.orderId
+                ) {
+                  throw new Error(
+                    "The payment response does not match the checkout order.",
+                  );
+                }
+
+                /*
+                 * STEP 7
+                 *
+                 * Verify the payment on the SERVER.
+                 *
+                 * The Edge Function should:
+                 *
+                 * 1. Verify Razorpay signature.
+                 * 2. Fetch/check payment if necessary.
+                 * 3. Confirm successful payment.
+                 * 4. Activate academy_memberships.
+                 *
+                 * Never activate membership only from
+                 * frontend payment success.
+                 */
+
+                const {
+                  data: verificationData,
+                  error: verificationError,
+                } =
+                  await supabase.functions.invoke<VerifyPaymentResponse>(
+                    "verify-academy-payment",
+                    {
+                      headers: {
+                        Authorization:
+                          `Bearer ${session.access_token}`,
+                      },
+
+                      body: {
+                        razorpay_payment_id:
+                          response.razorpay_payment_id,
+
+                        razorpay_order_id:
+                          response.razorpay_order_id,
+
+                        razorpay_signature:
+                          response.razorpay_signature,
+                      },
                     },
+                  );
 
-                    body: {
-                      razorpay_payment_id:
-                        response.razorpay_payment_id,
+                if (verificationError) {
+                  console.error(
+                    "Payment verification error:",
+                    verificationError,
+                  );
 
-                      razorpay_order_id:
-                        response.razorpay_order_id,
-
-                      razorpay_signature:
-                        response.razorpay_signature,
-                    },
-                  },
-                );
-
-              if (verificationError) {
-                throw new Error(
-                  verificationError.message ||
-                    "Payment verification failed.",
-                );
-              }
-
-              if (
-                !verificationData ||
-                verificationData.success !== true ||
-                verificationData.membershipActive !== true
-              ) {
-                throw new Error(
-                  verificationData?.message ||
-                    "Payment was received but Academy access could not yet be activated.",
-                );
-              }
-
-              resolve({
-                paymentId:
-                  response.razorpay_payment_id,
-
-                orderId:
-                  response.razorpay_order_id,
-
-                signature:
-                  response.razorpay_signature,
-              });
-            } catch (
-              verificationFailure
-            ) {
-              reject(
-                verificationFailure instanceof Error
-                  ? verificationFailure
-                  : new Error(
+                  throw new Error(
+                    verificationError.message ||
                       "Payment verification failed.",
-                    ),
-              );
-            }
-          },
+                  );
+                }
 
-          modal: {
-            ondismiss: () => {
-              if (!completed) {
-                reject(
-                  new Error(
-                    "Payment was cancelled.",
-                  ),
+                if (!verificationData) {
+                  throw new Error(
+                    "The payment verification service returned no response.",
+                  );
+                }
+
+                if (
+                  verificationData.success !== true
+                ) {
+                  throw new Error(
+                    verificationData.message ||
+                      "Payment verification was unsuccessful.",
+                  );
+                }
+
+                if (
+                  verificationData.membershipActive !== true
+                ) {
+                  throw new Error(
+                    verificationData.message ||
+                      "Payment was verified, but Academy access could not be activated.",
+                  );
+                }
+
+                /*
+                 * STEP 8
+                 *
+                 * Payment and membership activation succeeded.
+                 */
+
+                resolveOnce({
+                  paymentId:
+                    response.razorpay_payment_id,
+
+                  orderId:
+                    response.razorpay_order_id,
+
+                  signature:
+                    response.razorpay_signature,
+                });
+              } catch (
+                verificationFailure
+              ) {
+                console.error(
+                  "Academy payment verification failed:",
+                  verificationFailure,
+                );
+
+                rejectOnce(
+                  verificationFailure instanceof Error
+                    ? verificationFailure
+                    : new Error(
+                        "Payment verification failed.",
+                      ),
                 );
               }
             },
-          },
 
-          theme: {
-            color:
-              "#111827",
-          },
-        });
+            modal: {
+              ondismiss: () => {
+                /*
+                 * Razorpay can close its modal after the
+                 * successful handler has started.
+                 *
+                 * Do NOT mark payment as cancelled in that case.
+                 */
 
-      razorpay.open();
+                if (
+                  paymentHandlerStarted ||
+                  settled
+                ) {
+                  return;
+                }
+
+                rejectOnce(
+                  new Error(
+                    "Payment was cancelled before completion.",
+                  ),
+                );
+              },
+            },
+
+            theme: {
+              color: "#111827",
+            },
+          });
+
+        razorpay.open();
+      } catch (
+        checkoutFailure
+      ) {
+        rejectOnce(
+          checkoutFailure instanceof Error
+            ? checkoutFailure
+            : new Error(
+                "Unable to open Razorpay Checkout.",
+              ),
+        );
+      }
     },
   );
 }
