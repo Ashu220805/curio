@@ -59,12 +59,6 @@ const MAX_CATEGORY_LENGTH = 100;
 const MAX_REQUEST_BYTES = 12000;
 
 /*
-  Maximum Gemini response size accepted by CURIO.
-*/
-const MAX_GEMINI_RESPONSE_BYTES =
-  100000;
-
-/*
   Maximum number of items returned by Gemini
   inside arrays such as strengths, improvements,
   missingElements and skillTips.
@@ -516,79 +510,6 @@ function cleanStringArray(
       0,
       MAX_ARRAY_ITEMS,
     );
-}
-
-/* =========================================================
-   NORMALIZE SCORE
-========================================================= */
-
-function normalizeScore(
-  value: unknown,
-): number {
-  const score = Number(value);
-
-  if (
-    !Number.isFinite(score)
-  ) {
-    return 0;
-  }
-
-  return Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(score),
-    ),
-  );
-}
-
-/* =========================================================
-   NORMALIZE GEMINI ANALYSIS
-========================================================= */
-
-function normalizeAnalysis(
-  analysis: CurioAnalysis,
-): CurioAnalysis {
-  return {
-    response: cleanString(
-      analysis.response,
-      MAX_ANALYSIS_STRING_LENGTH,
-    ),
-
-    score: normalizeScore(
-      analysis.score,
-    ),
-
-    summary: cleanString(
-      analysis.summary,
-      MAX_ANALYSIS_STRING_LENGTH,
-    ),
-
-    strengths:
-      cleanStringArray(
-        analysis.strengths,
-      ),
-
-    improvements:
-      cleanStringArray(
-        analysis.improvements,
-      ),
-
-    missingElements:
-      cleanStringArray(
-        analysis.missingElements,
-      ),
-
-    betterPrompt: cleanString(
-      analysis.betterPrompt,
-      MAX_ANALYSIS_STRING_LENGTH,
-    ),
-
-    skillTips:
-      cleanStringArray(
-        analysis.skillTips,
-      ),
-  };
 }
 
 /* =========================================================

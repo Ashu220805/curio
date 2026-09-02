@@ -730,13 +730,20 @@ Deno.serve(
         lint rule is not triggered.
       */
 
-      const sanitizedPrompt =
-        prompt
-          .replace(
-            /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,
-            "",
-          )
-          .trim();
+      const sanitizedPrompt = prompt
+        .split("")
+        .filter((character) => {
+          const codePoint = character.codePointAt(0) ?? 0;
+          return !(
+            codePoint <= 0x08 ||
+            codePoint === 0x0b ||
+            codePoint === 0x0c ||
+            (codePoint >= 0x0e && codePoint <= 0x1f) ||
+            codePoint === 0x7f
+          );
+        })
+        .join("")
+        .trim();
 
       if (
         !sanitizedPrompt
