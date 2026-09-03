@@ -22,25 +22,25 @@ const emptyProgress = (): AcademyLessonProgress => ({
 export function readAcademyLearningProgress(): AcademyLearningProgress {
   try {
     const raw: unknown = JSON.parse(localStorage.getItem(DETAIL_KEY) ?? "{}");
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-
     const result: AcademyLearningProgress = {};
 
-    for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-      const order = Number(key);
-      if (!Number.isInteger(order) || order < 1 || !value || typeof value !== "object") continue;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+        const order = Number(key);
+        if (!Number.isInteger(order) || order < 1 || !value || typeof value !== "object") continue;
 
-      const item = value as Partial<AcademyLessonProgress>;
-      result[order] = {
-        concept: item.concept === true,
-        practice: item.practice === true,
-        teachBack: item.teachBack === true,
-        completed: item.completed === true,
-        updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : new Date(0).toISOString(),
-      };
+        const item = value as Partial<AcademyLessonProgress>;
+        result[order] = {
+          concept: item.concept === true,
+          practice: item.practice === true,
+          teachBack: item.teachBack === true,
+          completed: item.completed === true,
+          updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : new Date(0).toISOString(),
+        };
+      }
     }
 
-    // Preserve progress from the previous Academy implementation.
+    // Preserve and merge progress from the previous Academy format (v6)
     const legacy: unknown = JSON.parse(localStorage.getItem(LEGACY_KEY) ?? "[]");
     if (Array.isArray(legacy)) {
       for (const value of legacy) {
@@ -63,16 +63,27 @@ export function readAcademyLearningProgress(): AcademyLearningProgress {
 }
 
 export function saveAcademyLearningProgress(progress: AcademyLearningProgress): void {
-  localStorage.setItem(DETAIL_KEY, JSON.stringify(progress));
+  try {
+    localStorage.setItem(DETAIL_KEY, JSON.stringify(progress));
 
-  const completed = Object.entries(progress)
-    .filter(([, value]) => value.completed)
-    .map(([order]) => Number(order))
-    .filter(Number.isInteger)
-    .sort((a, b) => a - b);
+    const completed = Object.entries(progress)
+      .filter(([, value]) => value.completed)
+      .map(([order]) => Number(order))
+      .filter(Number.isInteger)
+      .sort((a, b) => a - b);
 
-  // Keep the existing Academy progress format in sync so old UI and new UI agree.
-  localStorage.setItem(LEGACY_KEY, JSON.stringify(completed));
+    localStorage.setItem(LEGACY_KEY, JSON.stringify(completed));
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("curio:academy-progress-updated", {
+          detail: { progress, completedCount: completed.length },
+        })
+      );
+    }
+  } catch (error) {
+    console.error("CURIO: Unable to save Academy learning progress:", error);
+  }
 }
 
 export function getLessonProgress(progress: AcademyLearningProgress, order: number): AcademyLessonProgress {
@@ -98,7 +109,8 @@ export function updateLessonProgress(
 }
 
 export function canOpenAcademyLesson(progress: AcademyLearningProgress, order: number): boolean {
-  return order === 1 || progress[order - 1]?.completed === true;
+  if (order <= 1) return true;
+  return progress[order - 1]?.completed === true;
 }
 
 export function academyCompletedCount(progress: AcademyLearningProgress): number {
