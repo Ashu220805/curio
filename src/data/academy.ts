@@ -1,4 +1,15 @@
-export type LessonDiagram = "flow" | "mindmap" | "regression" | "neural" | "data" | "transformer" | "mlops" | "tree" | "matrix" | "gradient" | "pipeline";
+export type LessonDiagram =
+  | "flow"
+  | "mindmap"
+  | "regression"
+  | "neural"
+  | "data"
+  | "transformer"
+  | "mlops"
+  | "tree"
+  | "matrix"
+  | "gradient"
+  | "pipeline";
 
 export type CodeBlock = {
   language: string;
@@ -6,34 +17,89 @@ export type CodeBlock = {
   notes: string[];
 };
 
+export type MathematicsSection = {
+  introduction: string;
+  formulas: {
+    title: string;
+    expression: string;
+    explanation: string;
+    symbolBreakdown?: { symbol: string; meaning: string }[];
+  }[];
+};
+
+export type DerivationSection = {
+  introduction: string;
+  steps: {
+    title: string;
+    expression: string;
+    explanation: string;
+  }[];
+};
+
+export type NumericalSection = {
+  introduction: string;
+  steps: {
+    step: string;
+    calculation: string;
+    explanation: string;
+  }[];
+};
+
+export type AlgorithmSection = {
+  introduction: string;
+  steps: {
+    step: number;
+    title: string;
+    description: string;
+  }[];
+};
+
+export type DebuggingItem = {
+  symptom: string;
+  possibleCause: string;
+  howToCheck: string;
+  fix: string;
+};
+
+export type RealWorldCase = {
+  title: string;
+  description: string;
+  industryImpact?: string;
+};
+
 export type AcademyLesson = {
   id: string;
   order: number;
   module: string;
+  moduleNumber: string;
   title: string;
   duration: string;
   level: "Foundation" | "Core" | "Applied" | "Advanced";
   summary: string;
   why: string;
+  openingProblem: string;
+  curiosity: string;
+  priorKnowledge: string;
   objectives: string[];
   concepts: { term: string; definition: string }[];
   diagram: LessonDiagram;
   mindMap: string[];
-  commonErrors: string[];
+  commonErrors?: string[];
   code?: CodeBlock;
   practice: { prompt: string; checkpoints: string[] };
   prerequisites: string[];
 
-  /** CURIO deep-learning engine: optional so existing lesson data remains valid. */
+  // Continuous Single-Page Flow Data
   intuition?: string[];
   visualExplanation?: string[];
-  mathematics?: { introduction: string; formulas: { title: string; expression: string; explanation: string }[] };
-  derivation?: { introduction: string; steps: { title: string; expression: string; explanation: string }[] };
-  numerical?: { introduction: string; steps: { step: string; calculation: string; explanation: string }[] };
-  algorithm?: { introduction: string; steps: { step: number; title: string; description: string }[] };
-  debugging?: { symptom: string; possibleCause: string; howToCheck: string; fix: string }[];
-  realWorldApplications?: { title: string; description: string }[];
+  mathematics?: MathematicsSection;
+  derivation?: DerivationSection;
+  numerical?: NumericalSection;
+  algorithm?: AlgorithmSection;
+  debugging?: DebuggingItem[];
+  realWorldApplications?: RealWorldCase[];
   keyTakeaways?: string[];
+  teachBackPrompt?: string;
 };
 
 export type AcademyModule = {
@@ -41,179 +107,905 @@ export type AcademyModule = {
   number: string;
   title: string;
   description: string;
+  learningOutcomes: string[];
+  prerequisites: string[];
   lessons: AcademyLesson[];
 };
 
-const python = (order: number, module: string, title: string, summary: string, why: string, concepts: AcademyLesson["concepts"], code: CodeBlock, mindMap: string[], errors: string[], practicePrompt: string, checkpoints: string[], prerequisites: string[] = []): AcademyLesson => ({
-  id: `${module.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${order}`,
-  order,
-  module,
-  title,
-  duration: "22–35 min",
-  level: order < 7 ? "Foundation" : "Core",
-  summary,
-  why,
-  objectives: concepts.slice(0, 4).map((item) => `Explain and use ${item.term}.`),
-  concepts,
-  diagram: "data",
-  mindMap,
-  commonErrors: errors,
-  code,
-  practice: { prompt: practicePrompt, checkpoints },
-  prerequisites,
-});
+/* =========================================================
+   CURIO AI / ML ACADEMY — 10 EXACT CURRICULUM MODULES
+   ========================================================= */
 
 export const academyModules: AcademyModule[] = [
+  // ---------------------------------------------------------
+  // MODULE 1: FOUNDATION
+  // ---------------------------------------------------------
   {
-    id: "orientation",
+    id: "foundation",
     number: "01",
-    title: "Computational Thinking and AI Foundations",
-    description: "Build the mental models required before Python, machine learning, or neural networks.",
+    title: "FOUNDATION",
+    description: "Build the mental models, Python basics, variables, math concepts, and problem-solving mindset required for AI engineering.",
+    learningOutcomes: [
+      "Understand how digital computers execute instructions versus how biological brains process information.",
+      "Write executable Python scripts using data types, variables, arithmetic, and control logic.",
+      "Represent problem variables as vectors and arrays.",
+      "Adopt a structured, hypothesis-driven problem-solving mindset."
+    ],
+    prerequisites: ["Basic computer literacy", "High school arithmetic"],
     lessons: [
       {
-        id: "orientation-1", order: 1, module: "Computational Thinking and AI Foundations", title: "What AI, ML and Deep Learning actually mean", duration: "30 min", level: "Foundation",
-        summary: "Separate the umbrella term AI from machine learning, deep learning, generative AI and ordinary automation.",
-        why: "Students often begin with libraries before understanding what kind of problem they are solving. Correct vocabulary prevents wrong model choices.",
-        objectives: ["Classify AI tasks by prediction, classification, generation and decision support.", "Differentiate rules from learned parameters.", "Explain training versus inference.", "Recognize when AI is unnecessary."],
-        concepts: [{term:"Artificial intelligence",definition:"A broad field for systems performing tasks associated with perception, reasoning, learning, language or decision making."},{term:"Machine learning",definition:"Methods that infer useful patterns from data instead of specifying every rule manually."},{term:"Deep learning",definition:"Machine learning based on multi-layer neural networks."},{term:"Inference",definition:"Using a trained model to produce an output for new input."}],
-        diagram:"mindmap", mindMap:["AI","Automation","Machine learning","Deep learning","Generative AI","Inference","Evaluation"],
-        commonErrors:["Treating fluent output as evidence of intelligence or correctness.","Calling every automated system machine learning.","Using a model where deterministic logic is safer and cheaper."],
-        code:{language:"text",code:`Problem → Data/Rules → System → Output → Evaluation\n\nRule-based: if temperature > 38: alert()\nLearned: model.fit(features, labels)\nInference: model.predict(new_features)`,notes:["Rules are explicitly authored.","Learned models estimate parameters from examples.","Every system still needs evaluation."]},
-        practice:{prompt:"For spam filtering, a calculator, a chatbot and a face-recognition system, decide which are rule-based, learned, or mixed systems and justify each choice.",checkpoints:["Name the input and output.","State whether data is needed for learning.","Identify one possible failure mode."]}, prerequisites:[],
-        intuition:["AI is the umbrella. Machine learning is one way to build AI systems, and deep learning is one family of machine-learning methods.","A rule-based system follows instructions written by people; a learned system adjusts parameters from examples.","Training changes the model using experience. Inference uses the trained model on new input."],
-        visualExplanation:["Start with a problem.","Decide whether explicit rules are sufficient or examples are needed.","Represent the input.","If learning is used, train parameters from data.","Run inference on new input.","Evaluate correctness, usefulness and failure modes."],
-        mathematics:{introduction:"A learned system can be written as a function with adjustable parameters.",formulas:[{title:"Prediction",expression:"ŷ = f(x; θ)",explanation:"The model f transforms input x using learned parameters θ."},{title:"Error",expression:"error = y - ŷ",explanation:"The difference between the observed target y and prediction ŷ."},{title:"Learning objective",expression:"θ* = arg minθ L(y, f(x; θ))",explanation:"Training searches for parameters that minimize a chosen loss."}]},
-        derivation:{introduction:"Learning follows a prediction-feedback-improvement loop.",steps:[{title:"Input",expression:"x",explanation:"Provide information about the problem."},{title:"Prediction",expression:"ŷ = f(x; θ)",explanation:"The current model produces an output."},{title:"Measure loss",expression:"L(y, ŷ)",explanation:"Compare prediction with the desired outcome."},{title:"Update",expression:"θ ← improve(θ)",explanation:"Optimization changes parameters to reduce future loss."}]},
-        numerical:{introduction:"A simple prediction-error example.",steps:[{step:"Actual value",calculation:"y = 50",explanation:"Observed target."},{step:"Prediction",calculation:"ŷ = 45",explanation:"Current model output."},{step:"Error",calculation:"50 - 45 = 5",explanation:"The prediction is five units below the target."},{step:"Squared loss",calculation:"5² = 25",explanation:"A common loss penalizes larger errors more strongly."}]},
-        algorithm:{introduction:"This pattern appears throughout supervised learning.",steps:[{step:1,title:"Collect examples",description:"Gather inputs and expected outcomes."},{step:2,title:"Initialize model",description:"Start with an initial parameter state."},{step:3,title:"Predict",description:"Run inputs through the model."},{step:4,title:"Measure loss",description:"Quantify prediction quality."},{step:5,title:"Update",description:"Adjust parameters using an optimization rule."},{step:6,title:"Validate",description:"Check performance on relevant unseen data."}]},
-        debugging:[{symptom:"Training score is high but new data fails.",possibleCause:"The model memorized training patterns rather than generalizing.",howToCheck:"Compare training and validation performance.",fix:"Use better validation, more data, regularization or a simpler model."},{symptom:"The system is fluent but wrong.",possibleCause:"Output quality was mistaken for correctness.",howToCheck:"Evaluate against ground truth or task-specific criteria.",fix:"Add reliable evaluation rather than trusting plausible output."}],
-        realWorldApplications:[{title:"Spam filtering",description:"A model learns patterns that distinguish unwanted from legitimate messages."},{title:"Face recognition",description:"A learned representation is used to compare visual patterns."},{title:"Chatbots",description:"Language models generate outputs using learned statistical parameters and must still be evaluated."}],
-        keyTakeaways:["AI is broader than machine learning.","Machine learning learns parameters from data rather than requiring every rule to be authored.","Deep learning uses multi-layer neural networks.","Training and inference are different stages.","Fluent output is not proof of correctness."]
+        id: "found-1", order: 1, module: "FOUNDATION", moduleNumber: "01",
+        title: "How Computers Think", duration: "25 min", level: "Foundation",
+        summary: "Understand binary computation, instructions, memory representation, and deterministic processing.",
+        why: "Before attempting to build intelligent systems, you must understand how ordinary software processes instructions.",
+        openingProblem: "Can a machine that only knows 0s and 1s solve problems that normally require human intelligence?",
+        curiosity: "Why do traditional IF/ELSE rules break down when dealing with complex tasks like recognizing a handwritten digit?",
+        priorKnowledge: "You already know how to use computers for web browsing and apps. Now we look under the hood.",
+        objectives: ["Explain CPU instruction execution", "Distinguish memory from storage", "Differentiate deterministic logic from probabilistic estimation"],
+        concepts: [
+          { term: "Deterministic System", definition: "A system that produces the exact same output every time for a given input." },
+          { term: "Binary Representation", definition: "Encoding data (numbers, text, images) as sequences of 0s and 1s." },
+          { term: "Interpreter / CPU", definition: "The hardware/software engine that executes instructions line by line." }
+        ],
+        diagram: "mindmap", mindMap: ["Input Data", "Binary Encoding", "CPU Memory", "Instructions", "Deterministic Output"],
+        commonErrors: ["Thinking computers 'understand' text or images the way humans do.", "Confusing RAM memory with hard-drive storage."],
+        mathematics: {
+          introduction: "A digital number $N$ is represented in binary (base 2) as a sum of powers of 2:",
+          formulas: [
+            {
+              title: "Binary Expansion",
+              expression: "N = \\sum_{i=0}^{k} b_i \\cdot 2^i",
+              explanation: "Each bit $b_i \\in \\{0, 1\\}$ multiplies a power of 2.",
+              symbolBreakdown: [
+                { symbol: "b_i", meaning: "Bit value (0 or 1) at position i" },
+                { symbol: "2^i", meaning: "Weight of position i (1, 2, 4, 8, 16...)" },
+                { symbol: "N", meaning: "Total integer value" }
+              ]
+            }
+          ]
+        },
+        derivation: {
+          introduction: "Converting decimal 13 to binary by successive division by 2:",
+          steps: [
+            { title: "Divide 13 by 2", expression: "13 \\div 2 = 6 \\text{ remainder } 1", explanation: "Least significant bit is 1." },
+            { title: "Divide 6 by 2", expression: "6 \\div 2 = 3 \\text{ remainder } 0", explanation: "Next bit is 0." },
+            { title: "Divide 3 by 2", expression: "3 \\div 2 = 1 \\text{ remainder } 1", explanation: "Next bit is 1." },
+            { title: "Divide 1 by 2", expression: "1 \\div 2 = 0 \\text{ remainder } 1", explanation: "Most significant bit is 1. Binary = 1101." }
+          ]
+        },
+        numerical: {
+          introduction: "Convert binary 1101 back to decimal:",
+          steps: [
+            { step: "Position 0", calculation: "1 \\times 2^0 = 1", explanation: "1" },
+            { step: "Position 1", calculation: "0 \\times 2^1 = 0", explanation: "0" },
+            { step: "Position 2", calculation: "1 \\times 2^2 = 4", explanation: "4" },
+            { step: "Position 3", calculation: "1 \\times 2^3 = 8", explanation: "8" },
+            { step: "Total Sum", calculation: "8 + 4 + 0 + 1 = 13", explanation: "Decimal value 13" }
+          ]
+        },
+        algorithm: {
+          introduction: "Execution loop of a deterministic computer:",
+          steps: [
+            { step: 1, title: "Fetch", description: "Read the next instruction from memory." },
+            { step: 2, title: "Decode", description: "Determine what operation (ADD, LOAD, STORE) is requested." },
+            { step: 3, title: "Execute", description: "Perform the calculation in the ALU." },
+            { step: 4, title: "Store", description: "Write the result back to memory." }
+          ]
+        },
+        code: {
+          language: "python",
+          code: `# Demonstrating deterministic logic in Python
+def evaluate_rule(temperature):
+    # Fixed rule authored by a human programmer
+    if temperature > 38.0:
+        return "Fever Alert"
+    else:
+        return "Normal"
+
+print(evaluate_rule(39.2))  # Output: Fever Alert`,
+          notes: [
+            "Line 2: Function accepts a numerical input.",
+            "Line 4: Strict deterministic IF condition.",
+            "Line 7: Calling the function returns predictable output every time."
+          ]
+        },
+        debugging: [
+          {
+            symptom: "TypeError: '>' not supported between instances of 'str' and 'float'",
+            possibleCause: "Input data was passed as text string `'39.2'` instead of number `39.2`.",
+            howToCheck: "Print `type(temperature)` before the IF statement.",
+            fix: "Convert input using `float(temperature)`."
+          }
+        ],
+        practice: {
+          prompt: "Write a function `check_access(age)` that returns 'Allowed' for age >= 18 and 'Denied' otherwise.",
+          checkpoints: ["Define function with parameter `age`", "Use explicit IF condition", "Return string result"]
+        },
+        realWorldApplications: [
+          { title: "ATM Banking", description: "ATMs check account balance using strict deterministic logic; missing 1 cent is an intolerable bug." }
+        ],
+        teachBackPrompt: "Explain how a computer executes deterministic instructions using an everyday vending machine analogy.",
+        prerequisites: []
       },
       {
-        id:"orientation-2", order:2, module:"Computational Thinking and AI Foundations", title:"The complete learning workflow", duration:"35 min", level:"Foundation",
-        summary:"Understand the sequence problem → data → representation → training → validation → testing → deployment → monitoring.",
-        why:"Most failures occur outside the model itself. A strong workflow makes later algorithms easier to compare.",
-        objectives:["Separate train, validation and test roles.","Define leakage.","Explain generalization.","Choose metrics based on the cost of mistakes."],
-        concepts:[{term:"Feature",definition:"An input variable used by a model."},{term:"Target",definition:"The value or class the model is expected to predict."},{term:"Generalization",definition:"Performance on relevant unseen data."},{term:"Data leakage",definition:"Information unavailable at prediction time accidentally influences training or evaluation."}],
-        diagram:"flow",mindMap:["Problem definition","Data collection","Cleaning","Feature engineering","Train","Validate","Test","Deploy","Monitor"],
-        commonErrors:["Tuning repeatedly on the test set.","Splitting time-dependent data randomly.","Measuring an easy metric instead of the business objective."],
-        code:{language:"python",code:`X_train, X_temp, y_train, y_temp = split(X, y)\nX_valid, X_test, y_valid, y_test = split(X_temp, y_temp)\n\nmodel.fit(X_train, y_train)\nchoose_model(model, X_valid, y_valid)\nfinal_score = evaluate(model, X_test, y_test)`,notes:["Training data estimates parameters.","Validation data guides choices.","The test set is reserved for final evidence."]},
-        practice:{prompt:"Design the workflow for predicting whether a student will need additional academic support.",checkpoints:["Define target and features.","Identify sensitive features that need care.","Choose a metric and explain why."]},prerequisites:["What AI, ML and Deep Learning actually mean"]
+        id: "found-2", order: 2, module: "FOUNDATION", moduleNumber: "01",
+        title: "Python Fundamentals", duration: "30 min", level: "Foundation",
+        summary: "Master scripts, syntax, control structures, functions, and modules in Python.",
+        why: "Python is the dominant language of AI and machine learning engineering.",
+        openingProblem: "How do we write instructions that are readable by humans and executable by computers?",
+        curiosity: "Why did Python beat C++ and Java as the universal language for AI research?",
+        priorKnowledge: "You understand how computers execute instructions line by line.",
+        objectives: ["Write Python scripts", "Use functions with parameters and returns", "Import modules"],
+        concepts: [
+          { term: "Interpreter", definition: "The Python runtime program that executes source code." },
+          { term: "Function", definition: "A named, reusable block of instructions." },
+          { term: "Module", definition: "A file containing reusable Python functions and classes." }
+        ],
+        diagram: "pipeline", mindMap: ["Script File", "Python Interpreter", "Bytecode", "Execution"],
+        commonErrors: ["Mixing tabs and spaces for indentation.", "Forgetting `return` in a function."],
+        code: {
+          language: "python",
+          code: `def calculate_mse(y_true, y_pred):
+    # Compute mean squared error between arrays
+    errors = [(a - b) ** 2 for a, b in zip(y_true, y_pred)]
+    return sum(errors) / len(errors)
+
+actual = [10.0, 20.0, 30.0]
+predicted = [12.0, 19.0, 29.0]
+print("MSE:", calculate_mse(actual, predicted))`,
+          notes: [
+            "Line 1: Function definition accepting two lists.",
+            "Line 3: List comprehension calculating squared residuals.",
+            "Line 4: Return average squared error."
+          ]
+        },
+        practice: {
+          prompt: "Implement a `calculate_mae(y_true, y_pred)` function that computes Mean Absolute Error.",
+          checkpoints: ["Use `abs(a - b)` for absolute error", "Sum absolute errors", "Divide by list length"]
+        },
+        realWorldApplications: [{ title: "Model Pipeline", description: "Python scripts orchestrate data loading, model training, and web deployment." }],
+        teachBackPrompt: "Explain the difference between printing a value and returning a value from a Python function.",
+        prerequisites: ["How Computers Think"]
       }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 2: AI FUNDAMENTALS
+  // ---------------------------------------------------------
   {
-    id:"python", number:"02", title:"Python from Interpreter to Engineering", description:"A serial Python foundation based on interpreter, syntax, control flow, data structures, modules, files, errors, OOP and environments.",
-    lessons:[
-      python(3,"Python Foundations","Using the interpreter and writing your first programs","Learn scripts, interactive mode, command-line arguments and the source-code model.","AI students must be able to run, inspect and debug code before using frameworks.",[{term:"Interpreter",definition:"The Python runtime that executes Python source."},{term:"Interactive mode",definition:"A read-evaluate loop for immediate experimentation."},{term:"Script",definition:"A source file executed by Python."},{term:"Encoding",definition:"The character representation used by source text."}],{language:"python",code:`# hello.py\nname = input("Name: ")\nprint(f"Hello, {name}")\n\n# Run in a terminal:\n# python hello.py`,notes:["input returns text.","An f-string inserts an expression into a string.","A script can be reproduced more easily than an interactive experiment."]},["Python","Interpreter","Interactive mode","Script","Arguments","Environment"],["Confusing the terminal with the Python interpreter.","Saving a file with the wrong extension.","Assuming code is running in the intended environment."],"Write a script that accepts a name and prints a personalized study plan heading.",["Use input.","Use an f-string.","Run it as a script."]),
-      python(4,"Python Foundations","Values, numbers, text and lists","Build confidence with Python's core values before control flow.","Every data structure later used in ML is easier to understand when basic values and mutability are clear.",[{term:"Integer",definition:"A whole-number value."},{term:"Float",definition:"A finite-precision decimal number."},{term:"String",definition:"An ordered sequence of text characters."},{term:"List",definition:"A mutable ordered collection."}],{language:"python",code:`score = 84\nratio = score / 100\nname = "Curio"\ntopics = ["Python", "NumPy", "ML"]\n\nprint(ratio)\nprint(topics[0])`,notes:["Python infers the value type at runtime.","/ produces division results.","List indexing starts at zero."]},["Values","Numbers","Operators","Strings","Lists","Indexing"],["Using = when you mean equality comparison.","Forgetting that list indexing starts at zero.","Expecting floating-point arithmetic to be exact."],"Create a list of five AI topics and print the first and last topic.",["Use a list.","Use positive and negative indexing.","Explain the output."]),
-      python(5,"Python Foundations","Control flow: if, for, while, range and match","Turn values into decisions and repetition using explicit control flow.","Model pipelines are programs; conditions and loops remain essential even when vectorized libraries are preferred.",[{term:"Condition",definition:"An expression that evaluates to true or false."},{term:"Iteration",definition:"Repeated execution over a sequence or condition."},{term:"range",definition:"A lazy sequence of integers commonly used for counting."},{term:"match",definition:"Pattern-based branching for supported Python versions."}],{language:"python",code:`for epoch in range(3):\n    loss = 1 / (epoch + 1)\n    if loss < 0.6:\n        print("improving")\n    else:\n        print("keep training")`,notes:["range(3) yields 0, 1, 2.","The loop body runs once per epoch.","if branches on a Boolean condition."]},["Condition","if / elif / else","for","while","range","break / continue","match"],["Infinite while loops.","Changing a collection while iterating over it.","Using deeply nested conditions when functions would clarify the logic."],"Simulate five training epochs and print whether loss is improving.",["Use range.","Use an if statement.","Keep the loss calculation deterministic."]),
-      python(6,"Python Foundations","Functions, parameters, return values and scope","Create reusable units of behavior with clear inputs and outputs.","Feature transformations and model utilities should be testable functions rather than repeated code.",[{term:"Parameter",definition:"A named input in a function definition."},{term:"Argument",definition:"A value supplied when calling a function."},{term:"Return value",definition:"The result sent back by a function."},{term:"Scope",definition:"The region where a name can be resolved."}],{language:"python",code:`def mean(values, *, round_to=None):\n    result = sum(values) / len(values)\n    return round(result, round_to) if round_to else result\n\nprint(mean([70, 80, 90], round_to=2))`,notes:["* makes following parameters keyword-only.","The function computes one responsibility.","return exposes the result to the caller."]},["Functions","Default arguments","Keyword arguments","Positional-only","*args","**kwargs","Lambda","Docstrings"],["Using mutable objects as default arguments.","Printing when a reusable function should return.","Hiding important behavior in a lambda."],"Write a normalize function that accepts a list and returns values divided by their sum.",["Validate non-empty input.","Return instead of only printing.","Explain the function contract."]),
-      python(7,"Python Foundations","Data structures and comprehensions","Use lists, tuples, sets and dictionaries deliberately.","Dataset metadata, feature maps and model results often require different structures with different guarantees.",[{term:"Tuple",definition:"An ordered sequence that is typically immutable."},{term:"Set",definition:"An unordered collection of unique values."},{term:"Dictionary",definition:"A mapping from keys to values."},{term:"Comprehension",definition:"A compact syntax for constructing collections."}],{language:"python",code:`scores = [72, 81, 95]\npassed = [s for s in scores if s >= 75]\nprofile = {"name": "Asha", "scores": scores}\nlabels = {"cat", "dog", "cat"}\n\nprint(passed, profile["name"], labels)`,notes:["A comprehension filters and transforms a sequence.","Dictionaries use keys for lookup.","Sets remove duplicate values."]},["Lists","Stacks","Queues","Comprehensions","Tuples","Sets","Dictionaries","Looping techniques"],["Using a set when order matters.","Using a list for repeated membership checks without considering a set.","Over-compressing complex logic into unreadable comprehensions."],"Represent a dataset profile using a dictionary and calculate passing scores with a comprehension.",["Use at least one dictionary.","Use a comprehension.","State why a set could be useful for labels."]),
-      python(8,"Python Foundations","Modules, packages and environments","Organize code and isolate dependencies.","Reproducible AI projects depend on explicit environments and importable modules.",[{term:"Module",definition:"A Python source file containing reusable definitions."},{term:"Package",definition:"A namespace containing modules."},{term:"Virtual environment",definition:"An isolated Python dependency environment."},{term:"pip",definition:"Python's package installer."}],{language:"python",code:`# metrics.py\ndef accuracy(y_true, y_pred):\n    return sum(a == b for a, b in zip(y_true, y_pred)) / len(y_true)\n\n# app.py\nfrom metrics import accuracy\nprint(accuracy([1, 0], [1, 1]))`,notes:["Imports expose reusable code.","Keep project dependencies isolated.","Pin or record versions for reproducibility."]},["Modules","Import search path","Packages","Standard library","venv","pip"],["Installing a package into one environment and running another.","Naming a file after a standard library module.","Using wildcard imports in production code."],"Create a small metrics module and import one function from it.",["Separate the files conceptually.","Use an explicit import.","Explain why an environment matters."]),
-      python(9,"Python Foundations","Input, output and structured files","Read and write text and JSON safely with context managers.","Data science begins with data entering and leaving programs; careless file handling creates silent failures.",[{term:"File object",definition:"An object representing an open file resource."},{term:"Context manager",definition:"A construct that guarantees setup and cleanup around a block."},{term:"JSON",definition:"A structured text format for nested data."},{term:"Serialization",definition:"Converting data structures into a storable or transferable form."}],{language:"python",code:`import json\n\nrecord = {"model": "baseline", "accuracy": 0.91}\nwith open("result.json", "w", encoding="utf-8") as file:\n    json.dump(record, file, indent=2)`,notes:["with closes the file even when an error occurs.","json.dump serializes the dictionary.","Explicit encoding avoids platform ambiguity."]},["Input","Output","f-strings","format","Files","JSON","Serialization"],["Forgetting to close files.","Assuming JSON preserves arbitrary Python objects.","Overwriting files unintentionally."],"Save an experiment result dictionary to JSON and read it back.",["Use with.","Use json.dump and json.load.","Verify the loaded type."]),
-      python(10,"Python Foundations","Errors, exceptions and defensive programs","Distinguish syntax errors from runtime exceptions and handle expected failures narrowly.","Reliable ML applications must expose useful failures rather than silently producing corrupted results.",[{term:"Syntax error",definition:"Invalid program structure detected before normal execution."},{term:"Exception",definition:"A runtime event that interrupts normal control flow."},{term:"raise",definition:"Explicitly create an exception."},{term:"finally",definition:"A cleanup block that runs regardless of many outcomes."}],{language:"python",code:`def load_score(value):\n    try:\n        score = float(value)\n    except ValueError as error:\n        raise ValueError("score must be numeric") from error\n    return score`,notes:["Catch the expected exception type.","Exception chaining preserves the original cause.","Validate at system boundaries."]},["Syntax errors","Exceptions","try / except","else","finally","raise","Custom exceptions"],["Using bare except.","Swallowing errors and continuing with invalid data.","Using exceptions for ordinary control flow."],"Write a safe parser for a numeric prediction threshold.",["Catch ValueError.","Raise a meaningful message.","Do not catch unrelated errors."]),
-      python(11,"Python Foundations","Classes, objects, inheritance, iterators and generators","Understand Python's object model enough to read libraries and build clean abstractions.","You do not need deep OOP to start ML, but libraries use objects, methods, iterators and generators everywhere.",[{term:"Class",definition:"A blueprint for creating objects with state and behavior."},{term:"Instance",definition:"An object created from a class."},{term:"Inheritance",definition:"Creating a class that extends another class."},{term:"Generator",definition:"An iterator-producing function that yields values lazily."}],{language:"python",code:`class Dataset:\n    def __init__(self, rows):\n        self.rows = rows\n\n    def __iter__(self):\n        yield from self.rows\n\nfor row in Dataset([1, 2, 3]):\n    print(row)`,notes:["__init__ initializes instance state.","__iter__ enables iteration.","yield supports lazy production of values."]},["Names","Namespaces","Classes","Instances","Methods","Inheritance","Iterators","Generators"],["Using inheritance where composition is simpler.","Confusing class variables with instance variables.","Assuming double underscores provide true privacy."],"Create a Dataset class that can be iterated over.",["Store rows on the instance.","Implement iteration.","Explain lazy versus eager processing."]),
-      python(12,"Python Foundations","Standard library, typing, testing and floating-point reality","Use batteries-included modules while understanding precision limits.","Production AI code benefits from logging, timing, typing and tests, while numerical work requires awareness of floating-point representation.",[{term:"Type annotation",definition:"Metadata describing the intended type of a value."},{term:"Unit test",definition:"A focused automated check of a small behavior."},{term:"Logging",definition:"Structured recording of program events."},{term:"Representation error",definition:"A value cannot always be represented exactly in finite binary floating point."}],{language:"python",code:`from math import isclose\n\ndef safe_mean(values: list[float]) -> float:\n    if not values:\n        raise ValueError("values cannot be empty")\n    return sum(values) / len(values)\n\nassert isclose(safe_mean([0.1, 0.2]), 0.15)`,notes:["Annotations improve readability and tooling.","assert can document simple expectations in examples.","Use tolerance-based comparisons for floating-point results."]},["math","statistics","pathlib","logging","typing","testing","Floating-point arithmetic"],["Comparing floats with exact equality.","Relying on type hints as runtime validation.","Skipping tests for data transformation code."],"Implement and test a safe_mean function.",["Handle empty input.","Add type annotations.","Use tolerance for floating-point comparison."])
-    ]
-  },
-  {
-    id:"math-data", number:"03", title:"Math, Statistics and Data Foundations", description:"The mathematics needed to understand models instead of treating libraries as black boxes.",
-    lessons:[
+    id: "ai-fundamentals",
+    number: "02",
+    title: "AI FUNDAMENTALS",
+    description: "Understand what Artificial Intelligence actually is, how AI systems work, differences between AI/ML/DL, training vs inference, and problem classification.",
+    learningOutcomes: [
+      "Distinguish Artificial Intelligence, Machine Learning, and Deep Learning.",
+      "Explain the exact difference between Training and Inference.",
+      "Classify AI problems into prediction, classification, generation, and decision support."
+    ],
+    prerequisites: ["FOUNDATION"],
+    lessons: [
       {
-        id:"math-13",order:13,module:"Math, Statistics and Data Foundations",title:"Linear algebra for machine learning",duration:"40 min",level:"Core",summary:"Vectors, matrices, dot products, norms, rank, transpose and linear transformations.",why:"Data and neural network parameters are tensors; shape reasoning prevents many implementation mistakes.",objectives:["Compute dot products.","Track matrix shapes.","Explain a linear transformation.","Relate weights to vectorized predictions."],concepts:[{term:"Vector",definition:"An ordered collection of numerical components."},{term:"Matrix",definition:"A rectangular array of numbers."},{term:"Dot product",definition:"A weighted sum of matching vector components."},{term:"Norm",definition:"A measure of vector magnitude."}],diagram:"data",mindMap:["Scalars","Vectors","Matrices","Tensors","Dot product","Matrix multiplication","Norms","Eigen concepts"],commonErrors:["Confusing elementwise multiplication with matrix multiplication.","Ignoring dimensions.","Memorizing operations without interpreting them."],code:{language:"python",code:`import numpy as np\nx = np.array([2., 3.])\nw = np.array([0.4, 0.6])\nscore = x @ w\nprint(score)`,notes:["@ performs matrix or vector multiplication.","The dot product combines features using weights.","Shapes must be compatible."]},practice:{prompt:"Compute one weighted prediction by hand and then verify it in NumPy.",checkpoints:["Write vector shapes.","Calculate each product.","Explain the final sum."]},prerequisites:["Values, numbers, text and lists"]
+        id: "ai-1", order: 3, module: "AI FUNDAMENTALS", moduleNumber: "02",
+        title: "What is Artificial Intelligence?", duration: "30 min", level: "Foundation",
+        summary: "Separate media hype from engineering reality by defining AI as software performing tasks associated with intelligence.",
+        why: "To build effective AI systems, you must know what AI can and cannot guarantee.",
+        openingProblem: "When an email app filters spam or a phone recognizes a face, is the software 'thinking'?",
+        curiosity: "Why are systems that sounded like science fiction 20 years ago now considered ordinary automation?",
+        priorKnowledge: "You know how computer scripts execute rules.",
+        objectives: ["Define Artificial Intelligence accurately", "Identify AI capability boundaries", "Differentiate rule-based AI from pattern-based AI"],
+        concepts: [
+          { term: "Artificial Intelligence", definition: "A broad field of computer science creating systems that perform tasks associated with human intelligence." },
+          { term: "Pattern Recognition", definition: "Detecting statistical regularities in visual, audio, text, or numerical data." }
+        ],
+        diagram: "mindmap", mindMap: ["Artificial Intelligence", "Rule-Based Expert Systems", "Machine Learning", "Deep Learning"],
+        commonErrors: ["Equating AI with human-like consciousness.", "Assuming AI outputs are guaranteed to be 100% correct."],
+        code: {
+          language: "text",
+          code: `Traditional Software: Data + Rules  ==> Output
+Machine Learning:    Data + Output ==> Learned Rules (Parameters)
+Inference Stage:     New Data + Learned Parameters ==> Prediction`,
+          notes: ["Traditional coding writes the rules manually.", "Machine learning infers parameters from examples."]
+        },
+        practice: {
+          prompt: "Classify three systems (Calculator, Spam Filter, Chatbot) as rule-based, learned, or hybrid.",
+          checkpoints: ["State input and output for each", "Identify whether data is used for training", "Explain failure modes"]
+        },
+        realWorldApplications: [{ title: "Spam Detection", description: "Learns statistical probability of spam words from millions of reported emails." }],
+        teachBackPrompt: "Explain AI to a non-technical friend without using marketing buzzwords.",
+        prerequisites: ["Python Fundamentals"]
       },
       {
-        id:"math-14",order:14,module:"Math, Statistics and Data Foundations",title:"Probability, distributions and statistics",duration:"45 min",level:"Core",summary:"Build intuition for random variables, expectation, variance, common distributions and statistical estimation.",why:"Loss functions, uncertainty and evaluation all depend on probability concepts.",objectives:["Distinguish probability from frequency.","Compute mean and variance.","Interpret distributions.","Understand sampling uncertainty."],concepts:[{term:"Random variable",definition:"A numerical value associated with outcomes of a random process."},{term:"Expectation",definition:"The long-run average value under a distribution."},{term:"Variance",definition:"Average squared deviation from the mean."},{term:"Distribution",definition:"A description of how probability is allocated across outcomes."}],diagram:"data",mindMap:["Probability","Random variables","Expectation","Variance","Normal distribution","Bernoulli","Sampling","Confidence"],commonErrors:["Confusing correlation with causation.","Treating a sample mean as the exact population mean.","Ignoring class imbalance when interpreting probability."],code:{language:"python",code:`import numpy as np\nvalues = np.array([70, 80, 90])\nprint(values.mean())\nprint(values.var())`,notes:["mean estimates central tendency.","variance measures spread around the mean.","The population/sample distinction matters in statistics."]},practice:{prompt:"Compare two model score distributions with the same mean but different variance.",checkpoints:["Calculate both means.","Calculate variance.","Explain which result is more stable."]},prerequisites:["Linear algebra for machine learning"]
-      },
-      {
-        id:"data-15",order:15,module:"Math, Statistics and Data Foundations",title:"Data collection, cleaning and exploratory analysis",duration:"45 min",level:"Core",summary:"Understand rows, columns, types, missing values, duplicates, outliers and data quality before fitting a model.",why:"Better algorithms cannot reliably repair invalid labels, leakage or a biased collection process.",objectives:["Profile a dataset.","Identify missingness patterns.","Detect duplicates and impossible values.","Document assumptions."],concepts:[{term:"Schema",definition:"Expected structure and types of data."},{term:"Missingness",definition:"Absence of an expected value."},{term:"Outlier",definition:"An observation unusually distant from a reference pattern."},{term:"Label quality",definition:"Accuracy and consistency of target annotations."}],diagram:"flow",mindMap:["Source","Schema","Quality checks","Missing values","Duplicates","Outliers","Visualization","Documentation"],commonErrors:["Deleting missing rows without understanding why values are missing.","Removing all outliers automatically.","Cleaning the full dataset before a split and leaking information."],code:{language:"python",code:`import pandas as pd\n\ndf = pd.read_csv("data.csv")\nprint(df.shape)\nprint(df.dtypes)\nprint(df.isna().sum())\nprint(df.duplicated().sum())`,notes:["shape gives rows and columns.","dtypes reveals inferred data types.","Missingness and duplicates should be measured before decisions."]},practice:{prompt:"Create a data-quality checklist for a student-performance dataset.",checkpoints:["List type checks.","List range checks.","List leakage risks."]},prerequisites:["Probability, distributions and statistics"]
+        id: "ai-2", order: 4, module: "AI FUNDAMENTALS", moduleNumber: "02",
+        title: "AI vs ML vs Deep Learning", duration: "30 min", level: "Foundation",
+        summary: "Master the nested hierarchy of AI, Machine Learning, Deep Learning, and Generative AI.",
+        why: "Correct technical vocabulary prevents picking the wrong architecture for a problem.",
+        openingProblem: "Are ChatGPT, linear regression, and spam filters all the same thing?",
+        curiosity: "Why did Deep Learning suddenly outperform classical ML around 2012?",
+        priorKnowledge: "You know what AI is in high-level terms.",
+        objectives: ["Map the nested set diagram of AI/ML/DL/GenAI", "Explain when to use classical ML vs Deep Learning"],
+        concepts: [
+          { term: "Machine Learning", definition: "Subfield of AI where algorithms adjust parameters using data examples." },
+          { term: "Deep Learning", definition: "Subfield of ML using multi-layer artificial neural networks." },
+          { term: "Generative AI", definition: "Deep learning models specialized in generating new text, images, audio, or code." }
+        ],
+        diagram: "neural", mindMap: ["AI (Broad Umbrella)", "ML (Data-driven)", "Deep Learning (Neural Nets)", "Generative AI (Transformers/Diffusion)"],
+        commonErrors: ["Using a heavy Deep Learning model when a simple Linear Regression is faster and more accurate."],
+        practice: {
+          prompt: "Draw or describe the nested relationship between AI, ML, Deep Learning, and Generative AI.",
+          checkpoints: ["Identify which contains which", "Provide one real-world example for each layer"]
+        },
+        realWorldApplications: [{ title: "Medical Imaging", description: "Deep learning detects tumors in X-rays; classical ML predicts hospital readmission risk." }],
+        teachBackPrompt: "Explain why Deep Learning requires more data than classical Machine Learning.",
+        prerequisites: ["What is Artificial Intelligence?"]
       }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 3: MACHINE LEARNING FOUNDATIONS
+  // ---------------------------------------------------------
   {
-    id:"ml",number:"04",title:"Machine Learning Core",description:"Learn supervised and unsupervised learning, regression families, classification, validation, metrics and model selection in the order they are used.",
-    lessons:[
+    id: "ml-foundations",
+    number: "03",
+    title: "MACHINE LEARNING FOUNDATIONS",
+    description: "Learn data representation, features and targets, train/test splits, generalization, and the complete ML workflow.",
+    learningOutcomes: [
+      "Formulate supervised problems into features ($X$) and targets ($y$).",
+      "Explain generalization gap and overfitting.",
+      "Execute the complete end-to-end Machine Learning workflow."
+    ],
+    prerequisites: ["AI FUNDAMENTALS"],
+    lessons: [
       {
-        id:"ml-16",order:16,module:"Machine Learning Core",title:"The supervised learning workflow in depth",duration:"45 min",level:"Core",summary:"Map problem statements to features, targets, splits, baselines, training, validation and final tests.",why:"Algorithm selection only makes sense after the prediction task and evidence are defined.",objectives:["Formulate a supervised problem.","Build a baseline.","Split data correctly.","Explain generalization."],concepts:[{term:"Supervised learning",definition:"Learning a mapping from inputs to known target values."},{term:"Baseline",definition:"A simple reference performance used to judge improvement."},{term:"Hyperparameter",definition:"A configuration chosen outside ordinary parameter fitting."},{term:"Generalization gap",definition:"Difference between seen-data and unseen-data performance."}],diagram:"flow",mindMap:["Question","Target","Features","Baseline","Split","Train","Validate","Test"],commonErrors:["Choosing a model before defining the target.","Skipping a baseline.","Reporting only training accuracy."],code:{language:"python",code:`from sklearn.model_selection import train_test_split\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.2, random_state=42\n)`,notes:["X holds features.","y holds targets.","random_state supports reproducibility."]},practice:{prompt:"Turn a real-world question into a supervised-learning specification.",checkpoints:["State one prediction unit.","Define target.","Choose baseline."]},prerequisites:["Data collection, cleaning and exploratory analysis"]
-      },
-      {
-        id:"regression-17",order:17,module:"Machine Learning Core",title:"Regression: what it predicts and why it is useful",duration:"45 min",level:"Core",summary:"Regression predicts a continuous numerical quantity and provides a foundation for loss functions and optimization.",why:"Students often confuse regression with any model that 'draws a line'. The key is the target type and objective.",objectives:["Recognize regression problems.","Interpret residuals.","Compare common losses.","Explain predictions as functions of features."],concepts:[{term:"Continuous target",definition:"A numerical target with meaningful ordered values across an interval or range."},{term:"Residual",definition:"Observed target minus predicted target."},{term:"MSE",definition:"Mean squared error, averaging squared residuals."},{term:"MAE",definition:"Mean absolute error, averaging absolute residuals."}],diagram:"regression",mindMap:["Regression","Target y","Features X","Prediction ŷ","Residual","MSE","MAE","R²"],commonErrors:["Using accuracy for a continuous target.","Ignoring target units.","Assuming low training error means useful generalization."],code:{language:"python",code:`from sklearn.linear_model import LinearRegression\nmodel = LinearRegression()\nmodel.fit(X_train, y_train)\npred = model.predict(X_test)`,notes:["fit estimates model parameters.","predict produces continuous outputs.","Evaluation must compare predictions with y_test."]},practice:{prompt:"Identify three continuous targets in real engineering problems.",checkpoints:["State units.","Choose MAE or MSE and justify.","Describe one harmful error."]},prerequisites:["The supervised learning workflow in depth"]
-      },
-      {
-        id:"regression-18",order:18,module:"Machine Learning Core",title:"Linear, polynomial, ridge, lasso and elastic-net regression",duration:"55 min",level:"Core",summary:"Study major regression families, assumptions, regularization and the bias–variance trade-off.",why:"Different regressors answer different assumptions about function shape and parameter complexity.",objectives:["Compare linear and polynomial features.","Explain L1 and L2 penalties.","Interpret regularization strength.","Choose a model using validation."],concepts:[{term:"Linear regression",definition:"A model linear in its parameters."},{term:"Polynomial regression",definition:"Linear regression applied to polynomially expanded features."},{term:"Ridge regression",definition:"Regression with an L2 parameter penalty."},{term:"Lasso regression",definition:"Regression with an L1 parameter penalty that can drive coefficients to zero."}],diagram:"regression",mindMap:["Linear","Polynomial features","Ridge L2","Lasso L1","Elastic Net","Regularization","Bias–variance"],commonErrors:["Assuming polynomial regression is nonlinear in parameters.","Scaling features inconsistently before regularization.","Interpreting lasso selection as causal truth."],code:{language:"python",code:`from sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import PolynomialFeatures, StandardScaler\nfrom sklearn.linear_model import Ridge\n\nmodel = make_pipeline(\n    PolynomialFeatures(2), StandardScaler(), Ridge(alpha=1.0)\n)\nmodel.fit(X_train, y_train)`,notes:["PolynomialFeatures expands representation.","Scaling is important for many regularized models.","alpha controls regularization strength."]},practice:{prompt:"Compare ridge and lasso on a dataset with many correlated features.",checkpoints:["Use validation data.","Compare coefficients.","Discuss stability and sparsity."]},prerequisites:["Regression: what it predicts and why it is useful"]
-      },
-      {
-        id:"regression-19",order:19,module:"Machine Learning Core",title:"Trees, random forests and gradient boosting for regression",duration:"55 min",level:"Core",summary:"Learn nonlinear tree models, ensembles and boosting without assuming linear relationships.",why:"Tree ensembles are powerful for structured/tabular data but require careful validation and interpretation.",objectives:["Explain splits.","Compare bagging and boosting.","Recognize overfitting controls.","Discuss feature importance limitations."],concepts:[{term:"Decision tree",definition:"A model that recursively partitions feature space using decision rules."},{term:"Random forest",definition:"An ensemble of randomized decision trees whose predictions are aggregated."},{term:"Gradient boosting",definition:"A sequence of models fitted to improve previous errors."},{term:"Ensemble",definition:"A combination of multiple models."}],diagram:"tree",mindMap:["Decision tree","Splits","Leaves","Bagging","Random forest","Boosting","Learning rate","Early stopping"],commonErrors:["Growing unrestricted trees.","Treating impurity importance as causal importance.","Using random splits for temporal forecasting."],code:{language:"python",code:`from sklearn.ensemble import RandomForestRegressor\nmodel = RandomForestRegressor(\n    n_estimators=300, max_depth=8, random_state=42\n)\nmodel.fit(X_train, y_train)`,notes:["n_estimators is the number of trees.","max_depth constrains complexity.","A fixed random seed aids reproducibility."]},practice:{prompt:"Explain when a tree ensemble may outperform a linear model.",checkpoints:["Discuss nonlinear interactions.","Discuss data size and cost.","Name one overfitting control."]},prerequisites:["Linear, polynomial, ridge, lasso and elastic-net regression"]
-      },
-      {
-        id:"classification-20",order:20,module:"Machine Learning Core",title:"Classification, probabilities and thresholds",duration:"55 min",level:"Core",summary:"Predict categories while distinguishing class labels from calibrated probabilities and decision thresholds.",why:"A model can rank examples well while using a poor threshold for the real cost of errors.",objectives:["Differentiate binary and multiclass classification.","Read confusion matrices.","Explain precision and recall.","Tune thresholds using context."],concepts:[{term:"Probability score",definition:"A model's estimate associated with class likelihood under its modeling assumptions."},{term:"Threshold",definition:"A decision boundary converting a score into a class action."},{term:"Precision",definition:"Among predicted positives, the proportion that are truly positive."},{term:"Recall",definition:"Among true positives, the proportion detected by the model."}],diagram:"flow",mindMap:["Binary","Multiclass","Probabilities","Threshold","Confusion matrix","Precision","Recall","F1","ROC-AUC"],commonErrors:["Using accuracy alone on imbalanced data.","Assuming 0.5 is always the correct threshold.","Ignoring calibration."],code:{language:"python",code:`from sklearn.linear_model import LogisticRegression\nmodel = LogisticRegression(max_iter=1000)\nmodel.fit(X_train, y_train)\nprob = model.predict_proba(X_test)[:, 1]\npred = (prob >= 0.7).astype(int)`,notes:["predict_proba returns class-associated scores.","A threshold turns scores into actions.","The threshold should reflect consequences."]},practice:{prompt:"For a medical-screening-style example, compare a low and high decision threshold.",checkpoints:["Describe false positives.","Describe false negatives.","Choose the safer trade-off."]},prerequisites:["Regression: what it predicts and why it is useful"]
-      },
-      {
-        id:"unsupervised-21",order:21,module:"Machine Learning Core",title:"Unsupervised learning: clustering, dimensionality reduction and anomaly detection",duration:"50 min",level:"Core",summary:"Find structure without labeled targets using clusters, lower-dimensional representations and unusual observations.",why:"Unsupervised outputs are hypotheses about structure, not automatically discovered ground truth.",objectives:["Explain k-means assumptions.","Compare PCA and nonlinear embeddings conceptually.","Define anomaly relative to context.","Validate unsupervised findings."],concepts:[{term:"Clustering",definition:"Grouping observations by a chosen similarity or structure criterion."},{term:"Dimensionality reduction",definition:"Representing data with fewer variables while retaining selected structure."},{term:"PCA",definition:"A linear projection that captures directions of high variance."},{term:"Anomaly detection",definition:"Identifying observations unusual relative to a reference distribution or model."}],diagram:"data",mindMap:["No labels","Clustering","K-means","Hierarchical","PCA","Embeddings","Anomalies","Validation"],commonErrors:["Assuming clusters are real classes.","Standardizing inconsistently.","Visualizing a 2D embedding as proof of separability."],code:{language:"python",code:`from sklearn.cluster import KMeans\nfrom sklearn.preprocessing import StandardScaler\n\nX_scaled = StandardScaler().fit_transform(X)\nlabels = KMeans(n_clusters=3, random_state=42).fit_predict(X_scaled)`,notes:["Scale can dominate distance-based methods.","Cluster labels are arbitrary identifiers.","Choose k using domain and validation evidence."]},practice:{prompt:"Design a clustering experiment for grouping learning behavior without calling the groups ability levels.",checkpoints:["Choose features carefully.","Discuss normalization.","Avoid harmful interpretations."]},prerequisites:["The supervised learning workflow in depth"]
-      },
-      {
-        id:"evaluation-22",order:22,module:"Machine Learning Core",title:"Validation, cross-validation, leakage and model selection",duration:"55 min",level:"Applied",summary:"Build trustworthy experiments using cross-validation, pipelines and leakage controls.",why:"A sophisticated model with invalid evaluation is less useful than a simple model with reliable evidence.",objectives:["Use cross-validation.","Prevent preprocessing leakage.","Separate tuning from testing.","Record experiments."],concepts:[{term:"Cross-validation",definition:"Repeatedly fitting and evaluating across different train/validation partitions."},{term:"Pipeline",definition:"A chained sequence of preprocessing and modeling steps."},{term:"Leakage",definition:"Future or unavailable information influences a learning decision."},{term:"Experiment tracking",definition:"Recording code, data, parameters and results needed to reproduce a run."}],diagram:"flow",mindMap:["Split strategy","Pipeline","Cross-validation","Hyperparameters","Leakage","Test set","Reproducibility"],commonErrors:["Scaling before splitting.","Selecting features using the full dataset.","Running many experiments and reporting only the best without context."],code:{language:"python",code:`from sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\nfrom sklearn.model_selection import cross_val_score\n\npipeline = make_pipeline(StandardScaler(), Ridge())\nscores = cross_val_score(pipeline, X, y, cv=5)`,notes:["Pipeline fits transformations inside each fold.","Cross-validation returns multiple estimates.","Keep the final test set untouched."]},practice:{prompt:"Identify three leakage paths in a project and propose a prevention for each.",checkpoints:["Leakage source.","Why it inflates performance.","Correct pipeline design."]},prerequisites:["Classification, probabilities and thresholds"]
+        id: "mlf-1", order: 5, module: "MACHINE LEARNING FOUNDATIONS", moduleNumber: "03",
+        title: "Features and Targets", duration: "35 min", level: "Core",
+        summary: "Learn how to structure data into feature matrices ($X$) and target vectors ($y$).",
+        why: "Machine learning algorithms accept structured matrices, not raw unstructured thoughts.",
+        openingProblem: "How do we convert a house listing (3 bedrooms, 1200 sqft, built 2010, price $400k) into mathematical inputs for a model?",
+        curiosity: "What happens if a crucial feature is missing from your dataset?",
+        priorKnowledge: "You understand Python variables and basic data types.",
+        objectives: ["Extract feature vectors $X$", "Identify target variable $y$", "Distinguish continuous targets from categorical targets"],
+        concepts: [
+          { term: "Feature Vector (X)", definition: "Numerical inputs representing measured attributes of an observation." },
+          { term: "Target (y)", definition: "The ground-truth output or value the model is trained to predict." }
+        ],
+        diagram: "data", mindMap: ["Raw Data", "Feature Matrix X", "Target Vector y", "Model Training"],
+        commonErrors: ["Including the target variable inside the feature matrix (Data Leakage)."],
+        mathematics: {
+          introduction: "A dataset with $n$ samples and $d$ features is represented as a matrix $\\mathbf{X}$ and vector $\\mathbf{y}$:",
+          formulas: [
+            {
+              title: "Feature Matrix & Target Vector",
+              expression: "\\mathbf{X} \\in \\mathbb{R}^{n \\times d}, \\quad \\mathbf{y} \\in \\mathbb{R}^{n}",
+              explanation: "$\\\\mathbf{X}$ has $n$ rows (samples) and $d$ columns (features). $\\\\mathbf{y}$ has $n$ target values.",
+              symbolBreakdown: [
+                { symbol: "n", meaning: "Number of data samples (rows)" },
+                { symbol: "d", meaning: "Number of input features (columns)" },
+                { symbol: "X", meaning: "Feature matrix" },
+                { symbol: "y", meaning: "Target vector" }
+              ]
+            }
+          ]
+        },
+        numerical: {
+          introduction: "Given 2 house listings:",
+          steps: [
+            { step: "House 1", calculation: "X_1 = [1200, 3, 2010], y_1 = 400000", explanation: "Size=1200, Beds=3, Year=2010" },
+            { step: "House 2", calculation: "X_2 = [1800, 4, 2015], y_2 = 550000", explanation: "Size=1800, Beds=4, Year=2015" },
+            { step: "Matrix X Shape", calculation: "(2, 3)", explanation: "2 samples, 3 features" }
+          ]
+        },
+        code: {
+          language: "python",
+          code: `import numpy as np
+
+# Feature matrix X: [size_sqft, bedrooms, age_years]
+X = np.array([
+    [1200, 3, 14],
+    [1800, 4, 9],
+    [950,  2, 25]
+])
+
+# Target vector y: price in $k
+y = np.array([400, 550, 280])
+
+print("X shape:", X.shape)  # (3, 3)
+print("y shape:", y.shape)  # (3,)`,
+          notes: [
+            "Line 4: Rows represent individual houses.",
+            "Line 11: Target vector y contains corresponding prices.",
+            "Line 13: Shapes must align along dimension 0."
+          ]
+        },
+        practice: {
+          prompt: "For a student performance dataset (study_hours, attendance_pct, sleep_hours, final_score), identify X and y.",
+          checkpoints: ["List features in X", "Identify target y", "State shape of X for 100 students"]
+        },
+        realWorldApplications: [{ title: "Credit Scoring", description: "Features: income, debt, payment history; Target: credit risk score or default." }],
+        teachBackPrompt: "Explain what features and targets are using a car pricing example.",
+        prerequisites: ["Python Fundamentals"]
       }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 4: MATHEMATICS FOR MACHINE LEARNING
+  // ---------------------------------------------------------
   {
-    id:"feature-engineering",number:"05",title:"Feature Engineering and Data Representation",description:"Transform raw information into representations that models can learn from while preserving evaluation integrity.",
-    lessons:[
-      {id:"features-23",order:23,module:"Feature Engineering and Data Representation",title:"Feature engineering from first principles",duration:"50 min",level:"Applied",summary:"Learn scaling, encoding, transformations, interactions and domain-driven features.",why:"Representation can determine model quality more than changing the algorithm.",objectives:["Match preprocessing to data type.","Prevent leakage.","Create interpretable transformations.","Use pipelines."],concepts:[{term:"Scaling",definition:"Changing feature magnitude using a defined transformation."},{term:"Encoding",definition:"Representing categorical information numerically."},{term:"Interaction",definition:"A feature whose effect depends on another feature."},{term:"Feature pipeline",definition:"Repeatable transformations from raw input to model-ready representation."}],diagram:"data",mindMap:["Raw data","Numeric","Categorical","Text","Time","Images","Transform","Validate"],commonErrors:["One-hot encoding high-cardinality IDs blindly.","Using target encoding without fold isolation.","Creating features from future information."],code:{language:"python",code:`from sklearn.compose import ColumnTransformer\nfrom sklearn.preprocessing import OneHotEncoder, StandardScaler\n\nprep = ColumnTransformer([\n  ("num", StandardScaler(), numeric_cols),\n  ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols),\n])`,notes:["Different columns need different transformations.","Unknown categories need a deployment strategy.","Fit preprocessing only on training information."]},practice:{prompt:"Create a preprocessing plan for a dataset with age, city, income and free-text feedback.",checkpoints:["Assign a representation to each type.","State missing-value handling.","State leakage checks."]},prerequisites:["Validation, cross-validation, leakage and model selection"]},
-      {id:"features-24",order:24,module:"Feature Engineering and Data Representation",title:"Time series and temporal features",duration:"50 min",level:"Applied",summary:"Handle lags, rolling windows, seasonality and chronological evaluation.",why:"Time order changes what information is available at prediction time.",objectives:["Build lag features.","Explain rolling windows.","Split chronologically.","Avoid future leakage."],concepts:[{term:"Lag",definition:"A prior observation used as a feature."},{term:"Rolling window",definition:"A statistic computed over a moving historical interval."},{term:"Seasonality",definition:"A recurring pattern linked to calendar or periodic structure."},{term:"Forecast horizon",definition:"How far into the future a prediction targets."}],diagram:"flow",mindMap:["Time index","Lag","Rolling mean","Seasonality","Trend","Forecast horizon","Backtesting"],commonErrors:["Randomly shuffling future data into training.","Using target values from after prediction time.","Computing rolling statistics including the current target."],code:{language:"python",code:`df = df.sort_values("date")\ndf["lag_1"] = df["value"].shift(1)\ndf["mean_7"] = df["value"].shift(1).rolling(7).mean()`,notes:["Sort before temporal transforms.","shift prevents using the current value as its own history.","Early rows become missing because history is unavailable."]},practice:{prompt:"Design a one-week demand forecast without using future information.",checkpoints:["Define cutoff time.","Define lags.","Describe backtesting."]},prerequisites:["Feature engineering from first principles"]}
+    id: "math-for-ml",
+    number: "04",
+    title: "MATHEMATICS FOR MACHINE LEARNING",
+    description: "Master essential Linear Algebra, Calculus, Probability, Statistics, and Optimization needed to understand ML algorithms.",
+    learningOutcomes: [
+      "Compute dot products, vector norms, and matrix multiplications.",
+      "Calculate derivatives using the Power Rule and Chain Rule.",
+      "Understand gradient vectors and how Gradient Descent minimizes loss."
+    ],
+    prerequisites: ["FOUNDATION"],
+    lessons: [
+      {
+        id: "math-lin-alg", order: 6, module: "MATHEMATICS FOR MACHINE LEARNING", moduleNumber: "04",
+        title: "Linear Algebra & Vectors", duration: "40 min", level: "Core",
+        summary: "Understand vectors, matrices, dot products, and linear combinations.",
+        why: "All model predictions $\\hat{y} = \\mathbf{w}^T \\mathbf{x} + b$ are vectorized dot products.",
+        openingProblem: "How do you multiply 50 feature values by 50 weight parameters in a single instant?",
+        curiosity: "Why are GPUs so much faster at machine learning than standard CPUs?",
+        priorKnowledge: "You know how features are organized in matrices.",
+        objectives: ["Compute vector dot products", "Perform matrix-vector multiplication", "Interpret geometric dot product"],
+        concepts: [
+          { term: "Vector Dot Product", definition: "Sum of element-wise products of two vectors: $\\mathbf{a} \\cdot \\mathbf{b} = \\sum a_i b_i$." },
+          { term: "Weight Vector (w)", definition: "Learned parameters indicating the importance of each feature." }
+        ],
+        diagram: "matrix", mindMap: ["Vector", "Matrix", "Dot Product", "Weighted Sum"],
+        mathematics: {
+          introduction: "The linear prediction model combines features $\\mathbf{x}$ and weights $\\mathbf{w}$:",
+          formulas: [
+            {
+              title: "Linear Prediction Formula",
+              expression: "\\hat{y} = \\mathbf{w}^T \\mathbf{x} + b = \\sum_{i=1}^{d} w_i x_i + b",
+              explanation: "Multiply each feature $x_i$ by weight $w_i$, sum them up, and add bias $b$.",
+              symbolBreakdown: [
+                { symbol: "\\hat{y}", meaning: "Predicted target value" },
+                { symbol: "w_i", meaning: "Weight (importance) of feature i" },
+                { symbol: "x_i", meaning: "Value of feature i" },
+                { symbol: "b", meaning: "Bias (intercept / baseline offset)" }
+              ]
+            }
+          ]
+        },
+        derivation: {
+          introduction: "Expanding the vector dot product $\\mathbf{w}^T \\mathbf{x}$ for $d=3$ features:",
+          steps: [
+            { title: "Define Vectors", expression: "\\mathbf{w} = [w_1, w_2, w_3]^T, \\quad \\mathbf{x} = [x_1, x_2, x_3]^T", explanation: "Column vectors of length 3." },
+            { title: "Transpose & Multiply", expression: "\\mathbf{w}^T \\mathbf{x} = [w_1, w_2, w_3] \\begin{bmatrix} x_1 \\\\ x_2 \\\\ x_3 \\end{bmatrix}", explanation: "Row vector times column vector." },
+            { title: "Sum Products", expression: "\\mathbf{w}^T \\mathbf{x} = w_1 x_1 + w_2 x_2 + w_3 x_3", explanation: "Final scalar weighted sum." }
+          ]
+        },
+        numerical: {
+          introduction: "Calculate prediction $\\hat{y}$ for a house with size $x_1=1500$, bedrooms $x_2=3$, with weights $w_1=0.2$, $w_2=10$, bias $b=50$:",
+          steps: [
+            { step: "Multiply Feature 1", calculation: "w_1 \\cdot x_1 = 0.2 \\times 1500 = 300", explanation: "Size contribution = $300k" },
+            { step: "Multiply Feature 2", calculation: "w_2 \\cdot x_2 = 10 \\times 3 = 30", explanation: "Bedrooms contribution = $30k" },
+            { step: "Add Bias", calculation: "300 + 30 + 50 = 380", explanation: "Base price offset = $50k" },
+            { step: "Final Prediction", calculation: "\\hat{y} = 380", explanation: "Predicted house price: $380,000" }
+          ]
+        },
+        algorithm: {
+          introduction: "Dot product calculation algorithm:",
+          steps: [
+            { step: 1, title: "Initialize", description: "Set `total = 0.0`." },
+            { step: 2, title: "Loop", description: "For index `i` from 0 to `d-1`, calculate `product = w[i] * x[i]`." },
+            { step: 3, title: "Accumulate", description: "Add `product` to `total`." },
+            { step: 4, title: "Add Bias", description: "Return `total + b`." }
+          ]
+        },
+        code: {
+          language: "python",
+          code: `import numpy as np
+
+# Weights: [price_per_sqft_k, price_per_bedroom_k]
+w = np.array([0.2, 10.0])
+# Features: [sqft, bedrooms]
+x = np.array([1500, 3])
+b = 50.0
+
+# Vectorized dot product
+y_hat = np.dot(w, x) + b
+print("Predicted Price ($k):", y_hat)  # 380.0`,
+          notes: [
+            "Line 9: `np.dot(w, x)` computes sum(w_i * x_i) in C-speed parallelism."
+          ]
+        },
+        debugging: [
+          {
+            symptom: "ValueError: shapes (3,) and (2,) not aligned",
+            possibleCause: "Weight vector has 3 elements but feature vector has only 2.",
+            howToCheck: "Print `w.shape` and `x.shape`.",
+            fix: "Ensure length of weights equals number of features."
+          }
+        ],
+        practice: {
+          prompt: "Compute dot product of w = [0.5, -1.0, 2.0] and x = [4.0, 2.0, 1.0] with bias b = 0.0 by hand and code.",
+          checkpoints: ["Hand calculation: (0.5*4) + (-1*2) + (2*1)", "Verify total is 2.0", "Write NumPy code"]
+        },
+        realWorldApplications: [{ title: "Recommendation Engines", description: "User preference vector dot product item feature vector calculates similarity score." }],
+        teachBackPrompt: "Explain what slope $w$ and intercept $b$ mean in the prediction equation $y = wx + b$.",
+        prerequisites: ["Features and Targets"]
+      }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 5: SUPERVISED LEARNING
+  // ---------------------------------------------------------
   {
-    id:"deep-learning",number:"06",title:"Neural Networks and Deep Learning",description:"Build neural-network understanding from neurons and activations through backpropagation, optimization, CNNs, sequence models and transformers.",
-    lessons:[
-      {id:"nn-25",order:25,module:"Neural Networks and Deep Learning",title:"Neural networks from a single neuron to multilayer models",duration:"60 min",level:"Applied",summary:"Understand weighted sums, bias terms, activations and layered representations.",why:"Framework code becomes understandable only when each forward-pass operation has a mathematical meaning.",objectives:["Compute a neuron output.","Explain bias.","Explain nonlinear activations.","Track tensor shapes."],concepts:[{term:"Neuron",definition:"A computational unit applying a weighted sum, bias and usually a nonlinear activation."},{term:"Weight",definition:"A learned parameter controlling contribution of an input."},{term:"Bias",definition:"A learned offset added before activation."},{term:"Activation function",definition:"A nonlinear function applied to a pre-activation value."}],diagram:"neural",mindMap:["Inputs","Weights","Weighted sum","Bias","Activation","Layer","Hidden representation","Output"],commonErrors:["Thinking one neuron corresponds to one human neuron.","Using only linear layers and expecting deep nonlinear boundaries.","Ignoring tensor shapes."],code:{language:"python",code:`import torch\nlayer = torch.nn.Linear(3, 2)\nx = torch.tensor([[1.0, 2.0, 3.0]])\nz = layer(x)\nprint(z.shape)`,notes:["Linear(3, 2) maps three input features to two outputs.","The layer includes learnable weights and bias by default.","The batch dimension is preserved."]},practice:{prompt:"Calculate one neuron output by hand with two inputs, two weights and a bias.",checkpoints:["Compute weighted sum.","Add bias.","Apply activation."]},prerequisites:["Linear algebra for machine learning"]},
-      {id:"nn-26",order:26,module:"Neural Networks and Deep Learning",title:"Activation functions in depth",duration:"55 min",level:"Applied",summary:"Compare sigmoid, tanh, ReLU, leaky ReLU, GELU and softmax by range, gradient behavior and typical role.",why:"Activation choice affects gradient flow, output interpretation and optimization behavior.",objectives:["Choose output activations by task.","Explain saturation.","Explain dead ReLUs.","Differentiate logits from probabilities."],concepts:[{term:"Sigmoid",definition:"Maps a real value to a value between zero and one."},{term:"ReLU",definition:"max(0, x), a piecewise linear activation."},{term:"GELU",definition:"A smooth activation commonly used in transformer architectures."},{term:"Softmax",definition:"Transforms a vector of logits into normalized positive values summing to one."}],diagram:"neural",mindMap:["Sigmoid","Tanh","ReLU","Leaky ReLU","GELU","Softmax","Logits","Gradients"],commonErrors:["Applying softmax twice.","Calling logits probabilities.","Using sigmoid output for mutually exclusive multiclass targets without considering softmax."],code:{language:"python",code:`import torch\nx = torch.tensor([-2., 0., 2.])\nprint(torch.relu(x))\nprint(torch.sigmoid(x))\nprint(torch.softmax(x, dim=0))`,notes:["ReLU removes negative values.","Sigmoid is elementwise.","Softmax normalizes across the selected dimension."]},practice:{prompt:"Choose an output activation for binary classification, multiclass classification and regression.",checkpoints:["Name activation.","Name compatible loss family.","Explain output meaning."]},prerequisites:["Neural networks from a single neuron to multilayer models"]},
-      {id:"nn-27",order:27,module:"Neural Networks and Deep Learning",title:"Loss functions and objective design",duration:"55 min",level:"Applied",summary:"Connect predictions to losses such as MSE, MAE, binary cross-entropy and multiclass cross-entropy.",why:"The loss defines what training is optimizing, so it must match the target and desired behavior.",objectives:["Choose a loss by task.","Interpret gradients of loss.","Understand reduction.","Separate training objective from evaluation metrics."],concepts:[{term:"Objective",definition:"The quantity optimization attempts to minimize or maximize."},{term:"Cross-entropy",definition:"A loss comparing predicted probability distributions with target distributions or labels."},{term:"Logit",definition:"A raw model score before a probability transformation."},{term:"Reduction",definition:"How per-example losses are aggregated."}],diagram:"flow",mindMap:["Prediction","Target","Per-example loss","Batch reduction","Gradient","Parameter update","Metric"],commonErrors:["Using a metric as a differentiable loss without checking properties.","Applying sigmoid before a numerically stable logits-based loss incorrectly.","Comparing losses with different reductions."],code:{language:"python",code:`loss_fn = torch.nn.BCEWithLogitsLoss()\nlogits = model(features)\nloss = loss_fn(logits, targets.float())`,notes:["BCEWithLogitsLoss expects raw logits.","It combines a stable sigmoid-and-loss computation.","Targets must have compatible shape and type."]},practice:{prompt:"Match three problem types to a suitable output representation and loss.",checkpoints:["Binary.","Multiclass.","Continuous regression."]},prerequisites:["Activation functions in depth"]},
-      {id:"nn-28",order:28,module:"Neural Networks and Deep Learning",title:"Backpropagation and automatic differentiation",duration:"65 min",level:"Advanced",summary:"Follow the chain rule from loss back to parameters and understand what automatic differentiation actually computes.",why:"Backpropagation is the mechanism connecting model errors to parameter updates.",objectives:["Explain computational graphs.","Use the chain rule conceptually.","Interpret gradients.","Avoid accidental gradient accumulation."],concepts:[{term:"Gradient",definition:"A vector of partial derivatives indicating local change with respect to parameters."},{term:"Chain rule",definition:"A calculus rule for differentiating composed functions."},{term:"Backpropagation",definition:"Efficient reverse-mode derivative computation through a computational graph."},{term:"Autograd",definition:"Automatic differentiation software tracking operations needed for gradients."}],diagram:"neural",mindMap:["Forward pass","Graph","Loss","Chain rule","Backward pass","Gradients","Parameters"],commonErrors:["Forgetting optimizer.zero_grad.","Updating parameters while gradients are disabled incorrectly.","Interpreting gradient as the parameter value."],code:{language:"python",code:`optimizer.zero_grad()\nprediction = model(features)\nloss = loss_fn(prediction, targets)\nloss.backward()\noptimizer.step()`,notes:["zero_grad clears previous gradient buffers.","backward computes derivatives of loss.","step changes parameters using the optimizer."]},practice:{prompt:"Trace the four-step training loop and explain what changes at each step.",checkpoints:["Forward output.","Loss.","Gradients.","Parameter update."]},prerequisites:["Loss functions and objective design"]},
-      {id:"nn-29",order:29,module:"Neural Networks and Deep Learning",title:"Optimization, learning rates and regularization",duration:"60 min",level:"Advanced",summary:"Compare SGD, momentum, Adam, learning-rate schedules, weight decay, dropout and early stopping.",why:"Training quality depends on optimization dynamics, not only architecture.",objectives:["Explain learning rate trade-offs.","Compare optimizers.","Use regularization.","Diagnose underfitting and overfitting curves."],concepts:[{term:"SGD",definition:"Gradient-based optimization using data subsets or stochastic samples."},{term:"Momentum",definition:"An accumulated direction that can smooth optimization updates."},{term:"Adam",definition:"An adaptive optimizer using estimates of first and second gradient moments."},{term:"Weight decay",definition:"A parameter shrinkage mechanism commonly used as regularization."}],diagram:"flow",mindMap:["Loss landscape","Gradient descent","Learning rate","Momentum","Adam","Schedules","Weight decay","Dropout","Early stopping"],commonErrors:["Increasing model size before checking data and learning rate.","Using validation data to tune indefinitely.","Assuming Adam removes all hyperparameter tuning."],code:{language:"python",code:`optimizer = torch.optim.AdamW(\n    model.parameters(), lr=3e-4, weight_decay=1e-2\n)`,notes:["AdamW decouples weight decay from adaptive gradient updates.","lr controls update scale.","Parameters are supplied by the model."]},practice:{prompt:"Diagnose three training curves: underfit, overfit and unstable optimization.",checkpoints:["Compare train and validation loss.","Name a likely cause.","Propose one controlled intervention."]},prerequisites:["Backpropagation and automatic differentiation"]},
-      {id:"cnn-30",order:30,module:"Neural Networks and Deep Learning",title:"Convolutional neural networks for images",duration:"65 min",level:"Advanced",summary:"Learn kernels, channels, receptive fields, stride, padding, pooling and image classification workflows.",why:"CNNs teach how architectural inductive biases exploit spatial structure.",objectives:["Compute output shapes.","Explain convolution.","Understand channels.","Build a small image model."],concepts:[{term:"Kernel",definition:"A small learnable filter applied across spatial positions."},{term:"Stride",definition:"The step size between filter applications."},{term:"Padding",definition:"Extra border values controlling spatial output size."},{term:"Receptive field",definition:"The region of input that can influence a unit."}],diagram:"neural",mindMap:["Image","Channels","Convolution","Activation","Pooling","Feature maps","Flatten/Head","Class scores"],commonErrors:["Ignoring image normalization.","Miscalculating output shapes.","Using test images as augmentation references during tuning."],code:{language:"python",code:`model = torch.nn.Sequential(\n  torch.nn.Conv2d(3, 16, kernel_size=3, padding=1),\n  torch.nn.ReLU(),\n  torch.nn.MaxPool2d(2),\n  torch.nn.Conv2d(16, 32, kernel_size=3, padding=1),\n  torch.nn.ReLU()\n)`,notes:["Conv2d expects batch, channel, height, width.","Padding preserves spatial size for stride 1 and kernel 3.","Pooling reduces spatial dimensions."]},practice:{prompt:"Compute the tensor shape after each layer for a 32×32 RGB image.",checkpoints:["Track channels.","Track height and width.","Explain pooling effect."]},prerequisites:["Optimization, learning rates and regularization"]}
+    id: "supervised-learning",
+    number: "05",
+    title: "SUPERVISED LEARNING",
+    description: "Deep dive into Linear Regression, Loss Functions, Gradient Descent, Logistic Regression, k-NN, Decision Trees, and Ensembles.",
+    learningOutcomes: [
+      "Understand Linear & Logistic Regression from math derivation to Python code.",
+      "Derive Mean Squared Error loss and Gradient Descent parameter updates.",
+      "Implement classification algorithms and decision trees."
+    ],
+    prerequisites: ["MATHEMATICS FOR MACHINE LEARNING"],
+    lessons: [
+      {
+        id: "sup-1", order: 7, module: "SUPERVISED LEARNING", moduleNumber: "05",
+        title: "Linear Regression & Gradient Descent", duration: "50 min", level: "Core",
+        summary: "Learn Linear Regression, MSE Loss derivation, and Gradient Descent optimization from scratch.",
+        why: "Linear Regression + Gradient Descent is the foundational optimization pattern used throughout machine learning and deep learning.",
+        openingProblem: "If you have 100 historical house prices, how do you find the exact slope $w$ and intercept $b$ that minimizes overall prediction error?",
+        curiosity: "Why can't we just guess weights randomly until we find good ones?",
+        priorKnowledge: "You know the linear prediction formula $\\hat{y} = wx + b$ and vector dot products.",
+        objectives: [
+          "Define Mean Squared Error (MSE) loss function",
+          "Derive partial derivatives $\\frac{\\partial L}{\\partial w}$ and $\\frac{\\partial L}{\\partial b}$",
+          "Implement Gradient Descent update rule $w \\leftarrow w - \\alpha \\frac{\\partial L}{\\partial w}$"
+        ],
+        concepts: [
+          { term: "Linear Regression", definition: "Algorithm that models the target as a linear combination of features." },
+          { term: "Mean Squared Error (MSE)", definition: "Loss function averaging squared differences between predictions and actual targets." },
+          { term: "Gradient Descent", definition: "Optimization algorithm that iteratively steps parameters in the opposite direction of the loss gradient." },
+          { term: "Learning Rate (alpha)", definition: "Hyperparameter controlling the step size of each gradient update." }
+        ],
+        diagram: "gradient", mindMap: ["Input Data", "Prediction y_hat = wx + b", "Calculate MSE Loss", "Compute Gradients", "Update w and b"],
+        commonErrors: [
+          "Setting learning rate $\\alpha$ too large, causing loss to explode to infinity.",
+          "Forgetting to divide by sample count $n$ when computing gradients."
+        ],
+        mathematics: {
+          introduction: "Linear Regression uses Mean Squared Error (MSE) loss $L(w, b)$:",
+          formulas: [
+            {
+              title: "Prediction Equation",
+              expression: "\\hat{y}_i = w x_i + b",
+              explanation: "Predicted output for sample i.",
+              symbolBreakdown: [
+                { symbol: "\\hat{y}_i", meaning: "Predicted target for sample i" },
+                { symbol: "w", meaning: "Weight (slope parameter)" },
+                { symbol: "x_i", meaning: "Feature input for sample i" },
+                { symbol: "b", meaning: "Bias (intercept parameter)" }
+              ]
+            },
+            {
+              title: "Mean Squared Error Loss",
+              expression: "L(w, b) = \\frac{1}{n} \\sum_{i=1}^{n} (\\hat{y}_i - y_i)^2",
+              explanation: "Averages squared residuals across all n training samples.",
+              symbolBreakdown: [
+                { symbol: "L(w, b)", meaning: "Total loss value" },
+                { symbol: "n", meaning: "Number of training samples" },
+                { symbol: "y_i", meaning: "Actual ground-truth target for sample i" }
+              ]
+            },
+            {
+              title: "Gradient Descent Update Rules",
+              expression: "w \\leftarrow w - \\alpha \\frac{\\partial L}{\\partial w}, \\quad b \\leftarrow b - \\alpha \\frac{\\partial L}{\\partial b}",
+              explanation: "Subtract learning rate times gradient to move downhill toward minimum loss.",
+              symbolBreakdown: [
+                { symbol: "\\alpha", meaning: "Learning rate (step size hyperparameter)" },
+                { symbol: "\\frac{\\partial L}{\\partial w}", meaning: "Gradient of loss with respect to weight w" }
+              ]
+            }
+          ]
+        },
+        derivation: {
+          introduction: "Deriving partial derivative $\\frac{\\partial L}{\\partial w}$ using the Chain Rule:",
+          steps: [
+            {
+              title: "Step 1: Write Loss Function",
+              expression: "L = \\frac{1}{n} \\sum_{i=1}^{n} (w x_i + b - y_i)^2",
+              explanation: "Substitute prediction formula $\\hat{y}_i = w x_i + b$ into MSE."
+            },
+            {
+              title: "Step 2: Apply Chain Rule",
+              expression: "\\frac{\\partial L}{\\partial w} = \\frac{1}{n} \\sum_{i=1}^{n} 2(w x_i + b - y_i) \\cdot \\frac{\\partial}{\\partial w}(w x_i + b - y_i)",
+              explanation: "Derivative of $u^2$ is $2u \\cdot u'$."
+            },
+            {
+              title: "Step 3: Inner Derivative",
+              expression: "\\frac{\\partial}{\\partial w}(w x_i + b - y_i) = x_i",
+              explanation: "Derivative of $w x_i$ with respect to $w$ is $x_i$."
+            },
+            {
+              title: "Step 4: Final Weight Gradient",
+              expression: "\\frac{\\partial L}{\\partial w} = \\frac{2}{n} \\sum_{i=1}^{n} (\\hat{y}_i - y_i) x_i",
+              explanation: "Gradient is the average error times input feature $x_i$."
+            },
+            {
+              title: "Step 5: Final Bias Gradient",
+              expression: "\\frac{\\partial L}{\\partial b} = \\frac{2}{n} \\sum_{i=1}^{n} (\\hat{y}_i - y_i)",
+              explanation: "Bias gradient is simply the average error."
+            }
+          ]
+        },
+        numerical: {
+          introduction: "Worked example with 1 sample: $x=2, y=5$. Initial $w=0, b=0, \\alpha=0.1$:",
+          steps: [
+            { step: "Predict", calculation: "\\hat{y} = (0)(2) + 0 = 0", explanation: "Initial prediction is 0." },
+            { step: "Error", calculation: "\\hat{y} - y = 0 - 5 = -5", explanation: "Prediction is 5 units too low." },
+            { step: "Weight Gradient", calculation: "2 \\times (-5) \\times 2 = -20", explanation: "Gradient w = -20" },
+            { step: "Bias Gradient", calculation: "2 \\times (-5) = -10", explanation: "Gradient b = -10" },
+            { step: "Update Weight", calculation: "w_{new} = 0 - (0.1 \\times -20) = 2.0", explanation: "New weight w = 2.0" },
+            { step: "Update Bias", calculation: "b_{new} = 0 - (0.1 \\times -10) = 1.0", explanation: "New bias b = 1.0" },
+            { step: "New Prediction", calculation: "\\hat{y}_{new} = (2.0)(2) + 1.0 = 5.0", explanation: "Prediction perfectly matches target 5.0!" }
+          ]
+        },
+        algorithm: {
+          introduction: "Linear Regression Gradient Descent Training Loop:",
+          steps: [
+            { step: 1, title: "Initialize", description: "Initialize parameters $w=0, b=0$, set learning rate $\\alpha$ and epochs." },
+            { step: 2, title: "Forward Pass", description: "Compute predictions $\\hat{y} = w X + b$ for all samples." },
+            { step: 3, title: "Compute Loss", description: "Calculate $MSE = \\frac{1}{n} \\sum (\\hat{y} - y)^2$." },
+            { step: 4, title: "Compute Gradients", description: "Calculate $dw = \\frac{2}{n} X^T (\\hat{y} - y)$ and $db = \\frac{2}{n} \\sum (\\hat{y} - y)$." },
+            { step: 5, title: "Update Parameters", description: "Update $w \\leftarrow w - \\alpha dw$ and $b \\leftarrow b - \\alpha db$." },
+            { step: 6, title: "Repeat", description: "Repeat steps 2–5 for specified epochs until loss converges." }
+          ]
+        },
+        code: {
+          language: "python",
+          code: `import numpy as np
+
+# Synthetic Data: y = 2x + 1
+X = np.array([1.0, 2.0, 3.0, 4.0])
+y = np.array([3.0, 5.0, 7.0, 9.0])
+
+# Initialize parameters
+w = 0.0
+b = 0.0
+alpha = 0.05
+epochs = 200
+n = len(X)
+
+# Training loop
+for epoch in range(epochs):
+    # 1. Forward Pass (Prediction)
+    y_hat = w * X + b
+    
+    # 2. Compute MSE Loss
+    loss = np.mean((y_hat - y) ** 2)
+    
+    # 3. Compute Gradients
+    dw = (2 / n) * np.sum((y_hat - y) * X)
+    db = (2 / n) * np.sum(y_hat - y)
+    
+    # 4. Update Parameters
+    w -= alpha * dw
+    b -= alpha * db
+
+print(f"Trained Weight w: {w:.4f} (Expected ~2.0)")
+print(f"Trained Bias b:   {b:.4f} (Expected ~1.0)")`,
+          notes: [
+            "Line 17: Prediction vector y_hat computed across all samples.",
+            "Line 20: MSE loss calculated as average squared error.",
+            "Lines 23-24: Exact vectorized partial derivatives.",
+            "Lines 27-28: Parameter updates using gradient descent."
+          ]
+        },
+        debugging: [
+          {
+            symptom: "Loss becomes `nan` or `inf` during training.",
+            possibleCause: "Learning rate $\\alpha$ is too high, causing gradient updates to overshoot and explode.",
+            howToCheck: "Print loss values during early epochs.",
+            fix: "Reduce learning rate by 10x (e.g. from 0.5 to 0.01)."
+          }
+        ],
+        practice: {
+          prompt: "Run 1 gradient update step by hand for x=1, y=3 with w=0, b=0, alpha=0.1.",
+          checkpoints: ["Calculate y_hat = 0", "Calculate dw = 2(0-3)(1) = -6", "Calculate new w = 0.6"]
+        },
+        realWorldApplications: [{ title: "House Price Estimation", description: "Zillow and real estate platforms predict property values using regression features." }],
+        teachBackPrompt: "Explain why we square errors in MSE and how Gradient Descent steps down the loss curve.",
+        prerequisites: ["Linear Algebra & Vectors"]
+      }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 6: UNSUPERVISED LEARNING
+  // ---------------------------------------------------------
   {
-    id:"sequence-nlp",number:"07",title:"Sequences, NLP and Transformers",description:"Move from tokenization and sequence representations to attention, transformers, retrieval and LLM evaluation.",
-    lessons:[
-      {id:"nlp-31",order:31,module:"Sequences, NLP and Transformers",title:"Text representation and classical NLP",duration:"55 min",level:"Applied",summary:"Tokenize text and understand bag-of-words, TF-IDF, n-grams and embeddings.",why:"Transformers are easier to understand when you know what problems older representations solved.",objectives:["Tokenize text.","Explain sparse vectors.","Explain embeddings.","Discuss vocabulary limits."],concepts:[{term:"Token",definition:"A unit used by a text-processing system, not necessarily a whole word."},{term:"TF-IDF",definition:"A weighting scheme emphasizing terms informative within a document collection."},{term:"N-gram",definition:"A sequence of n adjacent tokens."},{term:"Embedding",definition:"A learned numerical representation intended to capture useful relationships."}],diagram:"data",mindMap:["Raw text","Tokenization","Vocabulary","Counts","TF-IDF","Embeddings","Sequence models"],commonErrors:["Assuming token equals word.","Fitting vocabulary using test data.","Treating embedding dimensions as individually interpretable features."],code:{language:"python",code:`from sklearn.feature_extraction.text import TfidfVectorizer\nvectorizer = TfidfVectorizer(ngram_range=(1, 2))\nX = vectorizer.fit_transform(documents)`,notes:["fit learns vocabulary and IDF statistics.","transform applies learned representation to new text.","N-gram range includes unigrams and bigrams."]},practice:{prompt:"Compare TF-IDF and embeddings for classifying short support messages.",checkpoints:["Discuss data size.","Discuss semantic similarity.","Discuss computational cost."]},prerequisites:["Feature engineering from first principles"]},
-      {id:"transformer-32",order:32,module:"Sequences, NLP and Transformers",title:"Attention and transformers in depth",duration:"75 min",level:"Advanced",summary:"Study queries, keys, values, attention scores, multi-head attention, positional information and transformer blocks.",why:"Attention is central to modern language and multimodal systems, but should be understood as a data-dependent weighted aggregation rather than magic.",objectives:["Explain Q, K and V roles.","Describe scaled dot-product attention.","Explain multi-head attention.","Understand positional information."],concepts:[{term:"Query",definition:"A representation asking which information is relevant."},{term:"Key",definition:"A representation used to score relevance to a query."},{term:"Value",definition:"The representation aggregated according to attention weights."},{term:"Self-attention",definition:"Attention where queries, keys and values originate from the same sequence context."}],diagram:"transformer",mindMap:["Tokens","Embeddings","Q/K/V","Attention scores","Softmax","Weighted values","Multi-head","Residual + normalization","Feed-forward"],commonErrors:["Thinking attention always explains causality.","Ignoring attention masks.","Confusing embedding dimension with vocabulary size."],code:{language:"python",code:`scores = (Q @ K.transpose(-2, -1)) / (d_k ** 0.5)\nweights = torch.softmax(scores, dim=-1)\ncontext = weights @ V`,notes:["QKᵀ produces relevance scores.","Scaling controls score magnitude.","Softmax creates normalized attention weights."]},practice:{prompt:"Explain one attention computation with a two-token sequence conceptually.",checkpoints:["Identify query and keys.","Describe score normalization.","Describe weighted value aggregation."]},prerequisites:["Text representation and classical NLP"]},
-      {id:"llm-33",order:33,module:"Sequences, NLP and Transformers",title:"How LLMs are trained, prompted and evaluated",duration:"70 min",level:"Advanced",summary:"Connect next-token training, instruction tuning, context windows, decoding, prompting, grounding and evaluation.",why:"Useful LLM applications require understanding probabilistic generation and verification boundaries.",objectives:["Explain next-token prediction.","Compare decoding strategies.","Design structured prompts.","Evaluate factual reliability."],concepts:[{term:"Context window",definition:"The input context a model can process within a generation step or architecture limit."},{term:"Temperature",definition:"A decoding control that changes relative preference sharpness among candidate tokens."},{term:"Grounding",definition:"Constraining outputs with relevant evidence or context."},{term:"Hallucination",definition:"A fluent model output that is unsupported or incorrect for the task context."}],diagram:"transformer",mindMap:["Pretraining","Next token","Instruction tuning","Context","Prompt","Decoding","Grounding","Evaluation"],commonErrors:["Using one impressive response as evaluation.","Assuming citations generated by a model are verified.","Putting secrets in prompts."],code:{language:"text",code:`Task: Summarize the supplied passage only.\nConstraints:\n- Do not add facts not present in the passage.\n- State uncertainty when evidence is missing.\nOutput schema:\n1. Main claim\n2. Supporting evidence\n3. Uncertainties`,notes:["Clear constraints reduce ambiguity.","Grounding limits the evidence source.","Evaluation still requires checking outputs."]},practice:{prompt:"Create an evaluation rubric for an AI study assistant.",checkpoints:["Correctness.","Evidence use.","Safety and uncertainty."]},prerequisites:["Attention and transformers in depth"]},
-      {id:"rag-34",order:34,module:"Sequences, NLP and Transformers",title:"Retrieval-augmented generation and vector search",duration:"65 min",level:"Advanced",summary:"Learn document chunking, embeddings, retrieval, reranking, context assembly and grounded generation.",why:"Retrieval can connect a model to changing private knowledge, but retrieval quality and citations must be evaluated separately.",objectives:["Explain semantic retrieval.","Choose chunk boundaries.","Evaluate retrieval separately from generation.","Detect irrelevant context."],concepts:[{term:"Vector database",definition:"A system optimized for storing and searching vector representations."},{term:"Chunk",definition:"A selected unit of source content indexed for retrieval."},{term:"Reranking",definition:"Reordering retrieved candidates using a stronger relevance method."},{term:"Grounded answer",definition:"An answer explicitly constrained by supplied evidence."}],diagram:"flow",mindMap:["Documents","Chunking","Embeddings","Index","Query","Retrieve","Rerank","Context","Generate","Citations"],commonErrors:["Chunks that split essential context.","Retrieving too much irrelevant context.","Calling an answer grounded without checking source support."],code:{language:"python",code:`query_vector = embed(query)\ncandidates = search(index, query_vector, top_k=20)\ncontext = rerank(candidates, query)[:5]\nanswer = generate(query, context)`,notes:["Embedding converts content into a search representation.","Retrieval and generation are separate stages.","Each stage needs its own evaluation."]},practice:{prompt:"Design a retrieval pipeline for internal course notes.",checkpoints:["Define chunk strategy.","Define retrieval metric.","Require answer-to-source verification."]},prerequisites:["How LLMs are trained, prompted and evaluated"]}
+    id: "unsupervised-learning",
+    number: "06",
+    title: "UNSUPERVISED LEARNING",
+    description: "Explore clustering algorithms ($K$-Means, Hierarchical, DBSCAN) and dimensionality reduction (PCA).",
+    learningOutcomes: [
+      "Group data without target labels using $K$-Means clustering.",
+      "Understand distance metrics and centroid updates.",
+      "Compress feature spaces using Principal Component Analysis (PCA)."
+    ],
+    prerequisites: ["SUPERVISED LEARNING"],
+    lessons: [
+      {
+        id: "unsup-1", order: 8, module: "UNSUPERVISED LEARNING", moduleNumber: "06",
+        title: "Clustering & K-Means", duration: "45 min", level: "Core",
+        summary: "Learn how $K$-Means clusters unlabeled data points around centroid seeds.",
+        why: "Most real-world data lacks labels. Clustering discovers natural groupings.",
+        openingProblem: "Given 100,000 customer shopping histories with no labels, how do you discover natural customer segments?",
+        curiosity: "How does the algorithm decide where cluster centers should be located?",
+        priorKnowledge: "You understand distance metrics and vector features.",
+        objectives: ["Explain $K$-Means algorithm loop", "Compute Euclidean distance", "Update centroids"],
+        concepts: [
+          { term: "Clustering", definition: "Unsupervised task of partitioning data into groups based on similarity." },
+          { term: "Centroid", definition: "The mean position of all data points belonging to a cluster." }
+        ],
+        diagram: "flow", mindMap: ["Unlabeled Data", "Initialize K Centroids", "Assign Points to Nearest Centroid", "Update Centroids to Mean", "Repeat until Convergence"],
+        code: {
+          language: "python",
+          code: `from sklearn.cluster import KMeans
+import numpy as np
+
+X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
+kmeans = KMeans(n_clusters=2, random_state=42).fit(X)
+
+print("Cluster Labels:", kmeans.labels_)
+print("Centroids:\n", kmeans.cluster_centers_)`,
+          notes: ["Line 5: K-Means partitions data into 2 distinct clusters."]
+        },
+        practice: {
+          prompt: "Describe how K-Means selects new centroid positions in iteration 2.",
+          checkpoints: ["Calculate mean X coordinate of cluster points", "Calculate mean Y coordinate", "Update centroid"]
+        },
+        realWorldApplications: [{ title: "Customer Segmentation", description: "E-commerce apps group users by buying patterns to target promotions." }],
+        teachBackPrompt: "Explain K-Means clustering using a grouping students into study tables analogy.",
+        prerequisites: ["Linear Regression & Gradient Descent"]
+      }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 7: MODEL EVALUATION
+  // ---------------------------------------------------------
   {
-    id:"generative",number:"08",title:"Generative Models Beyond Text",description:"Understand generative modeling principles, autoencoders, GANs, diffusion and multimodal systems.",
-    lessons:[
-      {id:"gen-35",order:35,module:"Generative Models Beyond Text",title:"Generative versus discriminative modeling",duration:"50 min",level:"Advanced",summary:"Compare modeling data distributions with directly modeling decision boundaries or conditional outputs.",why:"The distinction clarifies why generation, likelihood and representation learning require different objectives.",objectives:["Differentiate generative and discriminative approaches.","Explain density modeling conceptually.","Connect objectives to outputs."],concepts:[{term:"Generative model",definition:"A model designed to represent or generate data according to a learned distribution or conditional distribution."},{term:"Discriminative model",definition:"A model focused on predicting outputs from inputs or separating classes."},{term:"Likelihood",definition:"A measure of how compatible observed data are with model parameters."}],diagram:"flow",mindMap:["Data distribution","Generative","Discriminative","Likelihood","Latent variables","Sampling"],commonErrors:["Assuming every generative model explicitly computes normalized density.","Calling any classifier discriminative without considering task definition."],code:{language:"text",code:`Discriminative: learn p(y | x) or a decision function\nGenerative: model p(x) or p(x | y), then sample or infer`,notes:["The modeling objective drives architecture and training.","Some modern models use implicit generation without explicit normalized density."]},practice:{prompt:"Classify a spam classifier, image generator and anomaly detector by primary modeling objective.",checkpoints:["State input.","State output.","State what distribution or decision is learned."]},prerequisites:["How LLMs are trained, prompted and evaluated"]},
-      {id:"gen-36",order:36,module:"Generative Models Beyond Text",title:"Autoencoders, VAEs and latent spaces",duration:"65 min",level:"Advanced",summary:"Learn encoders, decoders, reconstruction, latent representations and probabilistic regularization.",why:"Latent-variable models provide a bridge between representation learning and generation.",objectives:["Explain encoder and decoder roles.","Interpret reconstruction loss.","Explain a latent variable.","Describe the VAE trade-off."],concepts:[{term:"Encoder",definition:"A network mapping input to a representation."},{term:"Decoder",definition:"A network mapping a representation to reconstructed or generated output."},{term:"Latent space",definition:"A learned representation space used to capture selected factors of variation."},{term:"KL divergence",definition:"A measure of difference between probability distributions used in many variational objectives."}],diagram:"neural",mindMap:["Input","Encoder","Latent","Decoder","Reconstruction","Sampling","KL regularization"],commonErrors:["Assuming every latent dimension has a human-readable meaning.","Optimizing reconstruction without considering latent structure."],code:{language:"python",code:`z = encoder(x)\nx_hat = decoder(z)\nreconstruction_loss = loss_fn(x_hat, x)`,notes:["Encoder compresses or represents input.","Decoder maps representation back to output.","A VAE adds probabilistic constraints beyond this basic pattern."]},practice:{prompt:"Explain why a reconstruction model can still fail to generate diverse samples.",checkpoints:["Discuss training objective.","Discuss latent distribution.","Discuss sampling."]},prerequisites:["Generative versus discriminative modeling"]},
-      {id:"gen-37",order:37,module:"Generative Models Beyond Text",title:"GANs, mode collapse and adversarial training",duration:"65 min",level:"Advanced",summary:"Study generator–discriminator competition, adversarial objectives, instability and mode collapse.",why:"GANs reveal that a model can generate realistic outputs without explicit likelihood evaluation.",objectives:["Explain generator and discriminator roles.","Describe mode collapse.","Recognize training instability.","Compare evaluation challenges."],concepts:[{term:"Generator",definition:"A model mapping noise or conditions into generated samples."},{term:"Discriminator",definition:"A model trained to distinguish real samples from generated ones in adversarial setups."},{term:"Mode collapse",definition:"A failure where generated samples cover too little of the target distribution."},{term:"Adversarial objective",definition:"An optimization setup involving competing model objectives."}],diagram:"flow",mindMap:["Noise","Generator","Fake sample","Discriminator","Real sample","Adversarial loss","Mode collapse"],commonErrors:["Judging diversity from a few attractive samples.","Assuming lower loss always means better visual generation."],code:{language:"text",code:`z → Generator → fake image ─┐\n                         ├→ Discriminator → loss\nreal image ──────────────┘`,notes:["Two models influence each other's learning dynamics.","Evaluation must consider realism and diversity."]},practice:{prompt:"Describe a mode-collapse symptom and one diagnostic experiment.",checkpoints:["Define diversity.","Inspect sample coverage.","Avoid relying on one scalar loss."]},prerequisites:["Autoencoders, VAEs and latent spaces"]},
-      {id:"gen-38",order:38,module:"Generative Models Beyond Text",title:"Diffusion models and denoising",duration:"70 min",level:"Advanced",summary:"Learn forward noising, learned reverse denoising, conditioning and iterative generation.",why:"Diffusion provides a major modern family for high-quality image and other generative tasks.",objectives:["Explain forward noise.","Explain reverse denoising.","Understand conditioning.","Discuss sampling cost."],concepts:[{term:"Forward process",definition:"A process progressively corrupting data with noise under a defined schedule."},{term:"Denoiser",definition:"A model trained to estimate or remove noise-related information."},{term:"Noise schedule",definition:"A sequence controlling corruption intensity over steps."},{term:"Conditioning",definition:"Additional information guiding generation."}],diagram:"flow",mindMap:["Data","Forward noise","Noisy state","Denoiser","Reverse steps","Conditioning","Sample"],commonErrors:["Thinking the reverse process literally memorizes original images.","Ignoring the speed-quality trade-off of iterative sampling."],code:{language:"text",code:`x₀ → add noise → x₁ → ... → xₜ\nnoise + timestep + condition → denoiser → cleaner estimate`,notes:["Training and sampling have different computational flows.","The denoiser is conditioned on noise level or timestep."]},practice:{prompt:"Compare one-pass generation with iterative denoising.",checkpoints:["Quality trade-off.","Sampling cost.","Conditioning role."]},prerequisites:["GANs, mode collapse and adversarial training"]}
+    id: "model-evaluation",
+    number: "07",
+    title: "MODEL EVALUATION",
+    description: "Master cross-validation, bias-variance trade-offs, overfitting, underfitting, confusion matrices, precision, recall, and F1-score.",
+    learningOutcomes: [
+      "Evaluate classification models using Precision, Recall, and F1-Score.",
+      "Diagnose underfitting vs overfitting from loss curves.",
+      "Implement $K$-Fold Cross Validation."
+    ],
+    prerequisites: ["SUPERVISED LEARNING"],
+    lessons: [
+      {
+        id: "eval-1", order: 9, module: "MODEL EVALUATION", moduleNumber: "07",
+        title: "Confusion Matrix & Metrics", duration: "45 min", level: "Core",
+        summary: "Understand TP, FP, TN, FN, Precision, Recall, and F1-Score.",
+        why: "Accuracy fails on imbalanced datasets. Precision and Recall evaluate real-world trade-offs.",
+        openingProblem: "Why is 99% accuracy useless if 99% of transactions are legitimate and 1% are fraudulent?",
+        curiosity: "Which is worse: diagnosing a healthy person as sick, or letting a sick person go home?",
+        priorKnowledge: "You know classification models predict probability scores.",
+        objectives: ["Construct a Confusion Matrix", "Calculate Precision, Recall, and F1-Score", "Select thresholds based on domain risk"],
+        concepts: [
+          { term: "True Positive (TP)", definition: "Model correctly predicted Positive class." },
+          { term: "False Positive (FP)", definition: "Model incorrectly predicted Positive class (False Alarm)." },
+          { term: "False Negative (FN)", definition: "Model incorrectly predicted Negative class (Missed Detection)." },
+          { term: "Precision", definition: "$\\frac{TP}{TP + FP}$ — Out of all predicted positives, how many were right?" },
+          { term: "Recall", definition: "$\\frac{TP}{TP + FN}$ — Out of all actual positives, how many did we catch?" }
+        ],
+        diagram: "flow", mindMap: ["Confusion Matrix", "True Positives", "False Positives", "Precision", "Recall", "F1 Score"],
+        mathematics: {
+          introduction: "Classification evaluation metrics:",
+          formulas: [
+            { title: "Precision", expression: "\\text{Precision} = \\frac{TP}{TP + FP}", explanation: "Accuracy of positive predictions." },
+            { title: "Recall", expression: "\\text{Recall} = \\frac{TP}{TP + FN}", explanation: "Coverage of actual positive cases." },
+            { title: "F1 Score", expression: "\\text{F1} = 2 \\cdot \\frac{\\text{Precision} \\cdot \\text{Recall}}{\\text{Precision} + \\text{Recall}}", explanation: "Harmonic mean of Precision and Recall." }
+          ]
+        },
+        code: {
+          language: "python",
+          code: `from sklearn.metrics import classification_report, confusion_matrix
+
+y_true = [1, 0, 1, 1, 0, 1, 0, 0]
+y_pred = [1, 0, 1, 0, 0, 1, 1, 0]
+
+print(confusion_matrix(y_true, y_pred))
+print(classification_report(y_true, y_pred))`,
+          notes: ["Line 6: Outputs TP, FP, TN, FN matrix.", "Line 7: Reports Precision, Recall, F1."]
+        },
+        practice: {
+          prompt: "Given TP=80, FP=20, FN=10, TN=890, calculate Precision and Recall.",
+          checkpoints: ["Precision = 80 / (80+20) = 0.80", "Recall = 80 / (80+10) = 0.888", "Calculate F1 score"]
+        },
+        realWorldApplications: [{ title: "Cancer Detection", description: "Medical screening prioritizes high Recall to ensure no tumor is missed." }],
+        teachBackPrompt: "Explain Precision and Recall using a fishing net analogy.",
+        prerequisites: ["Linear Regression & Gradient Descent"]
+      }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 8: DEEP LEARNING
+  // ---------------------------------------------------------
   {
-    id:"deployment",number:"09",title:"AI Engineering, MLOps and Production",description:"Turn experiments into reproducible, observable systems with testing, APIs, versioning and monitoring.",
-    lessons:[
-      {id:"prod-39",order:39,module:"AI Engineering, MLOps and Production",title:"From notebook to reproducible project",duration:"55 min",level:"Applied",summary:"Organize code, configuration, data contracts, dependencies and tests for reproducible AI work.",why:"A successful notebook is not automatically a reliable application.",objectives:["Separate configuration from code.","Record dependencies.","Create testable functions.","Version experiments."],concepts:[{term:"Reproducibility",definition:"Ability to recreate a result under documented conditions."},{term:"Data contract",definition:"An explicit agreement about expected data structure and meaning."},{term:"Configuration",definition:"Values controlling behavior outside hard-coded source."}],diagram:"flow",mindMap:["Project structure","Config","Data contract","Environment","Tests","Experiments","Version control"],commonErrors:["Hard-coding file paths and secrets.","Using an untracked dataset version.","Mixing training and serving code."],code:{language:"text",code:`project/\n  src/\n  tests/\n  configs/\n  data_contracts/\n  requirements.txt\n  README.md`,notes:["Separate responsibilities.","Document how to reproduce a run.","Do not commit secrets."]},practice:{prompt:"Refactor a notebook conceptually into a project layout.",checkpoints:["Separate data loading.","Separate model code.","Add tests and config."]},prerequisites:["Validation, cross-validation, leakage and model selection"]},
-      {id:"prod-40",order:40,module:"AI Engineering, MLOps and Production",title:"Serving models, APIs and inference systems",duration:"55 min",level:"Applied",summary:"Understand request validation, preprocessing parity, inference, responses, latency and failure handling.",why:"Deployment introduces inputs and failures that were absent in controlled notebooks.",objectives:["Define inference contracts.","Keep preprocessing consistent.","Measure latency.","Handle invalid input."],concepts:[{term:"Inference service",definition:"A system that accepts input and returns model outputs."},{term:"Schema validation",definition:"Checking input structure and types before processing."},{term:"Latency",definition:"Time taken to produce a response."},{term:"Batch inference",definition:"Processing many examples together rather than one request at a time."}],diagram:"flow",mindMap:["Client","Validate","Preprocess","Model","Postprocess","Response","Logging","Fallback"],commonErrors:["Training and serving preprocessing differ.","Returning raw model scores without interpretation.","Logging sensitive inputs unnecessarily."],code:{language:"python",code:`def predict(request):\n    validated = validate(request)\n    features = preprocess(validated)\n    score = model.predict(features)\n    return postprocess(score)`,notes:["Validation is a security and reliability boundary.","Preprocessing should be versioned.","Postprocessing makes outputs usable."]},practice:{prompt:"Design an API contract for a regression model.",checkpoints:["Input schema.","Output units.","Error response."]},prerequisites:["From notebook to reproducible project"]},
-      {id:"prod-41",order:41,module:"AI Engineering, MLOps and Production",title:"Monitoring, drift and responsible model updates",duration:"55 min",level:"Applied",summary:"Monitor data, predictions, performance proxies, failures and changes after deployment.",why:"The world changes after launch; a model's original evaluation is not permanent evidence.",objectives:["Define data drift.","Separate drift from performance decline.","Set update criteria.","Plan rollback."],concepts:[{term:"Data drift",definition:"Change in input data distribution relative to a reference period."},{term:"Concept drift",definition:"Change in the relationship between inputs and target."},{term:"Rollback",definition:"Restoring a prior system version after a problem."},{term:"Observability",definition:"Ability to understand system behavior through collected signals."}],diagram:"mlops",mindMap:["Deploy","Inputs","Predictions","Outcomes","Drift","Alerts","Evaluate","Retrain","Rollback"],commonErrors:["Retraining automatically on every drift signal.","Monitoring only infrastructure and not output behavior.","Updating without preserving a previous version."],code:{language:"text",code:`reference data → compare → alert threshold\nproduction outcomes → delayed evaluation\nnew model → offline checks → staged release → monitor → rollback if needed`,notes:["Monitoring depends on available ground truth.","Updates should be evaluated before replacement."]},practice:{prompt:"Create a monitoring plan for a demand prediction service.",checkpoints:["Input checks.","Prediction checks.","Outcome checks."]},prerequisites:["Serving models, APIs and inference systems"]}
+    id: "deep-learning",
+    number: "08",
+    title: "DEEP LEARNING",
+    description: "Understand artificial neural networks, forward propagation, backpropagation, CNNs, RNNs, and Transformers.",
+    learningOutcomes: [
+      "Understand multi-layer neural networks from single neurons to deep architectures.",
+      "Derive backpropagation with the Calculus Chain Rule.",
+      "Build Convolutional Neural Networks and Transformer Attention mechanisms."
+    ],
+    prerequisites: ["MATHEMATICS FOR MACHINE LEARNING"],
+    lessons: [
+      {
+        id: "dl-1", order: 10, module: "DEEP LEARNING", moduleNumber: "08",
+        title: "Neural Networks & Backpropagation", duration: "60 min", level: "Advanced",
+        summary: "Build deep neural networks, forward pass, activation functions, and backpropagation.",
+        why: "Deep learning powers modern vision, speech, language, and generative models.",
+        openingProblem: "How do networks with millions of parameters learn complex features automatically?",
+        curiosity: "What makes deep networks superior to single-layer models?",
+        priorKnowledge: "You know linear algebra, dot products, and basic gradient descent.",
+        objectives: ["Understand multi-layer perceptron architecture", "Trace forward pass matrix multiplication", "Understand backpropagation chain rule"],
+        concepts: [
+          { term: "Hidden Layer", definition: "Intermediate layer of neurons learning latent representations." },
+          { term: "Backpropagation", definition: "Calculating gradients of loss with respect to all weights using the chain rule." }
+        ],
+        diagram: "neural", mindMap: ["Input Layer", "Hidden Layers (ReLU)", "Output Layer (Softmax)", "Backpropagation (Chain Rule)", "Optimizer Update"],
+        code: {
+          language: "python",
+          code: `import torch
+import torch.nn as nn
+
+# Simple PyTorch Neural Network
+class MultiLayerPerceptron(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(10, 32)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(32, 1)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        return self.fc2(x)
+
+model = MultiLayerPerceptron()
+print(model)`,
+          notes: ["Line 8: Input 10 -> Hidden 32", "Line 9: Non-linear ReLU activation", "Line 10: Hidden 32 -> Output 1"]
+        },
+        practice: {
+          prompt: "Write a PyTorch network with 2 hidden layers (64 and 32 neurons) using ReLU.",
+          checkpoints: ["Define `fc1`, `fc2`, `fc3`", "Apply ReLU after fc1 and fc2", "Return final output"]
+        },
+        realWorldApplications: [{ title: "Speech Recognition", description: "Siri and Google Assistant use deep neural networks to convert audio signals to text." }],
+        teachBackPrompt: "Explain how information flows forward and gradients flow backward in a deep neural network.",
+        prerequisites: ["Linear Regression & Gradient Descent"]
+      }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 9: REAL-WORLD MACHINE LEARNING
+  // ---------------------------------------------------------
   {
-    id:"safety",number:"10",title:"Security, Privacy, Evaluation and Responsible AI",description:"Learn the engineering controls needed around AI systems rather than treating safety as an optional final chapter.",
-    lessons:[
-      {id:"safe-42",order:42,module:"Security, Privacy, Evaluation and Responsible AI",title:"Privacy, secrets and secure AI application design",duration:"60 min",level:"Applied",summary:"Apply data minimization, access control, secret management, validation and logging discipline.",why:"Frontend code cannot provide complete encryption or payment security by itself; sensitive operations require trusted server-side systems.",objectives:["Separate public and secret data.","Avoid exposing API keys.","Validate boundaries.","Explain authentication versus authorization."],concepts:[{term:"Authentication",definition:"Verifying who a user or service is."},{term:"Authorization",definition:"Deciding what an authenticated identity may access."},{term:"Encryption in transit",definition:"Protection of data while moving across networks, typically through TLS."},{term:"Secret management",definition:"Controlled storage and access to credentials and private keys."}],diagram:"flow",mindMap:["Identity","Authentication","Authorization","OTP/MFA","TLS","Secrets","Validation","Audit"],commonErrors:["Putting secret keys in Vite frontend environment variables.","Treating a login check as authorization.","Claiming encryption without a server-side design."],code:{language:"text",code:`Frontend: public configuration only\nBackend: payment secrets, webhook verification, privileged access\nDatabase: row-level authorization policies\nTransport: HTTPS/TLS`,notes:["Browser-delivered code is inspectable by users.","Sensitive keys belong on trusted infrastructure.","OTP/MFA requires an identity provider or backend flow."]},practice:{prompt:"Classify which data can safely live in a browser bundle and which must remain server-side.",checkpoints:["Public URL.","Publishable key.","Secret key.","Payment webhook secret."]},prerequisites:["Serving models, APIs and inference systems"]},
-      {id:"safe-43",order:43,module:"Security, Privacy, Evaluation and Responsible AI",title:"Bias, robustness and AI evaluation",duration:"60 min",level:"Advanced",summary:"Evaluate across groups, conditions, failure cases and realistic distributions while documenting limitations.",why:"Average accuracy can hide serious failures for important slices of users or environments.",objectives:["Define evaluation slices.","Create adversarial test cases.","Document limitations.","Separate fairness claims from assumptions."],concepts:[{term:"Evaluation slice",definition:"A meaningful subset of data used to inspect performance differences."},{term:"Robustness",definition:"Ability to maintain acceptable behavior under relevant variation or perturbation."},{term:"Bias",definition:"Systematic distortion that can arise from data, objectives, measurement or deployment context."},{term:"Red teaming",definition:"Structured attempts to discover failure modes through adversarial testing."}],diagram:"flow",mindMap:["Requirements","Benchmark","Slices","Stress tests","Human review","Failure taxonomy","Mitigation","Documentation"],commonErrors:["Claiming a model is unbiased from one aggregate metric.","Testing only clean benchmark data.","Hiding uncertainty in product wording."],code:{language:"python",code:`for group in evaluation_groups:\n    result = evaluate(model, group.data)\n    report[group.name] = result`,notes:["Group definitions need domain justification.","Small groups can have high uncertainty.","Evaluation findings should influence deployment decisions."]},practice:{prompt:"Create a failure taxonomy for an AI tutor.",checkpoints:["Factual errors.","Unsafe guidance.","Unequal performance.","Uncertainty handling."]},prerequisites:["Privacy, secrets and secure AI application design"]}
+    id: "real-world-ml",
+    number: "09",
+    title: "REAL-WORLD MACHINE LEARNING",
+    description: "Learn data collection, cleaning, feature engineering, hyperparameter tuning, model deployment, and monitoring.",
+    learningOutcomes: [
+      "Package models into clean production project layouts.",
+      "Build deployment REST APIs.",
+      "Monitor data drift and model performance decay in production."
+    ],
+    prerequisites: ["MODEL EVALUATION"],
+    lessons: [
+      {
+        id: "rw-1", order: 11, module: "REAL-WORLD MACHINE LEARNING", moduleNumber: "09",
+        title: "Deployment & Monitoring", duration: "50 min", level: "Applied",
+        summary: "Turn models into live REST APIs, handle data drift, and build monitoring pipelines.",
+        why: "A model in a notebook creates zero business value until deployed and monitored.",
+        openingProblem: "What happens when a model deployed to production starts receiving unexpected data?",
+        curiosity: "Why do models degrade over time even if the code never changes?",
+        priorKnowledge: "You know python scripts and model evaluation metrics.",
+        objectives: ["Deploy models via API endpoints", "Detect Data Drift and Concept Drift", "Build logging pipelines"],
+        concepts: [
+          { term: "Data Drift", definition: "Shift in input feature distribution $P(X)$ over time." },
+          { term: "Concept Drift", definition: "Shift in the target relationship mapping $P(y|X)$ over time." }
+        ],
+        diagram: "mlops", mindMap: ["Deploy API", "Validate Input Data", "Compute Inference", "Log Metrics", "Detect Data Drift"],
+        code: {
+          language: "python",
+          code: `# Production inference handler pattern
+def predict_endpoint(input_json, model, scaler):
+    # 1. Validate input schema
+    if "sqft" not in input_json:
+        return {"error": "Missing sqft field"}, 400
+    
+    # 2. Preprocess using training scaler
+    features = scaler.transform([[input_json["sqft"], input_json["beds"]]])
+    
+    # 3. Model inference
+    prediction = model.predict(features)[0]
+    
+    return {"prediction": float(prediction)}, 200`,
+          notes: ["Line 4: Validates request boundary", "Line 8: Uses training scaler to maintain preprocessing parity"]
+        },
+        practice: {
+          prompt: "Write a validation function checking that input age is between 0 and 120 before model inference.",
+          checkpoints: ["Check type", "Check numerical range", "Return descriptive error if invalid"]
+        },
+        realWorldApplications: [{ title: "Fraud Monitoring", description: "Banks monitor live credit transaction feature distributions to detect emerging fraud patterns." }],
+        teachBackPrompt: "Explain the difference between Data Drift and Concept Drift with an e-commerce example.",
+        prerequisites: ["Neural Networks & Backpropagation"]
+      }
     ]
   },
+
+  // ---------------------------------------------------------
+  // MODULE 10: PROJECTS AND PRACTICE
+  // ---------------------------------------------------------
   {
-    id:"capstone",number:"11",title:"Capstone and Research Skills",description:"Combine the curriculum into evidence-based projects, paper reading and portfolio-quality engineering.",
-    lessons:[
-      {id:"capstone-44",order:44,module:"Capstone and Research Skills",title:"Build an end-to-end AI project",duration:"90 min",level:"Advanced",summary:"Plan a complete project from question and data to evaluation, documentation and deployment boundaries.",why:"Integration is where isolated concepts become engineering skill.",objectives:["Write a problem specification.","Build a reproducible pipeline.","Evaluate honestly.","Document limitations."],concepts:[{term:"Problem specification",definition:"A precise statement of objective, inputs, outputs, constraints and success criteria."},{term:"Baseline",definition:"A reference solution used to contextualize improvements."},{term:"Ablation",definition:"An experiment removing or changing a component to measure its contribution."}],diagram:"mlops",mindMap:["Question","Data","Baseline","Features","Model","Evaluation","Error analysis","Documentation","Deployment"],commonErrors:["Starting with a model instead of a question.","Adding complexity without ablation.","Claiming production readiness without security review."],code:{language:"text",code:`1. Define the decision and success metric\n2. Audit data and split strategy\n3. Build baseline\n4. Add representation/model improvements\n5. Validate and perform error analysis\n6. Test once for final evidence\n7. Document limitations and monitoring`,notes:["Each step produces evidence for the next.","A smaller, reproducible project is better than an unexplained complex one."]},practice:{prompt:"Write a capstone proposal before choosing the final model.",checkpoints:["Problem.","Data source and risks.","Baseline.","Evaluation plan."]},prerequisites:["Bias, robustness and AI evaluation"]},
-      {id:"capstone-45",order:45,module:"Capstone and Research Skills",title:"How to read papers, reproduce results and keep learning",duration:"60 min",level:"Advanced",summary:"Read abstracts skeptically, inspect methods, datasets, baselines, limitations and reproducibility details.",why:"Advanced AI changes quickly; durable skill is learning how to evaluate new claims.",objectives:["Extract a paper's central claim.","Inspect experimental evidence.","Identify missing details.","Plan a small reproduction."],concepts:[{term:"Reproducibility",definition:"Ability to obtain consistent results using documented methods and conditions."},{term:"Baseline",definition:"A comparison method establishing context for a reported result."},{term:"Ablation",definition:"A controlled removal or modification used to test component contribution."},{term:"Limitation",definition:"A condition under which evidence or method may not support broad conclusions."}],diagram:"mindmap",mindMap:["Claim","Method","Data","Baselines","Metrics","Ablations","Results","Limitations","Reproduction"],commonErrors:["Reading only the abstract.","Confusing benchmark gains with universal superiority.","Copying code without understanding data and evaluation."],code:{language:"text",code:`Paper reading checklist\n- What exact claim is made?\n- What data and split are used?\n- What are the strongest baselines?\n- What changes in the ablation?\n- Which limitations are acknowledged?\n- Can one small result be reproduced?`,notes:["A paper is evidence, not a final authority.","Reproduction begins with precise assumptions."]},practice:{prompt:"Take one technical claim and design a minimal experiment that could challenge it.",checkpoints:["Define claim.","Define baseline.","Define metric.","Define failure condition."]},prerequisites:["Build an end-to-end AI project"]}
+    id: "projects-and-practice",
+    number: "10",
+    title: "PROJECTS AND PRACTICE",
+    description: "Apply your knowledge across guided projects, mini challenges, debugging challenges, case studies, and capstone projects.",
+    learningOutcomes: [
+      "Build end-to-end Machine Learning pipelines from scratch.",
+      "Debug broken ML pipelines and fix data leakage bugs.",
+      "Complete a production-ready Capstone project."
+    ],
+    prerequisites: ["REAL-WORLD MACHINE LEARNING"],
+    lessons: [
+      {
+        id: "proj-1", order: 12, module: "PROJECTS AND PRACTICE", moduleNumber: "10",
+        title: "End-to-End Capstone Project", duration: "90 min", level: "Advanced",
+        summary: "Build an end-to-end AI project from specification and baseline to deployment and auditing.",
+        why: "Integrating all skills into a complete project is how you become an AI engineer.",
+        openingProblem: "How do you take a real business problem statement and build a complete, verifiable AI product?",
+        curiosity: "How do senior engineers evaluate whether an AI project is ready for launch?",
+        priorKnowledge: "All previous modules in this curriculum.",
+        objectives: ["Formulate project specification", "Build baseline and candidate models", "Perform ablation study", "Document limitations and release"],
+        concepts: [
+          { term: "Capstone Project", definition: "An integrated project demonstrating complete mastery of the ML lifecycle." },
+          { term: "Ablation Study", definition: "Removing individual components to measure their exact performance contribution." }
+        ],
+        diagram: "pipeline", mindMap: ["Problem Spec", "Data Pipeline", "Baseline Model", "Candidate Models", "Evaluation & Ablation", "Deployment API"],
+        code: {
+          language: "python",
+          code: `# Complete Capstone Execution Pipeline
+def run_capstone_pipeline(data_path):
+    print("1. Loading & Validating Data...")
+    print("2. Feature Engineering & Preprocessing...")
+    print("3. Training Baseline vs Candidate Models...")
+    print("4. Evaluating Metrics (Precision, Recall, F1)...")
+    print("5. Packaging Model Artifacts for API Serving...")
+    return True
+
+run_capstone_pipeline("dataset.csv")`,
+          notes: ["Orchestrates data, preprocessing, training, evaluation, and packaging."]
+        },
+        practice: {
+          prompt: "Write a Capstone project proposal outlining problem, data source, baseline, model, and metrics.",
+          checkpoints: ["Define business outcome", "Specify feature inputs and targets", "Choose baseline and evaluation metrics"]
+        },
+        realWorldApplications: [{ title: "Enterprise AI Launch", description: "Deploying a customer churn prediction pipeline with automated monitoring." }],
+        teachBackPrompt: "Summarize your end-to-end Capstone architecture from data collection to live monitoring.",
+        prerequisites: ["Deployment & Monitoring"]
+      }
     ]
   }
 ];
@@ -222,10 +1014,6 @@ export const academyLessons = academyModules
   .flatMap((module) => module.lessons)
   .sort((a, b) => a.order - b.order);
 
-/**
- * Flat search index used by the dashboard. Keep this derived from the canonical
- * curriculum so search and the Academy can never drift apart.
- */
 export type AcademyTopic = {
   id: string;
   title: string;
@@ -245,5 +1033,5 @@ export const allAcademyTopics: AcademyTopic[] = academyModules.flatMap((module) 
     trackTitle: module.title,
     concepts: lesson.concepts.map((concept) => concept.term),
     lessonOrder: lesson.order,
-  })),
+  }))
 );

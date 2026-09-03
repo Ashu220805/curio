@@ -1,1 +1,222 @@
-.concept-page{min-height:100vh;background:radial-gradient(circle at 90% 0,rgba(91,109,224,.1),transparent 28%),#f8fafc;color:#1d2b42}.concept-hero{width:min(1080px,calc(100% - 48px));margin:36px auto 0;padding:56px;border:1px solid #dfe6f0;border-radius:30px;background:linear-gradient(140deg,#fff,#f5f7ff);box-shadow:0 20px 55px rgba(42,55,90,.06)}.concept-hero>span{color:#5f6fd8;font-size:10px;font-weight:950;letter-spacing:.15em}.concept-hero h1{max-width:800px;margin:14px 0;font-size:clamp(38px,5vw,64px);line-height:1;letter-spacing:-.06em}.concept-hero p{max-width:780px;color:#65748a;line-height:1.75}.concept-hero input{width:100%;min-height:52px;margin-top:22px;padding:0 16px;border:1px solid #d8e1ef;border-radius:15px;background:#fff;color:#28374f;outline:none}.concept-hero input:focus{border-color:#8290e9;box-shadow:0 0 0 4px rgba(100,116,225,.09)}.concept-category-row{width:min(1080px,calc(100% - 48px));margin:16px auto;display:flex;gap:8px;overflow:auto;padding-bottom:4px}.concept-category-row button{flex:none;padding:9px 12px;border:1px solid #dce4ef;border-radius:999px;background:#fff;color:#6a788b;font-size:10px;font-weight:850;cursor:pointer}.concept-category-row button.is-selected{border-color:#6676df;background:#eef0ff;color:#4e5fca}.concept-workspace{width:min(1080px,calc(100% - 48px));margin:0 auto 70px;display:grid;grid-template-columns:330px minmax(0,1fr);border:1px solid #dfe6ef;border-radius:26px;overflow:hidden;background:#fff;box-shadow:0 24px 65px rgba(40,52,85,.07)}.concept-workspace aside{max-height:760px;overflow:auto;padding:14px;border-right:1px solid #e1e7ef;background:#fbfcfe}.concept-count{padding:10px 12px;color:#7b889b;font-size:10px}.concept-count span{color:#5e6fd7;font-weight:950}.concept-workspace aside button{width:100%;padding:13px;text-align:left;border:1px solid transparent;border-radius:14px;background:transparent;color:#42516a;cursor:pointer}.concept-workspace aside button:hover,.concept-workspace aside button.is-selected{border-color:#d7dff2;background:#fff;box-shadow:0 7px 18px rgba(40,52,80,.05)}.concept-workspace aside button span{display:block;color:#7885dc;font-size:9px;font-weight:900;text-transform:uppercase}.concept-workspace aside button strong{display:block;margin-top:5px;font-size:13px}.concept-workspace aside button small{display:block;margin-top:5px;color:#7b899c;font-size:10px;line-height:1.5}.concept-workspace article{padding:clamp(26px,5vw,60px)}.concept-category{color:#6171dc;font-size:10px;font-weight:950;letter-spacing:.14em;text-transform:uppercase}.concept-workspace article h2{margin:10px 0 26px;font-size:clamp(34px,5vw,56px);letter-spacing:-.06em}.concept-workspace article section{margin-top:18px;padding:19px;border:1px solid #e0e6ef;border-radius:16px}.concept-workspace article section>strong{color:#5363cf;font-size:10px;letter-spacing:.12em}.concept-workspace article section p{margin:8px 0 0;color:#536277;font-size:14px;line-height:1.75}.concept-simple{background:#f3f5ff}.concept-misconception{border-left:4px solid #d59a62!important;background:#fffaf5}.concept-misconception strong{color:#a36b37!important}.concept-related div{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.concept-related button{padding:8px 10px;border:0;border-radius:999px;background:#edf8f4;color:#3c8877;font-size:10px;font-weight:850;cursor:pointer}@media(max-width:760px){.concept-hero,.concept-category-row,.concept-workspace{width:calc(100% - 28px)}.concept-hero{padding:34px 22px}.concept-workspace{grid-template-columns:1fr}.concept-workspace aside{max-height:320px;border-right:0;border-bottom:1px solid #e1e7ef}}
+/* =========================================================
+   CURIO — CONCEPT LIBRARY STYLING
+========================================================= */
+
+.concept-page {
+  min-height: 100vh;
+  background: var(--bg-main, #080a13);
+  color: var(--text-main, #f5f7ff);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+.concept-hero {
+  max-width: 1200px;
+  margin: 32px auto 0;
+  padding: 40px 32px;
+  background: linear-gradient(145deg, rgba(20, 25, 45, 0.8), rgba(12, 15, 28, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+}
+
+.concept-hero > span {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #7662ff;
+  background: rgba(118, 98, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.concept-hero h1 {
+  font-size: 2.5rem;
+  font-weight: 850;
+  color: #ffffff;
+  margin: 0 0 12px;
+}
+
+.concept-hero p {
+  color: rgba(245, 247, 255, 0.75);
+  font-size: 1.05rem;
+  max-width: 760px;
+  margin: 0;
+}
+
+.concept-hero input {
+  width: 100%;
+  height: 52px;
+  margin-top: 24px;
+  padding: 0 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: #060810;
+  color: #ffffff;
+  font-size: 1rem;
+  outline: none;
+}
+
+.concept-hero input:focus {
+  border-color: #7662ff;
+  box-shadow: 0 0 0 3px rgba(118, 98, 255, 0.2);
+}
+
+.concept-category-row {
+  max-width: 1200px;
+  margin: 20px auto;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.concept-category-row button {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 247, 255, 0.7);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.concept-category-row button.is-selected {
+  background: rgba(118, 98, 255, 0.2);
+  border-color: #7662ff;
+  color: #ffffff;
+}
+
+.concept-workspace {
+  max-width: 1200px;
+  margin: 0 auto 80px;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.concept-workspace aside {
+  background: #0f1322;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  max-height: 720px;
+  overflow-y: auto;
+}
+
+.concept-count {
+  font-size: 0.78rem;
+  color: rgba(245, 247, 255, 0.5);
+  margin-bottom: 12px;
+  padding-left: 8px;
+}
+
+.concept-workspace aside button {
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(245, 247, 255, 0.7);
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+}
+
+.concept-workspace aside button:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.concept-workspace aside button.is-selected {
+  background: rgba(85, 212, 255, 0.1);
+  border-color: rgba(85, 212, 255, 0.3);
+  color: #ffffff;
+}
+
+.concept-workspace aside button span {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #55d4ff;
+}
+
+.concept-workspace aside button strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-top: 2px;
+}
+
+.concept-workspace article {
+  background: #0f1322;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 36px;
+}
+
+.concept-category {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #55d4ff;
+  letter-spacing: 0.08em;
+}
+
+.concept-workspace article h2 {
+  font-size: 2.2rem;
+  font-weight: 850;
+  color: #ffffff;
+  margin: 8px 0 24px;
+}
+
+.concept-workspace article section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.concept-workspace article section > strong {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #7662ff;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.concept-workspace article section p {
+  margin: 0;
+  color: rgba(245, 247, 255, 0.85);
+  font-size: 0.98rem;
+}
+
+.concept-misconception {
+  border-left: 4px solid #ffbd67 !important;
+  background: rgba(255, 189, 103, 0.05) !important;
+}
+
+.concept-misconception strong {
+  color: #ffbd67 !important;
+}
+
+.concept-related button {
+  background: rgba(105, 220, 174, 0.12);
+  color: #69dcae;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 4px;
+  cursor: pointer;
+}
+
+@media (max-width: 800px) {
+  .concept-workspace {
+    grid-template-columns: 1fr;
+  }
+}

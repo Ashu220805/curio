@@ -54,7 +54,7 @@ await navigator.clipboard.writeText(lesson.code.code);
 }
 
 export function DebugWorkshop({ lesson }: { lesson: AcademyLesson }) {
-  const issues = lesson.debugging ?? lesson.commonErrors.map((error) => ({ symptom: error, possibleCause: "A mental model or implementation assumption does not match how the system actually works.", howToCheck: "Return to the inputs, expected output and the step where the behaviour first becomes different.", fix: "Change one assumption at a time and test again." }));
+  const issues = lesson.debugging ?? (lesson.commonErrors ?? []).map((error) => ({ symptom: error, possibleCause: "A mental model or implementation assumption does not match how the system actually works.", howToCheck: "Return to the inputs, expected output and the step where the behaviour first becomes different.", fix: "Change one assumption at a time and test again." }));
 
   return <div className="tool-stack">
     <section className="tool-hero"><span>DEBUGGING LAB</span><h2>Learn by finding what went wrong</h2><p>Strong learners do not avoid mistakes. They learn to locate the exact assumption that caused the mistake.</p></section>
